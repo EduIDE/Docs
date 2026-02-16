@@ -53,3 +53,7 @@ To explore the EduTheia projects, browse the **Projects** section in the sidebar
 - Links to source repositories
 
 For deployment and infrastructure details, start with the [Theia Deployment](./projects/theia-deployment.md) documentation.
+
+## Student Contributions
+
+EduTheia is developed and maintained by a team of dedicated students. Check out the **Contributions** section to learn about individual thesis work and contributions to the ecosystem. Each student documents their research, implementations, and the impact of their work on the platform.
