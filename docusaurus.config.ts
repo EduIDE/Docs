@@ -68,7 +68,7 @@ const config: Config = {
       logo: {
         alt: 'EduTheia Logo',
         src: 'img/logo.png',
-        href: '/intro',
+        href: '/',
       },
       items: [
         {
@@ -92,7 +92,7 @@ const config: Config = {
           items: [
             {
               label: 'Introduction',
-              to: '/intro',
+              to: '/',
             },
             {
               label: 'Projects',
