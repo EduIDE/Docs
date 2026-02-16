@@ -1,7 +1,9 @@
 ---
-title: Theia Shared Cache
-sidebar_label: Shared Cache
+title: theia-shared-cache
+sidebar_label: theia-shared-cache
 ---
+
+# theia-shared-cache
 
 ## Overview
 

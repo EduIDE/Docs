@@ -1,7 +1,9 @@
 ---
-title: Theia LSP Extension
-sidebar_label: LSP Extension
+title: theia-lsp-extension
+sidebar_label: theia-lsp-extension
 ---
+
+# theia-lsp-extension
 
 ## Overview
 

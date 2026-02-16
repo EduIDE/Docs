@@ -1,9 +1,11 @@
 ---
-title: Theia Scale Tests
-sidebar_label: Scale Tests
+title: theia-scale-tests
+sidebar_label: theia-scale-tests
 ---
 
-# Overview
+# theia-scale-tests
+
+## Overview
 
 The **Theia Scale Tests** repository provides an end-to-end (E2E) integration and scalability testing suite for [Theia Cloud IDE](https://theia-cloud.io). It is designed to simulate real-world usage of Online IDEs in large classroom settings, particularly within the EduTheia and Artemis ecosystem, ensuring that the infrastructure can handle high concurrent loads.
 

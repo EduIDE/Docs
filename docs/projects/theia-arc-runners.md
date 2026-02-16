@@ -1,9 +1,11 @@
 ---
-title: Theia ARC Runners
-sidebar_label: ARC Runners
+title: theia-arc-runners
+sidebar_label: theia-arc-runners
 ---
 
-# Overview
+# theia-arc-runners
+
+## Overview
 
 The **Theia ARC Runners** repository provides infrastructure-as-code for deploying GitHub Actions self-hosted runners on Kubernetes using the Actions Runner Controller (ARC). It is a foundational component that powers the CI/CD pipelines for the entire EduTheia ecosystem.
 

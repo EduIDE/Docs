@@ -1,9 +1,11 @@
 ---
-title: Theia Data Bridge
-sidebar_label: Data Bridge
+title: theia-data-bridge
+sidebar_label: theia-data-bridge
 ---
 
-# Overview
+# theia-data-bridge
+
+## Overview
 
 The **Theia Data Bridge** is a VS Code extension designed to facilitate secure data and credential injection into cloud-based IDE sessions. It acts as a communication bridge between the Theia Cloud host and the IDE workspace, allowing runtime configuration without manual user intervention.
 

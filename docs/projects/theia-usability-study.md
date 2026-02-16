@@ -1,9 +1,11 @@
 ---
-title: Theia Usability Study
-sidebar_label: Usability Study
+title: theia-usability-study
+sidebar_label: theia-usability-study
 ---
 
-# Overview
+# theia-usability-study
+
+## Overview
 
 The **Theia Usability Study** repository contains the analysis tools and data for a research study on the usability of Online IDEs conducted at the Technical University of Munich. It focuses on evaluating the student experience with the EduTheia/Artemis IDE infrastructure.
 

@@ -1,9 +1,11 @@
 ---
-title: Artemis Theia Images
-sidebar_label: IDE Images
+title: artemis-theia-images
+sidebar_label: artemis-theia-images
 ---
 
-# Overview
+# artemis-theia-images
+
+## Overview
 
 The **Artemis Theia Images** repository manages the Docker builds for custom Eclipse Theia IDE instances. These images are pre-configured with the specific tools, plugins, and settings required for student exercises on the Artemis platform. Once built, these images are deployed to Kubernetes clusters via [Theia Deployment](./theia-deployment.md).
 

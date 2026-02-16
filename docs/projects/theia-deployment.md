@@ -1,7 +1,9 @@
 ---
-title: Theia Deployment
-sidebar_label: Deployment
+title: theia-deployment
+sidebar_label: theia-deployment
 ---
+
+# theia-deployment
 
 ## Overview
 
