@@ -46,6 +46,7 @@ const config: Config = {
           // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/ls1intum/EduTheia-Docs/tree/main/',
+          routeBasePath: '/', // Serve docs at the site's root
         },
         blog: false,
         theme: {
@@ -68,6 +69,7 @@ const config: Config = {
       logo: {
         alt: 'EduTheia Logo',
         src: 'img/logo.png',
+        href: '/intro',
       },
       items: [
         {
@@ -91,11 +93,11 @@ const config: Config = {
           items: [
             {
               label: 'Introduction',
-              to: '/docs/intro',
+              to: '/intro',
             },
             {
               label: 'Projects',
-              to: '/docs/projects/theia-deployment',
+              to: '/projects/theia-deployment',
             },
           ],
         },
