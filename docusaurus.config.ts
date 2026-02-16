@@ -47,21 +47,7 @@ const config: Config = {
           editUrl:
             'https://github.com/ls1intum/EduTheia-Docs/tree/main/',
         },
-        blog: {
-          showReadingTime: true,
-          feedOptions: {
-            type: ['rss', 'atom'],
-            xslt: true,
-          },
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/ls1intum/EduTheia-Docs/tree/main/',
-          // Useful options to enforce blogging best practices
-          onInlineTags: 'warn',
-          onInlineAuthors: 'warn',
-          onUntruncatedBlogPosts: 'warn',
-        },
+        blog: false,
         theme: {
           customCss: './src/css/custom.css',
         },
@@ -88,9 +74,8 @@ const config: Config = {
           type: 'docSidebar',
           sidebarId: 'tutorialSidebar',
           position: 'left',
-          label: 'Tutorial',
+          label: 'Projects',
         },
-        {to: '/blog', label: 'Blog', position: 'left'},
         {
           href: 'https://github.com/ls1intum/EduTheia-Docs',
           label: 'GitHub',
@@ -105,25 +90,29 @@ const config: Config = {
           title: 'Docs',
           items: [
             {
-              label: 'Tutorial',
+              label: 'Introduction',
               to: '/docs/intro',
+            },
+            {
+              label: 'Projects',
+              to: '/docs/projects/theia-deployment',
             },
           ],
         },
         {
-          title: 'Community',
+          title: 'Related Projects',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'Eclipse Theia',
+              href: 'https://theia-ide.org/',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: 'Theia Cloud',
+              href: 'https://github.com/eclipse-theia/theia-cloud',
             },
             {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
+              label: 'Artemis',
+              href: 'https://github.com/ls1intum/Artemis',
             },
           ],
         },
@@ -131,11 +120,11 @@ const config: Config = {
           title: 'More',
           items: [
             {
-              label: 'Blog',
-              to: '/blog',
+              label: 'GitHub Organization',
+              href: 'https://github.com/ls1intum',
             },
             {
-              label: 'GitHub',
+              label: 'Documentation Repository',
               href: 'https://github.com/ls1intum/EduTheia-Docs',
             },
           ],

@@ -2,46 +2,54 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Welcome to EduTheia
 
-Let's discover **Docusaurus in less than 5 minutes**.
+**EduTheia** is a scalable, cloud-native educational IDE platform built on [Eclipse Theia](https://theia-ide.org/) and integrated with the [Artemis](https://github.com/ls1intum/Artemis) learning management system. It provides students with powerful, browser-based development environments for programming exercises without requiring local installations.
+
+## What is EduTheia?
+
+EduTheia delivers a complete IDE experience directly in the browser, enabling students to:
+
+- Write, compile, and test code without installing tools locally
+- Access consistent development environments across devices
+- Benefit from intelligent code completion and language server features
+- Work with real-world development tools in a managed, scalable infrastructure
+
+## Architecture Overview
+
+The EduTheia ecosystem consists of several interconnected components:
+
+- **[Theia Deployment](./projects/theia-deployment.md)**: Infrastructure-as-code for deploying and managing Kubernetes clusters
+- **[Artemis Theia Images](./projects/artemis-theia-images.md)**: Custom IDE container images with language support and tooling
+- **[Theia LSP Extension](./projects/theia-lsp-extension.md)**: Language server integration for intelligent code features
+- **[Theia Shared Cache](./projects/theia-shared-cache.md)**: Distributed caching layer for improved performance
+- **[Theia Scale Tests](./projects/theia-scale-tests.md)**: Load testing framework for performance validation
+
+## Key Features
+
+### 🚀 Cloud-Native Architecture
+
+Built on Kubernetes with [Theia Cloud](https://github.com/eclipse-theia/theia-cloud), enabling horizontal scaling and efficient resource management.
+
+### 🎓 Educational Focus
+
+Designed specifically for university programming courses with features like automated grading integration, exercise templates, and student workspace isolation.
+
+### 🔧 Extensible Platform
+
+Supports multiple programming languages (Java, Python, C, Rust, and more) with customizable IDE blueprints and configurations.
+
+### 📊 Observability
+
+Comprehensive monitoring with Prometheus and Grafana dashboards for tracking system health and user activity.
 
 ## Getting Started
 
-Get started by **creating a new site**.
+To explore the EduTheia projects, browse the **Projects** section in the sidebar. Each project page includes:
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+- An overview of the component's purpose
+- Key features and capabilities
+- Technical implementation details
+- Links to source repositories
 
-### What you'll need
-
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
-
-## Generate a new site
-
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
-```
-
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
-
-```bash
-cd my-website
-npm run start
-```
-
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
-
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
-
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+For deployment and infrastructure details, start with the [Theia Deployment](./projects/theia-deployment.md) documentation.
