@@ -5,14 +5,12 @@ import styles from './styles.module.css';
 
 type FeatureItem = {
   title: string;
-  Svg: React.ComponentType<React.ComponentProps<'svg'>>;
   description: ReactNode;
 };
 
 const FeatureList: FeatureItem[] = [
   {
     title: 'Cloud-Native IDE',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
         Access a full-featured development environment directly in your browser.
@@ -22,7 +20,6 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Built for Education',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
         Designed for university programming courses with seamless Artemis integration,
@@ -32,7 +29,6 @@ const FeatureList: FeatureItem[] = [
   },
   {
     title: 'Scalable & Extensible',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
         Deployed on Kubernetes with custom language server support, shared caching,
@@ -42,12 +38,9 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({title, Svg, description}: FeatureItem) {
+function Feature({title, description}: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
-      <div className="text--center">
-        <Svg className={styles.featureSvg} role="img" />
-      </div>
       <div className="text--center padding-horiz--md">
         <Heading as="h3">{title}</Heading>
         <p>{description}</p>
