@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'EduTheia Docs',
-  tagline: 'Documentation for EduTheia',
+  title: 'EduIDE Docs',
+  tagline: 'Documentation for EduIDE',
   favicon: 'img/logo.png',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -15,15 +15,15 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://ls1intum.github.io',
+  url: 'https://EduIDE.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/EduTheia-Docs/',
+  baseUrl: '/Docs/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'ls1intum', // Usually your GitHub org/user name.
-  projectName: 'EduTheia-Docs', // Usually your repo name.
+  organizationName: 'EduIDE', // Usually your GitHub org/user name.
+  projectName: 'Docs', // Usually your repo name.
   trailingSlash: false,
 
   onBrokenLinks: 'throw',
@@ -45,7 +45,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/ls1intum/EduTheia-Docs/tree/main/',
+            'https://github.com/EduIDE/Docs/tree/main/',
           routeBasePath: '/', // Serve docs at the site's root
         },
         blog: false,
@@ -64,9 +64,9 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: 'EduTheia Docs',
+      title: 'EduIDE Docs',
       logo: {
-        alt: 'EduTheia Logo',
+        alt: 'EduIDE Logo',
         src: 'img/logo.png',
         href: '/',
       },
@@ -78,7 +78,7 @@ const config: Config = {
           label: 'Projects',
         },
         {
-          href: 'https://github.com/ls1intum/EduTheia-Docs',
+          href: 'https://github.com/EduIDE/Docs',
           label: 'GitHub',
           position: 'right',
         },
@@ -122,16 +122,16 @@ const config: Config = {
           items: [
             {
               label: 'GitHub Organization',
-              href: 'https://github.com/ls1intum',
+              href: 'https://github.com/EduIDE',
             },
             {
               label: 'Documentation Repository',
-              href: 'https://github.com/ls1intum/EduTheia-Docs',
+              href: 'https://github.com/EduIDE/Docs',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} EduTheia Docs. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} EduIDE Docs. Built with Docusaurus.`,
     },
     prism: {
       theme: prismThemes.github,

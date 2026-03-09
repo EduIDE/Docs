@@ -28,7 +28,6 @@ const sidebars: SidebarsConfig = {
         'projects/artemis-theia-images',
         'projects/theia-arc-runners',
         'projects/theia-workspace-garbage-collector',
-        'projects/theia-usability-study',
       ],
     },
     {
