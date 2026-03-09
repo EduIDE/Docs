@@ -21,7 +21,7 @@ EduIDE delivers a complete IDE experience directly in the browser, enabling stud
 The EduIDE ecosystem consists of several interconnected components:
 
 - **[Theia Deployment](./projects/theia-deployment.md)**: Infrastructure-as-code for deploying and managing Kubernetes clusters
-- **[Artemis Theia Images](./projects/artemis-theia-images.md)**: Custom IDE container images with language support and tooling
+- **[EduIDE-Cloud](./projects/eduidec-cloud.md)**: Custom IDE container images with language support and tooling
 - **[Theia LSP Extension](./projects/theia-lsp-extension.md)**: Language server integration for intelligent code features
 - **[Theia Shared Cache](./projects/theia-shared-cache.md)**: Distributed caching layer for improved performance
 - **[Theia Scale Tests](./projects/theia-scale-tests.md)**: Load testing framework for performance validation

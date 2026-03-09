@@ -25,7 +25,7 @@ const sidebars: SidebarsConfig = {
         'projects/theia-shared-cache',
         'projects/theia-lsp-extension',
         'projects/theia-data-bridge',
-        'projects/artemis-theia-images',
+        'projects/eduidec-cloud',
         'projects/theia-arc-runners',
         'projects/theia-workspace-garbage-collector',
       ],
