@@ -3,13 +3,13 @@ sidebar_position: 1
 slug: /
 ---
 
-# Welcome to EduTheia
+# Welcome to EduIDE
 
-**EduTheia** is a scalable, cloud-native educational IDE platform built on [Eclipse Theia](https://theia-ide.org/) and integrated with the [Artemis](https://github.com/ls1intum/Artemis) learning management system. It provides students with powerful, browser-based development environments for programming exercises without requiring local installations.
+**EduIDE** is a scalable, cloud-native educational IDE platform built on [Eclipse Theia](https://theia-ide.org/) and integrated with the [Artemis](https://github.com/ls1intum/Artemis) learning management system. It provides students with powerful, browser-based development environments for programming exercises without requiring local installations.
 
-## What is EduTheia?
+## What is EduIDE?
 
-EduTheia delivers a complete IDE experience directly in the browser, enabling students to:
+EduIDE delivers a complete IDE experience directly in the browser, enabling students to:
 
 - Write, compile, and test code without installing tools locally
 - Access consistent development environments across devices
@@ -18,7 +18,7 @@ EduTheia delivers a complete IDE experience directly in the browser, enabling st
 
 ## Architecture Overview
 
-The EduTheia ecosystem consists of several interconnected components:
+The EduIDE ecosystem consists of several interconnected components:
 
 - **[Theia Deployment](./projects/theia-deployment.md)**: Infrastructure-as-code for deploying and managing Kubernetes clusters
 - **[Artemis Theia Images](./projects/artemis-theia-images.md)**: Custom IDE container images with language support and tooling
@@ -46,7 +46,7 @@ Comprehensive monitoring with Prometheus and Grafana dashboards for tracking sys
 
 ## Getting Started
 
-To explore the EduTheia projects, browse the **Projects** section in the sidebar. Each project page includes:
+To explore the EduIDE projects, browse the **Projects** section in the sidebar. Each project page includes:
 
 - An overview of the component's purpose
 - Key features and capabilities
@@ -57,4 +57,4 @@ For deployment and infrastructure details, start with the [Theia Deployment](./p
 
 ## Student Contributions
 
-EduTheia is developed and maintained by a team of dedicated students. Check out the **Contributions** section to learn about individual thesis work and contributions to the ecosystem. Each student documents their research, implementations, and the impact of their work on the platform.
+EduIDE is developed and maintained by a team of dedicated students. Check out the **Contributions** section to learn about individual thesis work and contributions to the ecosystem. Each student documents their research, implementations, and the impact of their work on the platform.

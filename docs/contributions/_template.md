@@ -3,7 +3,7 @@ title: [Your Name]
 sidebar_label: [Your Name]
 ---
 
-# [Your Name] - Contributions to EduTheia
+# [Your Name] - Contributions to EduIDE
 
 ## Thesis
 
@@ -28,7 +28,7 @@ sidebar_label: [Your Name]
 - [Repository name](link) - [Brief description of your work in this repo]
 
 ### Results & Impact
-[Describe the outcomes of your thesis work - what was achieved, what impact it had on the EduTheia ecosystem]
+[Describe the outcomes of your thesis work - what was achieved, what impact it had on the EduIDE ecosystem]
 
 ---
 

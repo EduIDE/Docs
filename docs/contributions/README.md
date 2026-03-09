@@ -4,9 +4,9 @@ sidebar_label: Overview
 sidebar_position: 1
 ---
 
-# Student Contributions to EduTheia
+# Student Contributions to EduIDE
 
-This section showcases the individual contributions of team members working on the EduTheia ecosystem. Each student documents their thesis work and other significant contributions to the project.
+This section showcases the individual contributions of team members working on the EduIDE ecosystem. Each student documents their thesis work and other significant contributions to the project.
 
 ## Contributing Your Documentation
 
