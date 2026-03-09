@@ -24,4 +24,4 @@ The **Theia Workspace Garbage Collector** is a specialized Kubernetes operator d
 
 ## Repository Link
 
-[ls1intum/theia-workspace-garbage-collector](https://github.com/ls1intum/theia-workspace-garbage-collector)
+[EduIDE/workspace-garbage-collector](https://github.com/EduIDE/workspace-garbage-collector)

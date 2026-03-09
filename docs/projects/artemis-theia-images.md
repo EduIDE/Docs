@@ -24,4 +24,4 @@ The **Artemis Theia Images** repository manages the Docker builds for custom Ecl
 
 ## Repository Link
 
-[ls1intum/artemis-theia-images](https://github.com/ls1intum/artemis-theia-images)
+[EduIDE/EduIDE](https://github.com/EduIDE/EduIDE)

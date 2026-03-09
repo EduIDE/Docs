@@ -7,7 +7,7 @@ sidebar_label: theia-deployment
 
 ## Overview
 
-The **theia-deployment** repository is the central hub for the infrastructure-as-code (IaC) of the EduTheia ecosystem. It manages the automated deployment of [Theia Cloud](https://github.com/eclipse-theia/theia-cloud) to various Kubernetes clusters using GitHub Actions and Helm. This ensures that students and developers have access to a reliable, browser-based IDE environment across production, staging, and testing tiers.
+The **theia-deployment** repository is the central hub for the infrastructure-as-code (IaC) of the EduIDE ecosystem. It manages the automated deployment of [Theia Cloud](https://github.com/eclipse-theia/theia-cloud) to various Kubernetes clusters using GitHub Actions and Helm. This ensures that students and developers have access to a reliable, browser-based IDE environment across production, staging, and testing tiers.
 
 ## Key Features
 
@@ -32,8 +32,8 @@ The **theia-deployment** repository is the central hub for the infrastructure-as
 
 ## Integration
 
-**theia-deployment** provides the foundation upon which all other EduTheia projects run. It coordinates the deployment of the Theia Cloud base components, the custom IDE blueprints (using images built in [Artemis Theia Images](./artemis-theia-images.md)), and the necessary supporting services like the [Theia Shared Cache](./theia-shared-cache.md), monitoring, and authentication. It is directly used to manage the environments that the **theia-scale-tests** project targets.
+**theia-deployment** provides the foundation upon which all other EduIDE projects run. It coordinates the deployment of the Theia Cloud base components, the custom IDE blueprints (using images built in [Artemis Theia Images](./artemis-theia-images.md)), and the necessary supporting services like the [Theia Shared Cache](./theia-shared-cache.md), monitoring, and authentication. It is directly used to manage the environments that the **theia-scale-tests** project targets.
 
 ## Repository
 
-[https://github.com/ls1intum/theia-deployment](https://github.com/ls1intum/theia-deployment)
+[https://github.com/EduIDE/EduIDE-deployment](https://github.com/EduIDE/EduIDE-deployment)

@@ -24,4 +24,4 @@ The **Theia Data Bridge** is a VS Code extension designed to facilitate secure d
 
 ## Repository Link
 
-[ls1intum/theia-data-bridge](https://github.com/ls1intum/theia-data-bridge)
+[EduIDE/EduIDE-data-bridge](https://github.com/EduIDE/EduIDE-data-bridge)

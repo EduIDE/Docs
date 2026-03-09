@@ -7,7 +7,7 @@ sidebar_label: theia-shared-cache
 
 ## Overview
 
-The **theia-shared-cache** repository provides a high-performance, Kubernetes-native HTTP build cache server specifically designed for Gradle builds. It implements the Gradle HTTP Build Cache API, allowing development teams and CI/CD pipelines to share build artifacts, which significantly reduces build times and resource consumption across the EduTheia ecosystem.
+The **theia-shared-cache** repository provides a high-performance, Kubernetes-native HTTP build cache server specifically designed for Gradle builds. It implements the Gradle HTTP Build Cache API, allowing development teams and CI/CD pipelines to share build artifacts, which significantly reduces build times and resource consumption across the EduIDE ecosystem.
 
 ## Key Features
 
@@ -31,8 +31,8 @@ The **theia-shared-cache** repository provides a high-performance, Kubernetes-na
 
 ## Integration
 
-In the EduTheia ecosystem, **theia-shared-cache** is an essential tool for developer productivity and CI/CD efficiency. It is used to accelerate the build processes of various components, such as the Theia IDE blueprints and other microservices, by caching intermediate build results. This is particularly beneficial in monorepo structures or large multi-module projects common in the Artemis environment.
+In the EduIDE ecosystem, **theia-shared-cache** is an essential tool for developer productivity and CI/CD efficiency. It is used to accelerate the build processes of various components, such as the Theia IDE blueprints and other microservices, by caching intermediate build results. This is particularly beneficial in monorepo structures or large multi-module projects common in the Artemis environment.
 
 ## Repository
 
-[https://github.com/ls1intum/theia-shared-cache](https://github.com/ls1intum/theia-shared-cache)
+[https://github.com/EduIDE/EduIDE-shared-cache](https://github.com/EduIDE/EduIDE-shared-cache)
