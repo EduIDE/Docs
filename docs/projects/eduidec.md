@@ -1,13 +1,13 @@
 ---
-title: EduIDE-Cloud
-sidebar_label: EduIDE-Cloud
+title: EduIDE
+sidebar_label: EduIDE
 ---
 
-# EduIDE-Cloud
+# EduIDE
 
 ## Overview
 
-The **EduIDE-Cloud** repository manages the Docker builds for custom Eclipse Theia IDE instances. These images are pre-configured with the specific tools, plugins, and settings required for student exercises on the Artemis platform. Once built, these images are deployed to Kubernetes clusters via [Theia Deployment](./theia-deployment.md).
+The **EduIDE** repository manages the Docker builds for custom Eclipse Theia IDE instances. These images are pre-configured with the specific tools, plugins, and settings required for student exercises on the Artemis platform. Once built, these images are deployed to Kubernetes clusters via [Theia Deployment](./theia-deployment.md).
 
 ## Key Features
 
@@ -24,4 +24,4 @@ The **EduIDE-Cloud** repository manages the Docker builds for custom Eclipse The
 
 ## Repository Link
 
-[EduIDE/EduIDE-Cloud](https://github.com/EduIDE/EduIDE-Cloud)
+[EduIDE/EduIDE](https://github.com/EduIDE/EduIDE)

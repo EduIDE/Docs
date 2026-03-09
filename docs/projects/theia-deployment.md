@@ -32,7 +32,7 @@ The **theia-deployment** repository is the central hub for the infrastructure-as
 
 ## Integration
 
-**theia-deployment** provides the foundation upon which all other EduIDE projects run. It coordinates the deployment of the Theia Cloud base components, the custom IDE blueprints (using images built in [EduIDE-Cloud](./eduidec-cloud.md)), and the necessary supporting services like the [Theia Shared Cache](./theia-shared-cache.md), monitoring, and authentication. It is directly used to manage the environments that the **theia-scale-tests** project targets.
+**theia-deployment** provides the foundation upon which all other EduIDE projects run. It coordinates the deployment of the Theia Cloud base components, the custom IDE blueprints (using images built in [EduIDE](./eduidec.md)), and the necessary supporting services like the [Theia Shared Cache](./theia-shared-cache.md), monitoring, and authentication. It is directly used to manage the environments that the **theia-scale-tests** project targets.
 
 ## Repository
 
