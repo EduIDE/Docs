@@ -1,9 +1,9 @@
 ---
-title: theia-scale-tests
-sidebar_label: theia-scale-tests
+title: Theia Scale Tests
+sidebar_label: Theia Scale Tests
 ---
 
-# theia-scale-tests
+# Theia Scale Tests
 
 ## Overview
 

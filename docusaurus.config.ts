@@ -2,35 +2,19 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
-// This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
-
 const config: Config = {
   title: 'EduIDE Docs',
-  tagline: 'Documentation for EduIDE',
+  tagline: 'Documentation and product guidance for EduIDE',
   favicon: 'img/logo.png',
-
-  // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    v4: true,
   },
-
-  // Set the production url of your site here
   url: 'https://EduIDE.github.io',
-  // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/Docs/',
-
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'EduIDE', // Usually your GitHub org/user name.
-  projectName: 'Docs', // Usually your repo name.
+  organizationName: 'EduIDE',
+  projectName: 'Docs',
   trailingSlash: false,
-
   onBrokenLinks: 'throw',
-
-  // Even if you don't use internationalization, you can use this field to set
-  // useful metadata like html lang. For example, if your site is Chinese, you
-  // may want to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
@@ -41,12 +25,10 @@ const config: Config = {
       'classic',
       {
         docs: {
-          sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/EduIDE/Docs/tree/main/',
-          routeBasePath: '/', // Serve docs at the site's root
+          path: 'docs/developer',
+          routeBasePath: 'developer',
+          sidebarPath: './sidebarsDeveloper.ts',
+          editUrl: 'https://github.com/EduIDE/Docs/tree/main/',
         },
         blog: false,
         theme: {
@@ -55,16 +37,52 @@ const config: Config = {
       } satisfies Preset.Options,
     ],
   ],
+  markdown: {
+    mermaid: true,
+  },
+  themes: ['@docusaurus/theme-mermaid'],
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'instructor',
+        path: 'docs/instructor',
+        routeBasePath: 'instructor',
+        sidebarPath: './sidebarsInstructor.ts',
+        editUrl: 'https://github.com/EduIDE/Docs/tree/main/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'admins',
+        path: 'docs/admins',
+        routeBasePath: 'admins',
+        sidebarPath: './sidebarsAdmins.ts',
+        editUrl: 'https://github.com/EduIDE/Docs/tree/main/',
+      },
+    ],
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'student',
+        path: 'docs/student',
+        routeBasePath: 'student',
+        sidebarPath: './sidebarsStudent.ts',
+        editUrl: 'https://github.com/EduIDE/Docs/tree/main/',
+      },
+    ],
+  ],
 
   themeConfig: {
     image: 'img/logo.png',
     colorMode: {
-      defaultMode: 'dark',
+      defaultMode: 'light',
       disableSwitch: false,
       respectPrefersColorScheme: false,
     },
     navbar: {
-      title: 'EduIDE Docs',
+      title: 'EduIDE',
       logo: {
         alt: 'EduIDE Logo',
         src: 'img/logo.png',
@@ -72,10 +90,24 @@ const config: Config = {
       },
       items: [
         {
-          type: 'docSidebar',
-          sidebarId: 'tutorialSidebar',
+          to: '/developer/intro',
+          label: 'Developer',
           position: 'left',
-          label: 'Projects',
+        },
+        {
+          to: '/instructor/intro',
+          label: 'Instructor',
+          position: 'left',
+        },
+        {
+          to: '/admins/intro',
+          label: 'Admins',
+          position: 'left',
+        },
+        {
+          to: '/student/intro',
+          label: 'Student',
+          position: 'left',
         },
         {
           href: 'https://github.com/EduIDE/Docs',
@@ -88,32 +120,40 @@ const config: Config = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Sections',
           items: [
             {
-              label: 'Introduction',
-              to: '/',
+              label: 'Developer',
+              to: '/developer/intro',
             },
             {
-              label: 'Projects',
-              to: '/projects/theia-deployment',
+              label: 'Instructor',
+              to: '/instructor/intro',
+            },
+            {
+              label: 'Admins',
+              to: '/admins/intro',
+            },
+            {
+              label: 'Student',
+              to: '/student/intro',
             },
           ],
         },
         {
-          title: 'Related Projects',
+          title: 'Product',
           items: [
             {
-              label: 'Eclipse Theia',
-              href: 'https://theia-ide.org/',
+              label: 'Landing Page',
+              to: '/',
             },
             {
-              label: 'Theia Cloud',
-              href: 'https://github.com/eclipse-theia/theia-cloud',
+              label: 'Developer Docs',
+              to: '/developer/intro',
             },
             {
-              label: 'Artemis',
-              href: 'https://github.com/ls1intum/Artemis',
+              label: 'Student Docs',
+              to: '/student/intro',
             },
           ],
         },

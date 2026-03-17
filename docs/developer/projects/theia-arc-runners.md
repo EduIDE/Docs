@@ -1,9 +1,9 @@
 ---
-title: theia-arc-runners
-sidebar_label: theia-arc-runners
+title: Theia ARC Runners
+sidebar_label: Theia ARC Runners
 ---
 
-# theia-arc-runners
+# Theia ARC Runners
 
 ## Overview
 

@@ -1,13 +1,13 @@
 ---
-title: theia-workspace-garbage-collector
-sidebar_label: theia-workspace-garbage-collector
+title: Workspace Garbage Collector
+sidebar_label: Workspace Garbage Collector
 ---
 
-# theia-workspace-garbage-collector
+# Workspace Garbage Collector
 
 ## Overview
 
-The **Theia Workspace Garbage Collector** is a specialized Kubernetes operator designed to manage the lifecycle of user workspaces in a Theia Cloud deployment. It ensures that storage resources are reclaimed by automatically cleaning up unused or abandoned workspaces.
+The **Workspace Garbage Collector** repository is a specialized Kubernetes operator designed to manage the lifecycle of user workspaces in a Theia Cloud deployment. It ensures that storage resources are reclaimed by automatically cleaning up unused or abandoned workspaces.
 
 ## Key Features
 

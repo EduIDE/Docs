@@ -1,9 +1,9 @@
 ---
-title: theia-lsp-extension
-sidebar_label: theia-lsp-extension
+title: EduIDE LSP Extension
+sidebar_label: EduIDE LSP Extension
 ---
 
-# theia-lsp-extension
+# EduIDE LSP Extension
 
 ## Overview
 
@@ -36,4 +36,4 @@ Within the EduIDE/Artemis ecosystem, this extension serves as the "thin" languag
 
 ## Repository
 
-[https://github.com/EduIDE/EduIDE-lsp-extension](https://github.com/EduIDE/EduIDE-lsp-extension)
+[EduIDE/EduIDE-lsp-extension](https://github.com/EduIDE/EduIDE-lsp-extension)
