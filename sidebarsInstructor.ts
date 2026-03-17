@@ -5,13 +5,17 @@ const sidebars: SidebarsConfig = {
     'intro',
     {
       type: 'category',
-      label: 'Course Operations',
-      items: ['course-operations/course-setup', 'course-operations/cohort-management'],
+      label: 'Course Evaluation',
+      items: [
+        'course-evaluation/course-fit',
+        'course-evaluation/evaluating-eduide-in-a-pilot',
+        'course-evaluation/customizable-features',
+      ],
     },
     {
       type: 'category',
-      label: 'Teaching',
-      items: ['teaching/live-session-playbook', 'teaching/feedback-rhythm'],
+      label: 'Prerequisites',
+      items: ['prerequisites/course-requirements', 'prerequisites/operational-dependencies'],
     },
   ],
 };
