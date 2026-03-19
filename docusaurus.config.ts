@@ -10,7 +10,7 @@ const config: Config = {
     v4: true,
   },
   url: 'https://EduIDE.github.io',
-  baseUrl: '/',
+  baseUrl: '/Docs/',
   organizationName: 'EduIDE',
   projectName: 'Docs',
   trailingSlash: false,
