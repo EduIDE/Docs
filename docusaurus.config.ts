@@ -141,23 +141,6 @@ const config: Config = {
           ],
         },
         {
-          title: 'Product',
-          items: [
-            {
-              label: 'Landing Page',
-              to: '/',
-            },
-            {
-              label: 'Developer Docs',
-              to: '/developer/intro',
-            },
-            {
-              label: 'Student Docs',
-              to: '/student/intro',
-            },
-          ],
-        },
-        {
           title: 'More',
           items: [
             {
