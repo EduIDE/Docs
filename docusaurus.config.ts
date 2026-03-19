@@ -161,6 +161,10 @@ const config: Config = {
           title: 'More',
           items: [
             {
+              label: 'Imprint',
+              to: '/imprint',
+            },
+            {
               label: 'GitHub Organization',
               href: 'https://github.com/EduIDE',
             },
