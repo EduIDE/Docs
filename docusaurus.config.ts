@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'EduIDE Docs',
   tagline: 'Documentation and product guidance for EduIDE',
-  favicon: 'img/logo.png',
+  favicon: 'img/logo.svg',
   future: {
     v4: true,
   },
@@ -75,7 +75,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: 'img/logo.png',
+    image: 'img/logo.svg',
     colorMode: {
       defaultMode: 'light',
       disableSwitch: false,
@@ -85,7 +85,7 @@ const config: Config = {
       title: 'EduIDE',
       logo: {
         alt: 'EduIDE Logo',
-        src: 'img/logo.png',
+        src: 'img/logo.svg',
         href: '/',
       },
       items: [
