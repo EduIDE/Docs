@@ -40,13 +40,6 @@ export default function Imprint() {
                 <p>Arcisstrasse 21, 80333 Munich</p>
               </div>
               <div>
-                <span className={styles.infoLabel}>
-                  Responsible for content
-                </span>
-                <strong>Prof. Dr. Stephan Krusche</strong>
-                <p>Boltzmannstrasse 3, 85748 Garching</p>
-              </div>
-              <div>
                 <span className={styles.infoLabel}>Applies to</span>
                 <strong>EduIDE Docs</strong>
                 <p>Documentation and product guidance for EduIDE</p>

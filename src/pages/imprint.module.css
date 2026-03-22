@@ -166,6 +166,70 @@
   }
 }
 
+[data-theme='dark'] .page {
+  background:
+    radial-gradient(circle at top left, rgba(15, 99, 255, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(10, 184, 126, 0.12), transparent 24%),
+    linear-gradient(180deg, #1e1e2e 0%, #1a1a2e 54%, #2a2a40 100%);
+}
+
+[data-theme='dark'] .heroCard,
+[data-theme='dark'] .infoCard,
+[data-theme='dark'] .sectionCard {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .eyebrow {
+  color: #8bb4ff;
+}
+
+[data-theme='dark'] .heroCard h1 {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .heroLead {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .secondaryAction {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .infoLabel {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .infoCard strong {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .infoCard p {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .sectionCard h2 {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .sectionCard h3 {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .sectionCard p {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .detailRow dt {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .detailRow dd {
+  color: #e2e8f0;
+}
+
 @media (max-width: 640px) {
   .actions {
     flex-direction: column;
