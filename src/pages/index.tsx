@@ -6,14 +6,14 @@ import styles from './index.module.css';
 
 const sections = [
   {
-    title: 'Developer',
-    description: 'API references, architecture decisions, integration guides, and implementation patterns.',
-    href: '/developer/intro',
-  },
-  {
     title: 'Instructor',
     description: 'Course delivery workflows, classroom playbooks, and content operations guidance.',
     href: '/instructor/intro',
+  },
+  {
+    title: 'Student',
+    description: 'Onboarding, workspace basics, assignment flow, and submission support.',
+    href: '/student/intro',
   },
   {
     title: 'Admins',
@@ -21,9 +21,9 @@ const sections = [
     href: '/admins/intro',
   },
   {
-    title: 'Student',
-    description: 'Onboarding, workspace basics, assignment flow, and submission support.',
-    href: '/student/intro',
+    title: 'Developer',
+    description: 'API references, architecture decisions, integration guides, and implementation patterns.',
+    href: '/developer/intro',
   },
 ];
 

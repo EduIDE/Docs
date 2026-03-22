@@ -90,13 +90,13 @@ const config: Config = {
       },
       items: [
         {
-          to: '/developer/intro',
-          label: 'Developer',
+          to: '/instructor/intro',
+          label: 'Instructor',
           position: 'left',
         },
         {
-          to: '/instructor/intro',
-          label: 'Instructor',
+          to: '/student/intro',
+          label: 'Student',
           position: 'left',
         },
         {
@@ -105,8 +105,8 @@ const config: Config = {
           position: 'left',
         },
         {
-          to: '/student/intro',
-          label: 'Student',
+          to: '/developer/intro',
+          label: 'Developer',
           position: 'left',
         },
         {
@@ -123,20 +123,20 @@ const config: Config = {
           title: 'Sections',
           items: [
             {
-              label: 'Developer',
-              to: '/developer/intro',
-            },
-            {
               label: 'Instructor',
               to: '/instructor/intro',
+            },
+            {
+              label: 'Student',
+              to: '/student/intro',
             },
             {
               label: 'Admins',
               to: '/admins/intro',
             },
             {
-              label: 'Student',
-              to: '/student/intro',
+              label: 'Developer',
+              to: '/developer/intro',
             },
           ],
         },
