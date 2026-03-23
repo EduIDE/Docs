@@ -11,7 +11,7 @@ Use this page for your first start.
 
 After login, go to the IDE launcher page with the app tiles.
 
-<img src="/img/student/getting-started/first-login-03-launcher-after-login.png" alt="IDE launcher page" style={{maxHeight: 520}} />
+![IDE launcher page](/img/student/getting-started/first-login-03-launcher-after-login.png#h520)
 
 ## 2) Launch Java
 

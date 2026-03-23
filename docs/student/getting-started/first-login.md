@@ -17,7 +17,7 @@ Open `https://theia.artemis.cit.tum.de/` in your browser.
 
 Complete the login flow shown by your course setup.
 
-<img src="/img/student/getting-started/first-login-02-sign-in-form.png" alt="Sign-in form" style={{maxHeight: 520}} />
+![Sign-in form](/img/student/getting-started/first-login-02-sign-in-form.png#h520)
 
 ## 3) Confirm you reached the launcher
 
