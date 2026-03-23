@@ -169,6 +169,77 @@
   }
 }
 
+[data-theme='dark'] .page {
+  background:
+    radial-gradient(circle at top left, rgba(15, 99, 255, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(10, 184, 126, 0.12), transparent 24%),
+    linear-gradient(180deg, #1e1e2e 0%, #1a1a2e 54%, #2a2a40 100%);
+}
+
+[data-theme='dark'] .heroGlow {
+  background:
+    radial-gradient(circle at 20% 15%, rgba(30, 30, 46, 0.8), transparent 26%),
+    radial-gradient(circle at 75% 30%, rgba(73, 123, 255, 0.12), transparent 22%);
+}
+
+[data-theme='dark'] .kicker {
+  color: #8bb4ff;
+}
+
+[data-theme='dark'] .heroContent h1 {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .lead {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .secondaryAction {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .metricCard {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .metricCard span {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .metricCard strong {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .sectionCard {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .sectionCard:hover {
+  border-color: rgba(139, 180, 255, 0.4);
+  box-shadow: 0 24px 55px rgba(139, 180, 255, 0.1);
+}
+
+[data-theme='dark'] .sectionLabel {
+  color: #8bb4ff;
+}
+
+[data-theme='dark'] .sectionCard h2 {
+  color: #e2e8f0;
+}
+
+[data-theme='dark'] .sectionCard p {
+  color: #94a3b8;
+}
+
+[data-theme='dark'] .sectionCta {
+  color: #e2e8f0;
+}
+
 @media (max-width: 640px) {
   .actions {
     flex-direction: column;
