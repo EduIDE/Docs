@@ -6,7 +6,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Getting Started',
-      items: ['getting-started/first-login', 'getting-started/workspace-tour'],
+      items: [
+        'getting-started/first-login',
+        'getting-started/first-start',
+        'getting-started/start-from-artemis',
+        'getting-started/workspace-tour',
+      ],
     },
     {
       type: 'category',

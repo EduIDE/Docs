@@ -1,15 +1,32 @@
 ---
 title: First Login
-description: Mock onboarding guide for students.
+description: Sign in and reach the app launcher.
 ---
 
 # First Login
 
-This mock page represents the first-run learner experience.
+Use this page for your first login flow.
 
-## Mock onboarding steps
+## 1) Open the login page
 
-1. Sign in with the course account
-2. Join the correct course space
-3. Launch the first workspace
-4. Confirm editor, files, and terminal access
+Open `https://theia.artemis.cit.tum.de/` in your browser.
+
+![Landing page with login button](/img/student/getting-started/first-login-01-landing-login.png)
+
+## 2) Sign in with your account
+
+Complete the login flow shown by your course setup.
+
+<img src="/img/student/getting-started/first-login-02-sign-in-form.png" alt="Sign-in form" style={{maxHeight: 520}} />
+
+## 3) Confirm you reached the launcher
+
+After login, you should see the IDE app tiles.
+
+![IDE launcher after login](/img/student/getting-started/first-login-03-launcher-after-login.png)
+
+## Next step
+
+Continue with [First Start](./first-start.md).
+
+If your course starts from Artemis exercises, you can also use [Start from Artemis](./start-from-artemis.md).

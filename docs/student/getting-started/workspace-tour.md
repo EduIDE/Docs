@@ -1,16 +1,37 @@
 ---
 title: Workspace Tour
-description: Mock workspace orientation for students.
+description: Quick orientation of the EduIDE layout.
 ---
 
 # Workspace Tour
 
-This placeholder page shows where a lightweight orientation guide would go.
+This is the minimal layout you need to start working.
 
-## Mock tour stops
+![IDE layout overview](/img/student/getting-started/workspace-tour-01-welcome-screen.png)
 
-- File explorer
-- Editor tabs
-- Terminal panel
-- Assignment instructions
-- Submission status
+## Main areas
+
+- **Explorer (left):** your files and folders
+- **Editor (center):** where you write code
+- **Terminal (bottom):** compile and run commands
+- **Problems (bottom):** diagnostics and warnings
+
+## Useful first action
+
+Open **Terminal -> New Terminal**.
+
+![Open new terminal from top menu](/img/student/getting-started/workspace-tour-02-open-terminal-menu.png)
+
+Open the terminal and run:
+
+```bash
+pwd
+```
+
+You should see your workspace path (usually `/home/project`).
+
+![Terminal current directory output](/img/student/getting-started/workspace-tour-03-terminal-pwd.png)
+
+## Next step
+
+Continue with the [Assignment Workflow](../learning/assignment-workflow.md).
