@@ -1,0 +1,174 @@
+.section {
+  padding: 5rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.instructorGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: start;
+}
+
+.instructorList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.instItem {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.instNum {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--landing-orange-light);
+  color: var(--landing-orange-dark);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.instItem h4 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 5px;
+  letter-spacing: -0.02em;
+  color: var(--landing-text);
+}
+
+.instItem p {
+  font-size: 13px;
+  color: var(--landing-muted);
+  line-height: 1.65;
+}
+
+.scorpioImg {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 0.5px solid var(--landing-border-med);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  align-self: center;
+}
+
+/* Dashboard mockup */
+.dashCard {
+  background: var(--landing-surface);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 0.5px solid var(--landing-border);
+}
+
+.dashHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.dashTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--landing-text);
+}
+
+.dashMeta {
+  font-size: 12px;
+  color: var(--landing-hint);
+}
+
+.dashRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: var(--ifm-background-color);
+  border: 0.5px solid var(--landing-border);
+  margin-bottom: 7px;
+}
+
+.dashAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.avT { background: var(--landing-teal-light); color: var(--landing-teal-dark); }
+.avO { background: var(--landing-orange-light); color: var(--landing-orange-dark); }
+.avB { background: #e8f0ff; color: #3355cc; }
+.avG { background: #eaf3de; color: #3a6d11; }
+
+.dashName {
+  font-size: 12px;
+  font-weight: 500;
+  flex: 1;
+  color: var(--landing-text);
+}
+
+.dashBadge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+
+.bDone { background: #eaf3de; color: #3a6d11; }
+.bProg { background: #faeeda; color: #854f0b; }
+.bErr  { background: #fcebeb; color: #a32d2d; }
+
+.dashBars {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.barLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--landing-muted);
+  margin-bottom: 5px;
+}
+
+.barBg {
+  height: 6px;
+  background: var(--landing-border);
+  border-radius: 3px;
+}
+
+.barFill {
+  height: 6px;
+  border-radius: 3px;
+}
+
+.barTeal { background: var(--landing-teal); }
+.barOrange { background: var(--landing-orange); }
+
+@media (max-width: 820px) {
+  .instructorGrid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+

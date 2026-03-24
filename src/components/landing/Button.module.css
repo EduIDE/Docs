@@ -1,0 +1,43 @@
+.btnPrimary {
+  background: var(--landing-teal);
+  color: #fff !important;
+  border: none;
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s, transform 0.1s;
+  text-decoration: none !important;
+  display: inline-block;
+}
+
+.btnPrimary:hover {
+  background: var(--landing-teal-dark);
+  color: #fff !important;
+}
+
+.btnPrimary:active {
+  transform: scale(0.98);
+}
+
+.btnSecondary {
+  background: transparent;
+  color: var(--landing-text) !important;
+  border: 0.5px solid var(--landing-border-med);
+  padding: 13px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+  text-decoration: none !important;
+  display: inline-block;
+}
+
+.btnSecondary:hover {
+  background: var(--landing-surface);
+  color: var(--landing-text) !important;
+}

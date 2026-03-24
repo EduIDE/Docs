@@ -1,0 +1,9 @@
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: var(--ifm-z-index-fixed);
+}
+
+.navLink {
+  font-weight: 500;
+}

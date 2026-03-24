@@ -15,6 +15,44 @@
   --ifm-color-primary-lightest: #ffffff;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+  /* Landing page design tokens */
+  --landing-teal: #4E9F9C;
+  --landing-teal-light: #e8f5f5;
+  --landing-teal-mid: #b2d9d8;
+  --landing-teal-dark: #3a7a78;
+  --landing-orange: #E88733;
+  --landing-orange-light: #fdf3e7;
+  --landing-orange-dark: #c46d1a;
+  --landing-surface: #f7f7f5;
+  --landing-border: rgba(0, 0, 0, 0.09);
+  --landing-border-med: rgba(0, 0, 0, 0.16);
+  --landing-text: #1a1a1a;
+  --landing-muted: #6b6b6b;
+  --landing-hint: #9a9a9a;
+  --landing-grid-line: rgba(78, 159, 156, 0.07);
+}
+
+/* ─── Scroll reveal ──────────────────────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -28,6 +66,21 @@
   --ifm-color-primary-lightest: #ffffff;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
   --ifm-background-color: #2a2a40;
+
+  --landing-teal: #6db5b2;
+  --landing-teal-light: rgba(78, 159, 156, 0.15);
+  --landing-teal-mid: rgba(78, 159, 156, 0.3);
+  --landing-teal-dark: #8bc5c3;
+  --landing-orange: #f0a060;
+  --landing-orange-light: rgba(232, 135, 51, 0.15);
+  --landing-orange-dark: #f0a060;
+  --landing-surface: rgba(255, 255, 255, 0.04);
+  --landing-border: rgba(255, 255, 255, 0.08);
+  --landing-border-med: rgba(255, 255, 255, 0.14);
+  --landing-text: #e2e8f0;
+  --landing-muted: #94a3b8;
+  --landing-hint: #64748b;
+  --landing-grid-line: rgba(78, 159, 156, 0.1);
 }
 
 [data-theme='dark'] .button.button--secondary:not(#_):not(#_) {
