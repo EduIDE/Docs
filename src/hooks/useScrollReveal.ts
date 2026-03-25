@@ -15,11 +15,13 @@ export function useScrollReveal<T extends HTMLElement = HTMLElement>(
 
     el.classList.add('reveal');
 
+    let timerId: ReturnType<typeof setTimeout> | undefined;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           if (delay > 0) {
-            setTimeout(() => el.classList.add('revealed'), delay);
+            timerId = setTimeout(() => el.classList.add('revealed'), delay);
           } else {
             el.classList.add('revealed');
           }
@@ -30,7 +32,7 @@ export function useScrollReveal<T extends HTMLElement = HTMLElement>(
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); clearTimeout(timerId); };
   }, [delay]);
 
   return ref;
