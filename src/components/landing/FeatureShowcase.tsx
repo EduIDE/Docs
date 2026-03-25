@@ -1,4 +1,5 @@
 import React from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import styles from './FeatureShowcase.module.css';
 
@@ -24,9 +25,14 @@ function MediaArea({
   const style = accentColor ? { background: accentColor } : undefined;
 
   if (mediaSrc) {
+    const isVideo = mediaType === 'video';
+    const className = isVideo
+      ? `${styles.mediaCol} ${styles.hasVideo}`
+      : styles.mediaCol;
+
     return (
-      <div className={styles.mediaCol} style={style}>
-        {mediaType === 'video' ? (
+      <div className={className} style={isVideo ? undefined : style}>
+        {isVideo ? (
           <video src={mediaSrc} autoPlay loop muted playsInline aria-label={mediaAlt} />
         ) : (
           <img src={mediaSrc} alt={mediaAlt ?? ''} />
@@ -61,6 +67,7 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
   accentColor,
 }) {
   const sectionRef = useScrollReveal<HTMLElement>();
+  const resolvedMediaSrc = useBaseUrl(mediaSrc ?? '');
 
   return (
     <section ref={sectionRef} className={styles.section}>
@@ -76,7 +83,7 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
           )}
         </div>
         <MediaArea
-          mediaSrc={mediaSrc}
+          mediaSrc={mediaSrc ? resolvedMediaSrc : undefined}
           mediaAlt={mediaAlt}
           mediaType={mediaType}
           accentColor={accentColor}
