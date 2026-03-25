@@ -21,7 +21,7 @@ const steps: Step[] = [
   {
     title: 'No "works on my machine" tickets',
     description:
-      "All runtimes, dependencies and configs live server-side. Support tickets about setup drop to near zero.",
+      "All runtimes, dependencies, and configs live server-side. Support tickets about setup drop to near zero.",
   },
 ];
 
@@ -37,7 +37,7 @@ export default function InstructorSection() {
     >
       <SectionHeader
         label="For instructors"
-        title="Deploy a full IDE to your class in minutes"
+        title="Set up a full IDE for your class in minutes."
         subtitle="No IT tickets. No setup emails. Students open a link and they're ready. You stay focused on teaching."
       />
       <div className={styles.instructorGrid}>

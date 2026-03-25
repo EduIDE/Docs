@@ -12,21 +12,17 @@ import styles from './index.module.css';
 export default function Home() {
   return (
     <Layout
-      title="edu ide"
-      description="A browser-based development environment designed for education — with AI assistance, zero setup, and seamless course integration."
+      title="EduIDE"
+      description="A browser-based development environment designed for education. With AI assistance, zero setup, and seamless course integration."
     >
       <main className={styles.page}>
         <HeroSection />
         <StudentFeatures />
         <hr className={styles.sectionDivider} />
-        <InstructorSection />
-        <hr className={styles.sectionDivider} />
         <FeatureShowcase
           label="Run tasks"
           title="One click to build, test, and run"
-          description="Pre-configured tasks let students run, build, and test their code without memorizing commands. Instructors define the workflow once — students just click Run."
-          linkText="Learn about task configuration"
-          linkHref="/student/intro"
+          description="Pre-configured tasks let students run, build, and test their code without memorizing commands. Instructors define the workflow once and students only need to click on Run."
           mediaSrc="/videos/run-button.webm"
           mediaAlt="Run button demo"
           mediaType="video"
@@ -37,8 +33,6 @@ export default function Home() {
           label="Submission"
           title="Submit without leaving the IDE"
           description="The integrated submission extension connects directly to Artemis. Students commit and submit their work in one step — no file uploads, no copy-paste, no switching tabs."
-          linkText="See how submission works"
-          linkHref="/student/intro"
           mediaSrc="/videos/scorpio.webm"
           mediaAlt="Submission demo"
           mediaType="video"
@@ -48,10 +42,8 @@ export default function Home() {
         <hr className={styles.sectionDivider} />
         <FeatureShowcase
           label="AI assistance"
-          title="A terminal assistant that explains errors"
-          description="When a command fails, the AI terminal assistant explains what went wrong and suggests guided fixes — right inside the terminal, not a separate chat window. Students learn from errors instead of just copying solutions."
-          linkText="Learn about the AI assistant"
-          linkHref="/student/intro"
+          title="An AI-powered terminal that teaches."
+          description="No more decoding cryptic logs. When a build fails, the AI terminal assistant provides instant explanations and guided fixes. It helps students master syntax and understand build outputs in real-time."
           mediaSrc="/videos/terminal-assistant.webm"
           mediaAlt="Terminal AI assistant demo"
           mediaType="video"
@@ -59,6 +51,8 @@ export default function Home() {
         />
         <hr className={styles.sectionDivider} />
         <LanguagesSection />
+        <hr className={styles.sectionDivider} />
+        <InstructorSection />
         <OpenSourceSection />
         <CtaSection />
       </main>
