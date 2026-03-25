@@ -8,12 +8,12 @@ interface Language {
 }
 
 const languages: Language[] = [
-  { name: 'Java',       logoSrc: '/Docs/img/marketing/java-svgrepo-com.svg' },
-  { name: 'Python',     logoSrc: '/Docs/img/marketing/python-svgrepo-com.svg' },
-  { name: 'C',          logoSrc: '/Docs/img/marketing/C_Programming_Language.svg' },
+  { name: 'Java', logoSrc: '/Docs/img/marketing/java-svgrepo-com.svg' },
+  { name: 'Python', logoSrc: '/Docs/img/marketing/python-svgrepo-com.svg' },
+  { name: 'C', logoSrc: '/Docs/img/marketing/C_Programming_Language.svg' },
   { name: 'JavaScript', logoSrc: '/Docs/img/marketing/javascript-svgrepo-com.svg' },
-  { name: 'OCaml',      logoSrc: '/Docs/img/marketing/OCaml_Sticker.svg' },
-  { name: 'Rust',       logoSrc: '/Docs/img/marketing/rust-svgrepo-com.svg' },
+  { name: 'OCaml', logoSrc: '/Docs/img/marketing/OCaml_Sticker.svg' },
+  { name: 'Rust', logoSrc: '/Docs/img/marketing/rust-svgrepo-com.svg' },
 ];
 
 const LangItem = React.memo<{ language: Language }>(function LangItem({ language }) {
@@ -32,9 +32,12 @@ export default function LanguagesSection() {
     <section ref={sectionRef} id="languages" className={styles.section} aria-labelledby="languages-heading">
       <div className={styles.inner}>
         <div className={styles.textCol}>
-          <h2 id="languages-heading">Supports the languages your course uses</h2>
+          <h2 id="languages-heading">
+            Ready-to-code environments
+          </h2>
           <p>
-            Full LSP-powered editing — syntax highlighting, autocompletion, and inline errors — out of the box for every major teaching language.
+            We provide pre-configured Cloud IDEs with full toolchain support and LSP-powered editing right out of the box.
+            <br />Enjoy seamless syntax highlighting, autocompletion, and real-time error detection without any setup.
           </p>
         </div>
         <div className={styles.langGrid} role="list" aria-label="Supported programming languages">

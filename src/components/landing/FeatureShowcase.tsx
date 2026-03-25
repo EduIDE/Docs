@@ -16,12 +16,28 @@ interface FeatureShowcaseProps {
   accentColor?: string;
 }
 
+function useDeferredSrc(src: string | undefined): string | undefined {
+  const [ready, setReady] = React.useState(false);
+  React.useEffect(() => {
+    if (!src) return;
+    if (document.readyState === 'complete') {
+      setReady(true);
+    } else {
+      const handler = () => setReady(true);
+      window.addEventListener('load', handler, { once: true });
+      return () => window.removeEventListener('load', handler);
+    }
+  }, [src]);
+  return ready ? src : undefined;
+}
+
 function MediaArea({
   mediaSrc,
   mediaAlt,
   mediaType,
   accentColor,
 }: Pick<FeatureShowcaseProps, 'mediaSrc' | 'mediaAlt' | 'mediaType' | 'accentColor'>) {
+  const deferredSrc = useDeferredSrc(mediaType === 'video' ? mediaSrc : undefined);
   const style = accentColor ? { background: accentColor } : undefined;
 
   if (mediaSrc) {
@@ -33,7 +49,7 @@ function MediaArea({
     return (
       <div className={className} style={isVideo ? undefined : style}>
         {isVideo ? (
-          <video src={mediaSrc} autoPlay loop muted playsInline aria-label={mediaAlt} />
+          <video src={deferredSrc} autoPlay loop muted playsInline aria-label={mediaAlt} />
         ) : (
           <img src={mediaSrc} alt={mediaAlt ?? ''} />
         )}
