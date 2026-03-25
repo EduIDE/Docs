@@ -1,4 +1,5 @@
 import React from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import styles from './LanguagesSection.module.css';
 
@@ -8,18 +9,19 @@ interface Language {
 }
 
 const languages: Language[] = [
-  { name: 'Java', logoSrc: '/Docs/img/marketing/java-svgrepo-com.svg' },
-  { name: 'Python', logoSrc: '/Docs/img/marketing/python-svgrepo-com.svg' },
-  { name: 'C', logoSrc: '/Docs/img/marketing/C_Programming_Language.svg' },
-  { name: 'JavaScript', logoSrc: '/Docs/img/marketing/javascript-svgrepo-com.svg' },
-  { name: 'OCaml', logoSrc: '/Docs/img/marketing/OCaml_Sticker.svg' },
-  { name: 'Rust', logoSrc: '/Docs/img/marketing/rust-svgrepo-com.svg' },
+  { name: 'Java', logoSrc: '/img/marketing/java-svgrepo-com.svg' },
+  { name: 'Python', logoSrc: '/img/marketing/python-svgrepo-com.svg' },
+  { name: 'C', logoSrc: '/img/marketing/C_Programming_Language.svg' },
+  { name: 'JavaScript', logoSrc: '/img/marketing/javascript-svgrepo-com.svg' },
+  { name: 'OCaml', logoSrc: '/img/marketing/OCaml_Sticker.svg' },
+  { name: 'Rust', logoSrc: '/img/marketing/rust-svgrepo-com.svg' },
 ];
 
 const LangItem = React.memo<{ language: Language }>(function LangItem({ language }) {
+  const resolvedSrc = useBaseUrl(language.logoSrc);
   return (
-    <div className={styles.langItem}>
-      <img src={language.logoSrc} alt={language.name} className={styles.langLogo} />
+    <div className={styles.langItem} role="listitem">
+      <img src={resolvedSrc} alt={language.name} className={styles.langLogo} />
       {language.name}
     </div>
   );
@@ -42,9 +44,7 @@ export default function LanguagesSection() {
         </div>
         <div className={styles.langGrid} role="list" aria-label="Supported programming languages">
           {languages.map((lang) => (
-            <div key={lang.name} role="listitem">
-              <LangItem language={lang} />
-            </div>
+            <LangItem key={lang.name} language={lang} />
           ))}
         </div>
       </div>

@@ -10,6 +10,7 @@ interface FeatureShowcaseProps {
   linkText?: string;
   linkHref?: string;
   mediaSrc?: string;
+  mediaPoster?: string;
   mediaAlt?: string;
   mediaType?: 'img' | 'gif' | 'video';
   reverse?: boolean;
@@ -22,21 +23,22 @@ function useDeferredSrc(src: string | undefined): string | undefined {
     if (!src) return;
     if (document.readyState === 'complete') {
       setReady(true);
-    } else {
-      const handler = () => setReady(true);
-      window.addEventListener('load', handler, { once: true });
-      return () => window.removeEventListener('load', handler);
+      return () => {};
     }
+    const handler = () => setReady(true);
+    window.addEventListener('load', handler, { once: true });
+    return () => window.removeEventListener('load', handler);
   }, [src]);
   return ready ? src : undefined;
 }
 
 function MediaArea({
   mediaSrc,
+  mediaPoster,
   mediaAlt,
   mediaType,
   accentColor,
-}: Pick<FeatureShowcaseProps, 'mediaSrc' | 'mediaAlt' | 'mediaType' | 'accentColor'>) {
+}: Pick<FeatureShowcaseProps, 'mediaSrc' | 'mediaPoster' | 'mediaAlt' | 'mediaType' | 'accentColor'>) {
   const deferredSrc = useDeferredSrc(mediaType === 'video' ? mediaSrc : undefined);
   const style = accentColor ? { background: accentColor } : undefined;
 
@@ -49,7 +51,7 @@ function MediaArea({
     return (
       <div className={className} style={isVideo ? undefined : style}>
         {isVideo ? (
-          <video src={deferredSrc} autoPlay loop muted playsInline aria-label={mediaAlt} />
+          <video src={deferredSrc} poster={mediaPoster} autoPlay loop muted playsInline aria-label={mediaAlt} />
         ) : (
           <img src={mediaSrc} alt={mediaAlt ?? ''} />
         )}
@@ -77,6 +79,7 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
   linkText,
   linkHref,
   mediaSrc,
+  mediaPoster,
   mediaAlt,
   mediaType = 'img',
   reverse = false,
@@ -84,6 +87,7 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
 }) {
   const sectionRef = useScrollReveal<HTMLElement>();
   const resolvedMediaSrc = useBaseUrl(mediaSrc ?? '');
+  const resolvedMediaPoster = useBaseUrl(mediaPoster ?? '');
 
   return (
     <section ref={sectionRef} className={styles.section}>
@@ -94,12 +98,13 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
           <p>{description}</p>
           {linkText && linkHref && (
             <a className={styles.link} href={linkHref}>
-              {linkText} →
+              {linkText} <span aria-hidden="true">→</span>
             </a>
           )}
         </div>
         <MediaArea
           mediaSrc={mediaSrc ? resolvedMediaSrc : undefined}
+          mediaPoster={mediaPoster ? resolvedMediaPoster : undefined}
           mediaAlt={mediaAlt}
           mediaType={mediaType}
           accentColor={accentColor}

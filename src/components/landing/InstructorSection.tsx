@@ -1,3 +1,4 @@
+import useBaseUrl from "@docusaurus/useBaseUrl";
 import SectionHeader from "./SectionHeader";
 import { useScrollReveal } from "../../hooks/useScrollReveal";
 import styles from "./InstructorSection.module.css";
@@ -27,6 +28,7 @@ const steps: Step[] = [
 
 export default function InstructorSection() {
   const sectionRef = useScrollReveal<HTMLElement>();
+  const scorpioImg = useBaseUrl('/img/marketing/scorpio.png');
 
   return (
     <section
@@ -56,7 +58,7 @@ export default function InstructorSection() {
           ))}
         </ol>
         <img
-          src="/Docs/img/marketing/scorpio.png"
+          src={scorpioImg}
           alt="Scorpio automated grading pipeline"
           className={styles.scorpioImg}
         />
