@@ -103,6 +103,7 @@ export default function StudentFeatures() {
       aria-labelledby="students-heading"
     >
       <SectionHeader
+        id="students-heading"
         label="For students"
         title="Everything you need, right in the browser"
         subtitle='No installation, no config files, no "it works on my machine." Open your assignment and start coding in seconds.'

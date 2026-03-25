@@ -36,6 +36,7 @@ export default function InstructorSection() {
       aria-labelledby="instructors-heading"
     >
       <SectionHeader
+        id="instructors-heading"
         label="For instructors"
         title="Set up a full IDE for your class in minutes."
         subtitle="No IT tickets. No setup emails. Students open a link and they're ready. You stay focused on teaching."

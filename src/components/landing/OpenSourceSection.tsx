@@ -73,7 +73,7 @@ const OssCardItem = React.memo<{ card: OssCard }>(function OssCardItem({
   card,
 }) {
   return (
-    <div className={styles.ossCard}>
+    <div className={styles.ossCard} role="listitem">
       <div
         className={`${styles.ossCardIcon} ${card.iconColor === "teal" ? styles.iconTeal : styles.iconOrange}`}
         aria-hidden="true"
@@ -99,6 +99,7 @@ export default function OpenSourceSection() {
     >
       <div className={styles.ossInner}>
         <SectionHeader
+          id="opensource-heading"
           label="Open source"
           title="Built in the open, giving back upstream"
           subtitle="EduIDE is built on Eclipse Theia and developed openly at TUM. Everything we learn, we share with the community and the platform."
@@ -106,9 +107,7 @@ export default function OpenSourceSection() {
 
         <div className={styles.ossGrid} role="list">
           {cards.map((card) => (
-            <div key={card.title} role="listitem">
-              <OssCardItem card={card} />
-            </div>
+            <OssCardItem key={card.title} card={card} />
           ))}
         </div>
 
@@ -131,7 +130,7 @@ export default function OpenSourceSection() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={styles.ossTheiaLink}
-              >Visit theia-ide.org ↗</a>
+              >Visit theia-ide.org <span aria-hidden="true">↗</span></a>
             </div>
           </div>
           <div className={styles.ossContribCard}>
