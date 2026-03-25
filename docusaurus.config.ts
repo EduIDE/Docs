@@ -79,7 +79,7 @@ const config: Config = {
     image: 'img/logo.svg',
     colorMode: {
       defaultMode: 'light',
-      disableSwitch: false,
+      disableSwitch: true,
       respectPrefersColorScheme: false,
     },
     navbar: {
