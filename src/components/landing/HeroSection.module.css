@@ -65,7 +65,7 @@
 }
 
 /* ─── Staggered fade-in animation ────────────────────────────────────────── */
-@keyframes heroFadeUp {
+@keyframes hero-fade-up {
   from {
     opacity: 0;
     transform: translateY(22px);
@@ -76,7 +76,7 @@
   }
 }
 
-@keyframes heroFadeIn {
+@keyframes hero-fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
@@ -93,7 +93,7 @@
   border-radius: 100px;
   margin-bottom: 1.5rem;
   border: 0.5px solid var(--landing-teal-mid);
-  animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .heroBadgeDot {
@@ -111,7 +111,7 @@
   margin-bottom: 1.25rem;
   letter-spacing: -2px;
   color: var(--landing-text);
-  animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
 }
 
 .hero h1 em {
@@ -127,7 +127,7 @@
   max-width: 540px;
   margin-left: auto;
   margin-right: auto;
-  animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
 }
 
 .heroActions {
@@ -135,11 +135,11 @@
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
-  animation: heroFadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+  animation: hero-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
 .heroImageWrap {
-  animation: heroFadeUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  animation: hero-fade-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
 }
 
 .heroImage {
