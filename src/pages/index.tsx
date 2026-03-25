@@ -1,83 +1,63 @@
-import clsx from 'clsx';
 import Layout from '@theme/Layout';
-import Link from '@docusaurus/Link';
+import HeroSection from '../components/landing/HeroSection';
+import StudentFeatures from '../components/landing/StudentFeatures';
+import InstructorSection from '../components/landing/InstructorSection';
+import FeatureShowcase from '../components/landing/FeatureShowcase';
+import LanguagesSection from '../components/landing/LanguagesSection';
+import OpenSourceSection from '../components/landing/OpenSourceSection';
+import CtaSection from '../components/landing/CtaSection';
 
 import styles from './index.module.css';
-
-const sections = [
-  {
-    title: 'Instructor',
-    description: 'Course delivery workflows, classroom playbooks, and content operations guidance.',
-    href: '/instructor/intro',
-  },
-  {
-    title: 'Student',
-    description: 'Onboarding, workspace basics, assignment flow, and submission support.',
-    href: '/student/intro',
-  },
-  {
-    title: 'Admins',
-    description: 'Provisioning, permissions, platform operations, and incident handling documentation.',
-    href: '/admins/intro',
-  },
-  {
-    title: 'Developer',
-    description: 'API references, architecture decisions, integration guides, and implementation patterns.',
-    href: '/developer/intro',
-  },
-];
 
 export default function Home() {
   return (
     <Layout
       title="EduIDE"
-      description="Flashy landing page for EduIDE with clear entry points into each documentation audience."
+      description="A browser-based development environment designed for education. With AI assistance, zero setup, and seamless course integration."
     >
       <main className={styles.page}>
-        <section className={styles.hero}>
-          <div className={styles.heroGlow} />
-          <div className={styles.heroContent}>
-            <p className={styles.kicker}>Learning infrastructure for modern engineering education</p>
-            <h1>EduIDE brings product storytelling and practical docs into one place.</h1>
-            <p className={styles.lead}>
-              This landing page can sell the platform, while every audience gets a dedicated doc space with
-              its own sidebar, route, and navigation path.
-            </p>
-            <div className={styles.actions}>
-              <Link className="button button--primary button--lg" to="/developer/intro">
-                Open docs
-              </Link>
-              <Link className={clsx('button button--secondary button--lg', styles.secondaryAction)} to="/student/intro">
-                Explore student flow
-              </Link>
-            </div>
-          </div>
-          <div className={styles.heroPanel}>
-            <div className={styles.metricCard}>
-              <span>Audience-based docs</span>
-              <strong>4 sections</strong>
-            </div>
-            <div className={styles.metricCard}>
-              <span>Navigation model</span>
-              <strong>Independent sidebars</strong>
-            </div>
-            <div className={styles.metricCard}>
-              <span>Current state</span>
-              <strong>Mock content ready</strong>
-            </div>
-          </div>
-        </section>
-
-        <section className={styles.sectionGrid}>
-          {sections.map((section) => (
-            <Link key={section.title} className={styles.sectionCard} to={section.href}>
-              <span className={styles.sectionLabel}>Section</span>
-              <h2>{section.title}</h2>
-              <p>{section.description}</p>
-              <span className={styles.sectionCta}>Enter section</span>
-            </Link>
-          ))}
-        </section>
+        <HeroSection />
+        <StudentFeatures />
+        <hr className={styles.sectionDivider} />
+        <FeatureShowcase
+          label="Run tasks"
+          title="One click to build, test, and run"
+          description="Pre-configured tasks let students run, build, and test their code without memorizing commands. Instructors define the workflow once and students only need to click on Run."
+          mediaSrc="/videos/run-button.webm"
+          mediaPoster="/img/marketing/page.png"
+          mediaAlt="Run button demo"
+          mediaType="video"
+          accentColor="linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)"
+        />
+        <hr className={styles.sectionDivider} />
+        <FeatureShowcase
+          label="Submission"
+          title="Submit without leaving the IDE"
+          description="The integrated submission extension connects directly to Artemis. Students commit and submit their work in one step — no file uploads, no copy-paste, no switching tabs."
+          mediaSrc="/videos/scorpio.webm"
+          mediaPoster="/img/marketing/page.png"
+          mediaAlt="Submission demo"
+          mediaType="video"
+          reverse
+          accentColor="linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)"
+        />
+        <hr className={styles.sectionDivider} />
+        <FeatureShowcase
+          label="AI assistance"
+          title="An AI-powered terminal that teaches."
+          description="No more decoding cryptic logs. When a build fails, the AI terminal assistant provides instant explanations and guided fixes. It helps students master syntax and understand build outputs in real-time."
+          mediaSrc="/videos/terminal-assistant.webm"
+          mediaPoster="/img/marketing/page.png"
+          mediaAlt="Terminal AI assistant demo"
+          mediaType="video"
+          accentColor="linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)"
+        />
+        <hr className={styles.sectionDivider} />
+        <LanguagesSection />
+        <hr className={styles.sectionDivider} />
+        <InstructorSection />
+        <OpenSourceSection />
+        <CtaSection />
       </main>
     </Layout>
   );

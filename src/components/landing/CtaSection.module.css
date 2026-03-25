@@ -1,0 +1,39 @@
+.ctaSection {
+  padding: 5rem 2rem;
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.ctaSection h2 {
+  font-size: 38px;
+  font-weight: 400;
+  margin-bottom: 1rem;
+  line-height: 1.15;
+  color: var(--landing-text);
+}
+
+.ctaSection p {
+  font-size: 16px;
+  color: var(--landing-muted);
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+}
+
+.ctaActions {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .ctaSection h2 {
+    font-size: 28px;
+  }
+
+  .ctaActions {
+    flex-direction: column;
+    align-items: center;
+  }
+}

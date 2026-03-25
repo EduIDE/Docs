@@ -1,0 +1,32 @@
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--landing-teal);
+  margin-bottom: 0.75rem;
+}
+
+.sectionTitle {
+  font-size: 2.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  margin-bottom: 0.85rem;
+  color: var(--landing-text);
+}
+
+.sectionSub {
+  font-size: 16px;
+  color: var(--landing-muted);
+  line-height: 1.75;
+  max-width: 540px;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 560px) {
+  .sectionTitle {
+    font-size: 1.85rem;
+  }
+}
