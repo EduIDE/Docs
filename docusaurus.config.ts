@@ -6,9 +6,7 @@ const config: Config = {
   title: 'edu ide — The IDE built for learning',
   tagline: 'A browser-based development environment designed for education',
   favicon: 'img/logo.svg',
-  stylesheets: [
-    'https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Space+Grotesk:wght@600;700&display=swap',
-  ],
+
   future: {
     v4: true,
   },
