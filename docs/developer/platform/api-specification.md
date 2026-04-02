@@ -1,9 +1,9 @@
 ---
-title: API Surface
+title: API Specification
 description: Service API overview based on the EduIDE Cloud OpenAPI specification.
 ---
 
-# API Surface
+# API Specification
 
 This page summarizes the current EduIDE Cloud service API from the OpenAPI specification in `theia-cloud/documentation/openapi.json`.
 

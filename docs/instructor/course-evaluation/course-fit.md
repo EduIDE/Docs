@@ -1,9 +1,9 @@
 ---
-title: Course Fit
+title: Evaluating Course Fit
 description: Which types of courses are a good fit for EduIDE.
 ---
 
-# Course Fit
+# Evaluating Course Fit
 
 EduIDE is most useful for courses where the browser-based environment is part of the teaching value, not just a deployment detail.
 

@@ -21,7 +21,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Platform',
-      items: ['platform/architecture', 'platform/api-surface'],
+      items: ['platform/architecture', 'platform/api-specification'],
     },
     {
       type: 'category',
