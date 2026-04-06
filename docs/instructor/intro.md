@@ -9,6 +9,10 @@ This section is for instructors and course owners who want to evaluate whether E
 
 The focus here should not be "how to use every feature." It should be "what kind of course benefits from EduIDE, what needs to be true before adoption makes sense, and what limitations need to be accepted."
 
+:::info TUM-specific evaluation context
+Some examples in this section may be scoped to how EduIDE is currently implemented at TUM. EduIDE itself is an independent product and can be evaluated and adopted for teaching at other institutions as well.
+:::
+
 ## What lives here
 
 - Which course setups fit EduIDE well

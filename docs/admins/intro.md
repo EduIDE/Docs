@@ -9,6 +9,10 @@ This section is for platform operators and administrators responsible for deploy
 
 Admin concerns are kept separate from instructor, student, and developer sections because they involve cluster-level access, service secrets, identity provider configuration, and infrastructure lifecycle decisions that are irrelevant to end users and should not be mixed with usage or development guidance.
 
+:::info TUM-specific deployment details
+This page sometimes uses TUM-specific environment names, domains, and operational examples to describe the current EduIDE rollout. EduIDE itself is an independent product and can be deployed and operated for any institution with its own infrastructure and policies.
+:::
+
 ## Who this section is for
 
 This section assumes you have:

@@ -9,6 +9,10 @@ Welcome to EduIDE. This guide helps you get coding quickly in your course worksp
 
 You do not need local setup. Everything runs in your browser.
 
+:::info TUM-specific examples
+Some steps and screenshots may reflect how EduIDE is currently used at TUM, for example with Artemis course flows. EduIDE itself is an independent product and can be implemented for students at any institution.
+:::
+
 ## Start here
 
 1. [First Login](./getting-started/first-login.md)

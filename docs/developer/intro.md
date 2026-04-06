@@ -9,6 +9,10 @@ This section is for engineers building on top of EduIDE.
 
 Use it for API contracts, extension points, local development instructions, integration notes, and the full EduIDE project catalog.
 
+:::info TUM-specific ecosystem references
+Some repository links and integration notes may reflect how EduIDE is currently implemented at TUM. EduIDE itself is an independent product and can be extended or integrated for other institutions and platform setups.
+:::
+
 ## What lives here
 
 - Project overviews for the repositories in the EduIDE ecosystem
