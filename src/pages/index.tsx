@@ -45,7 +45,7 @@ export default function Home() {
         <FeatureShowcase
           label="AI assistance"
           title="An AI-powered terminal that teaches."
-          description="No more decoding cryptic logs. When a build fails, the AI terminal assistant provides instant explanations and guided fixes. It helps students master syntax and understand build outputs in real-time."
+          description={<>No more decoding cryptic logs. When a build fails, the AI terminal assistant provides instant explanations and guided fixes. It helps students master syntax and understand build outputs in real-time.<br /><small style={{ color: 'var(--ifm-color-emphasis-500)', marginTop: '0.4rem', display: 'block' }}>This is an upstream contribution to Eclipse Theia and requires student-side LLM configuration.</small></>}
           mediaSrc="/videos/terminal-assistant.webm"
           mediaPoster="/img/marketing/page.png"
           mediaAlt="Terminal AI assistant demo"
