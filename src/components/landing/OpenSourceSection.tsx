@@ -51,14 +51,14 @@ const cards: OssCard[] = [
     icon: <IconHeart />,
     title: "Built by students, for students",
     description:
-      "EduIDE is developed as part of thesis projects at TUM's AET Chair — by students who understand the learning experience firsthand.",
+      "EduIDE is developed as part of thesis projects at TUM's AET Research Group — by students who understand the learning experience firsthand.",
   },
   {
     iconColor: "teal",
     icon: <IconBook />,
     title: "Education research-backed",
     description:
-      "Features are grounded in real student studies and pedagogical research at TUM's Applied Education Technologies chair.",
+      "Features are grounded in real student studies and pedagogical research at TUM's Applied Education Technologies Research Group.",
   },
 ];
 

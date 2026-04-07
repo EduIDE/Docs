@@ -1,3 +1,4 @@
+import React from "react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import SectionHeader from "./SectionHeader";
 import { useScrollReveal } from "../../hooks/useScrollReveal";
@@ -5,19 +6,19 @@ import styles from "./InstructorSection.module.css";
 
 interface Step {
   title: string;
-  description: string;
+  description: React.ReactNode;
 }
 
 const steps: Step[] = [
   {
     title: "One-click course setup",
     description:
-      "Define the environment once within Artemis. Every student gets an identical, pre-configured workspace with no need for manual replication.",
+      <>Define the environment once within <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Every student gets an identical, pre-configured workspace with no need for manual replication.</>,
   },
   {
     title: "Automated grading pipeline",
     description:
-      "Integrated with Artemis for test-based grading. Student submissions run against your test suite automatically.",
+      <>Integrated with <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a> for test-based grading. Student submissions run against your test suite automatically.</>,
   },
   {
     title: 'No "works on my machine" tickets',

@@ -33,7 +33,7 @@ export default function Home() {
         <FeatureShowcase
           label="Submission"
           title="Submit without leaving the IDE"
-          description="The integrated submission extension connects directly to Artemis. Students commit and submit their work in one step — no file uploads, no copy-paste, no switching tabs."
+          description={<>The integrated submission extension connects directly to <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Students commit and submit their work in one step — no file uploads, no copy-paste, no switching tabs.</>}
           mediaSrc="/videos/scorpio.webm"
           mediaPoster="/img/marketing/page.png"
           mediaAlt="Submission demo"

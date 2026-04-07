@@ -14,7 +14,7 @@ export default function HeroSection() {
       <div className={styles.heroText}>
         <div className={styles.heroBadge}>
           <span className={styles.heroBadgeDot} aria-hidden="true" />
-          By TUM · AET Chair
+          By TUM · AET Research Group
         </div>
         <h1 id="hero-heading">
           The IDE built for <em>learning</em>,<br />not just coding

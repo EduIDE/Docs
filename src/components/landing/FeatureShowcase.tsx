@@ -6,7 +6,7 @@ import styles from './FeatureShowcase.module.css';
 interface FeatureShowcaseProps {
   label: string;
   title: string;
-  description: string;
+  description: React.ReactNode;
   linkText?: string;
   linkHref?: string;
   mediaSrc?: string;
