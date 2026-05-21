@@ -42,7 +42,8 @@ These are cluster-level prerequisites installed once. If they are already presen
 # cert-manager (check https://cert-manager.io for the latest version)
 helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager --create-namespace \
-  --set crds.enabled=true
+  --set crds.enabled=true \
+  --set config.enableGatewayAPI=true
 
 # trust-manager (part of the cert-manager project)
 helm upgrade --install trust-manager jetstack/trust-manager \

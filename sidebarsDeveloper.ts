@@ -21,12 +21,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Platform',
-      items: ['platform/architecture', 'platform/api-specification'],
+      items: ['platform/architecture', 'platform/session-prewarming', 'platform/api-specification'],
     },
     {
       type: 'category',
       label: 'Guides',
-      items: ['guides/local-development', 'guides/deploying-pull-requests', 'guides/session-prewarming'],
+      items: ['guides/local-development', 'guides/deploying-pull-requests'],
     },
   ],
 };
