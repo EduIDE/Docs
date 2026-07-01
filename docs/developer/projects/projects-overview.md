@@ -11,7 +11,7 @@ The developer section includes the project catalog that previously lived in the 
 
 - [EduIDE Deployment](/developer/projects/eduide-deployment): Infrastructure-as-code and deployment workflows for EduIDE environments.
 - [Theia Scale Tests](/developer/projects/theia-scale-tests): End-to-end and scalability validation for classroom-scale IDE usage.
-- [EduIDE Shared Cache](/developer/projects/eduide-shared-cache): Shared Gradle build cache service for faster builds.
+- [EduIDE Shared Cache](/developer/projects/eduide-shared-cache): Shared Gradle and Bazel build cache service for faster builds.
 - [EduIDE LSP Extension](/developer/projects/eduide-lsp-extension): Remote language-server connector for Theia and VS Code.
 - [EduIDE Data Bridge](/developer/projects/eduide-data-bridge): Runtime data and credential injection bridge for cloud IDE sessions.
 - [EduIDE](/developer/projects/eduide): Custom Eclipse Theia Docker images and packaged IDE environments.
