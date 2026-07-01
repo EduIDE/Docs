@@ -20,7 +20,7 @@ If a new environment namespace is added, update the `targetNamespaces` and `sess
 
 ### Shared build cache metrics
 
-The `theia-shared-cache` (Gradle build cache) exposes Prometheus metrics at `/metrics` via a Redis Exporter sidecar. Enable the ServiceMonitor for it in the chart values:
+The `theia-shared-cache` (Gradle and Bazel build cache) exposes Prometheus metrics at `/metrics` via a Redis Exporter sidecar. Enable the ServiceMonitor for it in the chart values:
 
 ```yaml
 metrics:
@@ -75,9 +75,13 @@ Monitor: `kube_resourcequota` for `persistentvolumeclaims` and `requests.storage
 
 ### Build cache hit rate
 
-A low cache hit rate for the Gradle shared cache degrades CI build times but does not affect user sessions directly.
+A low cache hit rate for the shared cache degrades CI build times but does not affect user sessions directly. Gradle and Bazel are tracked with separate counters.
 
-Monitor: `gradle_cache_cache_hits` / (`gradle_cache_cache_hits` + `gradle_cache_cache_misses`).
+Monitor (Gradle): `gradle_cache_cache_hits` / (`gradle_cache_cache_hits` + `gradle_cache_cache_misses`).
+
+Monitor (Bazel): `bazel_cache_cache_hits` / (`bazel_cache_cache_hits` + `bazel_cache_cache_misses`).
+
+Also watch `bazel_cache_hash_mismatches` — a non-zero rate indicates Bazel CAS uploads failing content-hash verification and should be investigated.
 
 **Informational threshold:** < 50% over a 24-hour window warrants investigation.
 
