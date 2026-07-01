@@ -29,14 +29,13 @@ Before a first deployment to a new cluster, confirm the following are in place:
 - Helm 3 is installed on the runner (handled automatically in CI)
 - You have cluster-admin permissions
 - **`cert-manager`** is installed on the cluster — manages TLS certificates via the `cert-manager.io` CRDs
-- **`trust-manager`** is installed on the cluster — distributes the internal CA trust bundle to target namespaces via the `trust.cert-manager.io` CRDs (required by `theia-internal-tls`)
 - A Keycloak instance is running and you have admin access to the relevant realm
 - DNS entries for the environment domain are configured and propagating
 - GitHub environment secrets are set (see [GitHub environment secrets](#github-environment-secrets))
 
-### Installing cert-manager and trust-manager
+### Installing cert-manager
 
-These are cluster-level prerequisites installed once. If they are already present, skip this.
+This is a cluster-level prerequisite installed once. If it is already present, skip this.
 
 ```bash
 # cert-manager (check https://cert-manager.io for the latest version)
@@ -44,13 +43,9 @@ helm upgrade --install cert-manager jetstack/cert-manager \
   --namespace cert-manager --create-namespace \
   --set crds.enabled=true \
   --set config.enableGatewayAPI=true
-
-# trust-manager (part of the cert-manager project)
-helm upgrade --install trust-manager jetstack/trust-manager \
-  --namespace cert-manager
 ```
 
-Verify both are running:
+Verify it is running:
 ```bash
 kubectl get pods -n cert-manager
 ```
@@ -64,7 +59,6 @@ EduIDE is deployed through a set of layered Helm charts. Cluster-scoped charts a
 | `theia-cloud-crds` | Cluster | Custom resource definitions for workspaces, sessions, app definitions |
 | `theia-cloud-base` | Cluster | Cluster-wide shared resources |
 | `theia-shared-gateway` | Cluster | Shared Envoy Gateway API entry point |
-| `theia-internal-tls` | Cluster | Internal CA and trust bundle (requires trust-manager) |
 | `theia-cloud-combined` | Environment | Main application: service, operator, landing page, OAuth2 proxy |
 | `theia-appdefinitions` | Environment | IDE session type definitions |
 | `theia-certificates` | Environment | TLS certificate management for the environment domain |
@@ -72,7 +66,7 @@ EduIDE is deployed through a set of layered Helm charts. Cluster-scoped charts a
 
 ## Step 1: Install cluster-scoped charts
 
-These are installed once per cluster. The pipeline handles this via the `deploy_shared_gateway` input flag and the internal TLS step. If setting up a brand new cluster manually:
+These are installed once per cluster. The pipeline handles this via the `deploy_shared_gateway` input flag. If setting up a brand new cluster manually:
 
 ```bash
 # CRDs first — operator and service depend on these
@@ -85,10 +79,6 @@ helm upgrade --install theia-cloud-base ./charts/theia-cloud-base
 helm upgrade --install theia-shared-gateway ./charts/theia-shared-gateway \
   -n gateway-system --create-namespace \
   -f <shared-gateway-values-file>
-
-# Internal TLS CA and trust bundle (namespace: cert-manager)
-helm upgrade --install theia-internal-tls ./charts/theia-internal-tls \
-  -n cert-manager
 ```
 
 ## Step 2: Prepare Keycloak
