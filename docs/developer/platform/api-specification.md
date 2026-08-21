@@ -64,7 +64,7 @@ This endpoint accepts a `LaunchRequest` and is the high-level "just give me a wo
 - an optional human-readable `label`
 - whether the session should be `ephemeral`
 - a launch `timeout`
-- additional `env` values
+- additional `env` values, described by the `EnvironmentVars` model: `fromMap` holds direct key/value pairs, `fromConfigMaps` lists the names of existing ConfigMaps, and `fromSecrets` lists the names of existing Secrets. See [External Session Launch](./external-integration) for the end-to-end integration flow.
 
 The response is a plain string containing the launched session URL.
 

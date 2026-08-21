@@ -21,7 +21,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Platform',
-      items: ['platform/architecture', 'platform/session-prewarming', 'platform/api-specification'],
+      items: [
+        'platform/architecture',
+        'platform/session-prewarming',
+        'platform/api-specification',
+        'platform/external-integration',
+      ],
     },
     {
       type: 'category',
