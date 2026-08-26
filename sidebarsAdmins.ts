@@ -5,6 +5,11 @@ const sidebars: SidebarsConfig = {
     'intro',
     {
       type: 'category',
+      label: 'Install',
+      items: ['install/installing', 'install/adding-an-installation'],
+    },
+    {
+      type: 'category',
       label: 'Platform',
       items: [
         'platform/provisioning',
@@ -36,6 +41,8 @@ const sidebars: SidebarsConfig = {
       label: 'Maintenance',
       items: [
         'maintenance/upgrades',
+        'maintenance/rollback',
+        'maintenance/release-policy',
       ],
     },
   ],

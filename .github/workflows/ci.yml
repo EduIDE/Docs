@@ -1,0 +1,34 @@
+# Docusaurus fails a build on a sidebar entry with no page, but publishes a page
+# with no sidebar entry and says nothing. Seven instructor pages sat live and
+# unreachable that way, including the two that set expectations honestly.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    name: Pages are reachable and links resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/check-docs.sh
+
+  build:
+    name: Site builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
