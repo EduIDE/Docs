@@ -53,16 +53,31 @@ Click **Next**.
 Set URLs based on the target environment domain. For production:
 
 ```
-Root URL:                     https://theia.artemis.cit.tum.de
-Home URL:                     https://theia.artemis.cit.tum.de
+Root URL:                     https://<landing-host>
+Home URL:                     https://<landing-host>
 Valid redirect URIs:
-  https://theia.artemis.cit.tum.de/*
-  https://instance.theia.artemis.cit.tum.de/*
+  https://<landing-host>/*
+  https://service.<landing-host>/*
+  https://instance.<landing-host>/*
+  https://*.webview.instance.<landing-host>/*
 Valid post-logout redirect URIs:  +
 Web origins:                  +
 ```
 
-For a test environment, replace the domain with the test domain (e.g., `test1.theia-test.artemis.cit.tum.de`).
+:::warning All four, not two
+An installation serves four hostnames and every one of them takes part in the
+login flow. Listing only the landing and instance hosts is a common mistake with
+a confusing result: login appears to work, and then **webviews inside the IDE
+fail to authenticate** — a failure users hit days later and report as "previews
+are broken".
+
+Substitute your own landing host; for an installation at `eduide.example.edu`
+the four are `eduide.example.edu`, `service.eduide.example.edu`,
+`instance.eduide.example.edu` and `*.webview.instance.eduide.example.edu`.
+:::
+
+Repeat this for each installation — one client per installation, because each
+has its own hostnames.
 
 Click **Save**.
 

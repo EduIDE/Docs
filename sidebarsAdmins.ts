@@ -6,7 +6,12 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Install',
-      items: ['install/installing', 'install/adding-an-installation'],
+      items: [
+        'install/prerequisites',
+        'install/certificates',
+        'install/installing',
+        'install/adding-an-installation',
+      ],
     },
     {
       type: 'category',
