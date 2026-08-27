@@ -34,3 +34,8 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run build
+
+  # Renovate reports vulnerabilities already on main; this one blocks a PR that
+  # is about to add a new dependency with a known advisory.
+  dependency-review:
+    uses: EduIDE/.github/.github/workflows/dependency-review.yml@v1
