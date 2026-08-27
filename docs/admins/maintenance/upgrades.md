@@ -1,127 +1,107 @@
 ---
 title: Upgrades
-description: Procedures for upgrading EduIDE Cloud charts, the operator, and supporting components.
+description: Moving an installation to a new EduIDE version.
 ---
 
 # Upgrades
 
-EduIDE releases new versions approximately every three months. This page covers how to upgrade the platform components, what to check before and after an upgrade, and how to roll back if needed.
+An upgrade is a version change and a `helm upgrade`. There is no multi-chart
+ordering to remember any more — there are two charts, and only one of them is
+usually involved.
 
-## Release cadence and versioning
+## What you are upgrading
 
-EduIDE uses a three-month release cycle. Between releases, chart versions carry a `-next.X` suffix (e.g., `1.2.0-next.2`). At release time:
-- The `-next` suffix is dropped.
-- All image tags are pinned to specific SHAs.
-- After release, the version is bumped and `-next.0` is added for the next cycle.
+| Chart | When it changes | Blast radius |
+|---|---|---|
+| `eduide` | Most upgrades | One installation |
+| `eduide-cluster` | CRDs, the conversion webhook, Gateway or issuer changes | **Every installation on the cluster** |
 
-In production, always deploy pinned release versions, never floating tags like `latest`.
+Both carry the same version. Read the release notes to see whether the cluster
+chart changed; if it did, upgrade it first and expect it to affect everyone.
 
-## How upgrades are deployed
+## Before
 
-Upgrades go through the same GitHub Actions pipelines as all other deployments. To upgrade an environment:
+- Read the release notes, particularly for CRD changes.
+- Check what you are running: `helm list -n <namespace>`.
+- Know how to go back: [Rollback](rollback.md).
+- On a cluster with more than one installation, upgrade a test one first.
 
-1. Update the chart versions and image tags in the environment's values files in the deployment repository.
-2. Commit and push (staging) or trigger the workflow manually (production).
-3. The pipeline runs all chart upgrades in the correct order and waits for each rollout to complete.
-
-**Always upgrade staging before production.** The staging pipeline runs automatically on push to main, making it the natural first target.
-
-The underlying commands the pipeline executes are documented in the steps below — they are useful for understanding what happens and for emergency manual intervention when the pipeline is unavailable.
-
-## Pre-upgrade checklist
-
-Before merging an upgrade to production:
-
-- [ ] The upgrade has been deployed to staging and verified stable.
-- [ ] Release notes have been checked for breaking changes, especially CRD schema changes.
-- [ ] No large cohort exercise is in progress (an upgrade restarts pods, briefly queuing launches).
-- [ ] Current chart versions are noted: `helm list -n theia-prod`
-- [ ] Values files are committed and reviewed.
-
-## Upgrade order
-
-The pipeline respects this order. CRDs and cluster-scoped resources must come before environment-scoped resources.
-
-1. `theia-cloud-crds`
-2. `theia-cloud-base`
-3. `theia-cloud-combined` (service + operator + landing page)
-4. `theia-appdefinitions`
-5. `theia-certificates`
-6. `theia-monitoring`
-7. `theia-workspace-garbage-collector`
-
-## CRD upgrades
-
-CRDs must be upgraded before the operator because the operator validates resources against the CRD schema at startup.
-
-After any CRD upgrade, verify that existing custom resources are still valid before proceeding:
+## Upgrading an installation
 
 ```bash
-kubectl get workspaces -n theia-prod
-kubectl get sessions -n theia-prod
+helm upgrade eduide oci://ghcr.io/eduide/charts/eduide \
+  --version <new-version> -n <namespace> \
+  -f values.yaml -f secrets.yaml \
+  --wait --timeout 15m
 ```
 
-If resources show validation errors, do not proceed until they are resolved.
+Keep the same release name and the same values files. Changing the release name
+is not an upgrade — Helm treats it as a new install and will refuse to adopt the
+existing resources.
 
-## App Definition image upgrades
+:::tip Preview it first
+`helm diff upgrade` (from the helm-diff plugin) shows what will change before
+anything is applied. On a live installation this is worth the extra step.
+:::
 
-When new IDE images are released, update the image tags in the environment's `appdefinitions.yaml` values file and deploy via the pipeline.
+### `--wait` and image preloading
 
-After the upgrade, the operator replaces pre-warmed sessions with the new image. **Existing running sessions are not affected** — they continue on the old image until they are stopped and restarted by the user.
+The preloading DaemonSet pulls every IDE image onto every node. On an upgrade
+that changes the image set, that can take longer than a sensible Helm timeout.
 
-## Checking rollout status
-
-After the pipeline completes, verify the rollout:
+Either allow a generous `--timeout`, or drop `--wait` and watch the rollout
+yourself:
 
 ```bash
-kubectl rollout status deployment/operator -n theia-prod
-kubectl rollout status deployment/service -n theia-prod
-kubectl get pods -n theia-prod
+kubectl -n <namespace> rollout status deploy/operator-deployment
+kubectl -n <namespace> rollout status deploy/service-deployment
+kubectl -n <namespace> rollout status deploy/landing-page-deployment
 ```
 
-## Post-upgrade validation
+Note the `-deployment` suffix; the Deployments are not named `operator` or
+`service`.
 
-- [ ] All pods in `theia-prod` are `Running`: `kubectl get pods -n theia-prod`
-- [ ] Service admin ping responds: `GET /service/admin/{appId}` with `X-Admin-Api-Token`
-- [ ] A test session can be launched and connects to the IDE
-- [ ] Grafana dashboards show data for the namespace
-- [ ] App Definition scaling values are intact: `GET /service/admin/appdefinition`
-
-## Rolling back
-
-If an upgrade introduces a regression, roll back via Helm:
+## Upgrading the cluster chart
 
 ```bash
-# Check release history
-helm history theia-cloud -n theia-prod
-
-# Roll back to a previous revision
-helm rollback theia-cloud <revision-number> -n theia-prod
+helm upgrade eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
+  --version <new-version> -n eduide-system \
+  -f cluster-values.yaml --wait
 ```
 
-For CRD rollbacks, Helm does not manage this automatically. If a CRD schema change is incompatible with running resources, you may need to manually apply the previous CRD version from the deployment repository:
+CRDs are ordinary templates in this chart rather than files in `crds/`, which
+means `helm upgrade` genuinely updates them — unlike many charts, where CRD
+changes need a manual `kubectl apply`.
 
-```bash
-kubectl apply -f charts/theia-cloud-crds/templates/
-```
+That cuts both ways: a CRD change lands the moment you upgrade, for every
+installation on the cluster at once. **A release that changes a stored CRD
+version cannot be undone by rolling back the tenant chart** — see
+[Rollback](rollback.md).
 
-This is rare and only necessary when the CRD schema changed in a breaking way.
+## After
 
-## Upgrading Keycloak
+- All four Deployments Ready, no pod in `ImagePullBackOff`.
+- The landing page returns 200 **and its TLS validates without `-k`**.
+- Start a real session and open something in a webview panel. Everything above
+  can be healthy while sessions do not start.
+- If the AppDefinition set changed, check the landing page offers what you
+  expect.
 
-Keycloak is managed separately from the EduIDE charts. If a Keycloak upgrade is required:
+## Two things that do not behave as you would guess
 
-1. Coordinate with the identity provider admin team.
-2. Test authentication in the staging environment after the upgrade.
-3. Verify that all three token claim mappers (username, audience, groups) still work correctly.
-4. Confirm OAuth2 proxy compatibility with the new Keycloak version.
+**`minInstances` and `maxInstances` stop taking effect after the first install.**
+The chart deliberately reads the live values back so that Helm does not reset
+scaling that the admin API has changed. The consequence is that changing them in
+your values file on an upgrade does nothing. Change them through the admin API
+instead — see [App Definitions](../platform/app-definitions.md).
 
-## Image tag pinning
+**`hosts.allWildcardInstances` does not update cleanly on upgrade.** If you
+change it, reinstall rather than upgrade. This is called out in the chart's own
+values file.
 
-Production values files pin all images to specific SHA-based tags (e.g., `latest-e431a13`). When updating images:
+## Coordinating with your identity provider
 
-1. Identify the new image SHA from the release or container registry.
-2. Update the tag in the relevant values file in the deployment repository.
-3. Deploy via the pipeline.
-
-Never use `latest` or branch-based tags in production — they change without a deployment, causing invisible configuration drift.
+An EduIDE upgrade does not change your Keycloak configuration. But if an upgrade
+adds a hostname — a new installation, or a renamed one — the client's redirect
+URIs need updating in the same change window, or login breaks for that host
+only. See [Access Control](../platform/access-control.md).

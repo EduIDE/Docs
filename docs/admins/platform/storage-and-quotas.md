@@ -37,16 +37,33 @@ theia-cloud:
 
 To change the default, update `requestedStorage` in the values file and redeploy the operator. Changes apply to newly created workspaces only. Existing PVCs are not resized automatically.
 
-## Ephemeral storage mode
+## Ephemeral storage mode — and it is the default
 
-If `ephemeralStorage: true` is set on the landing page configuration, workspaces launched from that entry point do not get a persistent PVC. Sessions are fully ephemeral — all data is lost when the session ends.
+:::danger Sessions do not persist unless you turn persistence on
+`landingPage.ephemeralStorage` defaults to **`true`**. A session started from the
+landing page gets no PersistentVolumeClaim, and **everything in it is destroyed
+when the session ends**.
+
+If your students are expected to keep work between sessions, you must set:
 
 ```yaml
 landingPage:
-  ephemeralStorage: true
+  ephemeralStorage: false
 ```
 
-This is useful for demo or evaluation environments where persistence is not needed and storage overhead should be minimised.
+Check what you actually deployed before a cohort relies on it:
+
+```bash
+kubectl -n <namespace> get cm landing-page-config -o jsonpath='{.data.config\.js}' | grep useEphemeralStorage
+```
+:::
+
+Ephemeral mode is the right default for evaluation and demos — nothing to clean
+up, no storage cost. It is the wrong setting for a course.
+
+Note that sessions launched from Artemis carry their own workspace regardless,
+so this setting governs the landing-page path specifically. Test the path your
+students will actually use.
 
 ## Namespace resource quotas
 
@@ -58,8 +75,8 @@ Recommended quota structure for a production namespace:
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: theia-prod-quota
-  namespace: theia-prod
+  name: <namespace>-quota
+  namespace: <namespace>
 spec:
   hard:
     requests.cpu: "200"       # total CPU requests across all pods
@@ -115,14 +132,14 @@ See [Garbage Collection](/admins/operations/garbage-collection) for TTL configur
 
 ```bash
 # List all PVCs in the production namespace
-kubectl get pvc -n theia-prod
+kubectl get pvc -n <namespace>
 
 # Check total PVC count and storage consumption
-kubectl get pvc -n theia-prod \
+kubectl get pvc -n <namespace> \
   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.resources.requests.storage}{"\n"}{end}'
 
 # Check resource quota utilisation
-kubectl describe resourcequota -n theia-prod
+kubectl describe resourcequota -n <namespace>
 ```
 
 ## Cleaning up stale PVCs
@@ -133,10 +150,13 @@ If PVCs are not automatically released:
 
 ```bash
 # List unbound PVCs
-kubectl get pvc -n theia-prod --field-selector=status.phase=Released
+# NOTE: `Released` is a PersistentVolume phase, not a PVC phase, so filtering
+# PVCs by it always returns nothing. PVC phases are Pending, Bound and Lost.
+# To find volumes left behind by deleted workspaces, look at the PVs:
+kubectl get pv --field-selector=status.phase=Released
 
 # Delete a specific unbound PVC
-kubectl delete pvc <pvc-name> -n theia-prod
+kubectl delete pvc <pvc-name> -n <namespace>
 ```
 
 Confirm the storage class reclaim policy with:

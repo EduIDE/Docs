@@ -23,50 +23,71 @@ Each App Definition specifies:
 | `maxInstances` | Maximum number of concurrent sessions allowed for this type |
 | `options` | Additional per-definition configuration, such as data bridge settings |
 
-In production, the current App Definitions are:
+The chart ships eight, and they are not all visible:
 
-| Name | Image | Memory request | Min instances | Max instances |
-|---|---|---|---|---|
-| `java-17-latest` | `ghcr.io/eduide/eduide/java-17` | 2000M | 3 | 1000 |
-| `python-latest` | `ghcr.io/eduide/eduide/python` | 2000M | configurable | configurable |
-| `c-latest` | `ghcr.io/eduide/eduide/c` | 2000M | configurable | configurable |
-| `javascript-latest` | `ghcr.io/eduide/eduide/javascript` | 2000M | configurable | configurable |
-| `ocaml-latest` | `ghcr.io/eduide/eduide/ocaml` | 2000M | configurable | configurable |
-| `rust-latest` | `ghcr.io/eduide/eduide/rust` | 2000M | configurable | configurable |
+| Name | Image | Offered on the landing page |
+|---|---|---|
+| `java-17-templates-latest` | `eduide/java-17-templates` | yes, with a Maven/Gradle choice |
+| `java-17-latest` | `eduide/java-17` | no — hidden behind the templates variant |
+| `c-templates-latest` | `eduide/c-templates` | yes, with a Make/Bazel choice |
+| `c-latest` | `eduide/c` | no |
+| `javascript-latest` | `eduide/javascript` | yes |
+| `ocaml-latest` | `eduide/ocaml` | yes |
+| `python-latest` | `eduide/python` | yes |
+| `rust-latest` | `eduide/rust` | yes |
 
-## Managing App Definitions via Helm
+The `-templates` variants ship a starter project and a build-system picker; the
+plain ones give an empty workspace. Both are deployable — a hidden definition can
+still be launched by name — but only the visible ones appear in the drop-down.
 
-App Definitions are defined in the `theia-appdefinitions` Helm chart. The values file (`appdefinitions.yaml`) for each environment controls the deployed set.
+Defaults are `requestsMemory: 500M`, `requestsCpu: 200m`, `limitsMemory: 2400M`,
+`limitsCpu: "2"`, `minInstances: 0`, `maxInstances: 1000`, with Java overriding
+the CPU and memory upward.
 
-To add a new App Definition:
+## Changing which applications are offered
 
-1. Add an entry under `apps` in the environment's appdefinitions values file:
+App definitions live in your installation's values for the `eduide` chart, under
+`appDefinitions.apps`. It is a **map keyed by definition name**, with a
+`defaults` block that every entry inherits.
 
-   ```yaml
-   apps:
-     - name: haskell-latest
-       image: ghcr.io/eduide/eduide/haskell:latest
-       requestsMemory: 2000M
-       requestsCpu: 500m
-       limitsMemory: 3000M
-       minInstances: 0
-       maxInstances: 200
-   ```
+```yaml
+appDefinitions:
+  apps:
+    haskell-latest:
+      image: eduide/haskell        # tag comes from versions.ide
+      requestsMemory: 800M         # only what differs from defaults
+      landingPage:
+        label: Haskell             # omit this key to deploy it but hide it
+```
 
-2. Ensure the image is available and the tag is pinned for production deployments.
+Then upgrade the installation as usual:
 
-3. Deploy the updated chart:
+```bash
+helm upgrade eduide oci://ghcr.io/eduide/charts/eduide \
+  --version <version> -n <namespace> -f values.yaml -f secrets.yaml
+```
 
-   ```bash
-   helm upgrade theia-appdefinitions \
-     oci://ghcr.io/eduide/charts/theia-appdefinitions \
-     -n theia-prod \
-     -f deployments/theia.artemis.cit.tum.de/appdefinitions.yaml
-   ```
+### One entry, three effects
 
-4. Add the new name to `additionalApps` in the main values file so it appears in the landing page.
+That single map drives the AppDefinition custom resource, the landing page's
+app list, **and** the set of images preloaded onto every node. You do not
+maintain a preload list — an earlier design did, and production ended up
+offering an application whose image was never preloaded, so every student who
+picked it waited for a cold multi-gigabyte pull.
 
-To remove an App Definition, remove its entry from the values file and run the same upgrade. Sessions already running on that definition are not affected immediately; the operator will no longer reconcile new ones.
+### Two things that are easy to get wrong
+
+**Removing `buildSystems` removes the picker.** A `-templates` application whose
+`landingPage` block has no `buildSystems` list offers no build-system choice,
+which is the entire reason those images exist.
+
+**Adding an application costs disk on every node.** Each image is preloaded
+cluster-wide. Trimming the list to what your courses actually use is a
+legitimate and effective way to reclaim node storage.
+
+Removing an entry stops new sessions using it. Sessions already running are not
+disturbed.
+
 
 ## Adjusting scaling at runtime
 
@@ -83,11 +104,11 @@ This is the recommended approach for live capacity adjustments before a schedule
 ```bash
 # List all app definitions and their scaling config
 curl -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
-  https://service.theia.artemis.cit.tum.de/service/admin/appdefinition
+  https://service.<landing-host>/service/admin/appdefinition
 
 # Get a specific app definition
 curl -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
-  https://service.theia.artemis.cit.tum.de/service/admin/appdefinition/java-17-latest
+  https://service.<landing-host>/service/admin/appdefinition/java-17-latest
 ```
 
 Response shape:
@@ -106,7 +127,7 @@ curl -X PATCH \
   -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"minInstances": 10, "maxInstances": 500}' \
-  https://service.theia.artemis.cit.tum.de/service/admin/appdefinition/java-17-latest
+  https://service.<landing-host>/service/admin/appdefinition/java-17-latest
 ```
 
 Validation rules enforced by the service:

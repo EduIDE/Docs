@@ -12,12 +12,14 @@ The **EduIDE Deployment** repository is the central hub for the infrastructure-a
 ## Key Features
 
 - **Automated CI/CD**: Seamless deployment pipelines using GitHub Actions for various branches and environments.
-- **Environment Management**: Specialized configurations for `production`, `staging`, and multiple `test` environments.
-- **Custom Helm Charts**:
-  - `theia-cloud-combined`: A master chart that bundles all necessary components.
-  - `theia-appdefinitions`: Configures the custom IDE environments (images and resources).
-  - `theia-certificates`: Manages SSL/TLS certificates, including TUM-specific processes.
-  - `theia-monitoring`: Sets up Prometheus and Grafana dashboards for observability.
+- **Environment Management**: One directory per installation under
+  `environments/`, split into `env.yaml` (how it is deployed) and `values.yaml`
+  (how the chart is configured).
+- **No chart source.** The charts live in
+  [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm) and are pulled from
+  `ghcr.io/eduide/charts`. There are two: `eduide-cluster` once per cluster, and
+  `eduide` once per installation. The five charts this repository used to carry
+  were consolidated into those two at 2.0.0.
 - **GitOps Workflow**: Deployments are managed through Git with approval gates and automated rollouts to staging.
 - **Authentication Integration**: Detailed configuration for Keycloak to manage user access and session security.
 
