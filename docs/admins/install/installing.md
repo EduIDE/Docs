@@ -32,6 +32,10 @@ The cluster must already have:
 
 ## Cluster half
 
+These two commands are the manual path. Day to day, `bootstrap-cluster.yml` and
+`deploy.yml` run them for you — see
+[Provisioning](../platform/provisioning.md).
+
 ```bash
 helm install eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
   --version 2.0.0 -n eduide-system --create-namespace \
@@ -100,6 +104,13 @@ gateway:
 Secrets — the Keycloak cookie secret and the admin API token — go in a second
 values file, never on the command line. `--set` puts them in the process list
 and in Actions debug logs.
+
+**In normal operation you do not write that file.** The deploy workflow
+generates it on the runner from the environment's GitHub Environment secrets and
+it never reaches the repository. The commands on this page are for a first
+install on a new cluster, or for manual intervention when the pipeline is
+unavailable — in which case write `secrets.yaml` yourself, keep it out of git,
+and delete it afterwards. Everything non-secret belongs in `values.yaml`.
 
 ## Four hostnames, not one
 

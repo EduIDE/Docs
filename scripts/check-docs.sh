@@ -28,7 +28,15 @@ for pair in "${PLUGINS[@]}"; do
   [[ -d "$base" ]] || { echo "  FAIL  $base does not exist"; FAILED=1; continue; }
   [[ -f "$sb"   ]] || { echo "  FAIL  $sb does not exist"; FAILED=1; continue; }
 
-  ids=$(grep -oE "'[a-zA-Z0-9_./-]+'" "$sb" | tr -d "'" | sort -u)
+  # Both quote styles. A double-quoted id was previously skipped, which made its
+  # page look orphaned and failed this job for no reason.
+  #
+  # `label:` and `type:` values are stripped first, so what remains is document
+  # ids - including root-level ones like `intro`, which carry no slash and were
+  # previously exempt from the dangling check entirely.
+  ids=$(sed -E "s/(label|type)[[:space:]]*:[[:space:]]*('[^']*'|\"[^\"]*\")//g" "$sb" \
+        | grep -oE "'[a-zA-Z0-9_./-]+'|\"[a-zA-Z0-9_./-]+\"" \
+        | tr -d "'\"" | sort -u)
   # -E: BSD sed does not take \? in a basic expression, and silently leaves the
   # extension on, which makes every page look orphaned.
   files=$(find "$base" \( -name '*.md' -o -name '*.mdx' \) \
@@ -42,8 +50,9 @@ for pair in "${PLUGINS[@]}"; do
   fi
 
   # A sidebar id that names no file. Docusaurus fails the build on these, but
-  # catching it here names the file instead of the plugin.
-  dangling=$(comm -13 <(echo "$files") <(echo "$ids") | grep '/' || true)
+  # catching it here names the file instead of the plugin. Root-level ids count:
+  # filtering on '/' let a missing top-level page through silently.
+  dangling=$(comm -13 <(echo "$files") <(echo "$ids") || true)
   if [[ -n "$dangling" ]]; then
     echo "  FAIL  $sb: entries with no page:"
     sed 's/^/          /' <<<"$dangling"

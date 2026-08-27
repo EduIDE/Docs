@@ -9,17 +9,29 @@ This page covers the steps required to bootstrap a new EduIDE environment. It is
 
 ## How deployments work
 
-All EduIDE environments are deployed through GitHub Actions pipelines defined in the deployment repository. The pipelines run `helm upgrade --install` for each chart with the environment-specific values files. You do not run Helm commands manually in normal operation — you trigger or configure the pipeline.
+All EduIDE environments are deployed through GitHub Actions pipelines defined in
+the deployment repository. You do not run Helm commands manually in normal
+operation — you trigger or configure the pipeline. For a first install on a new
+cluster, or emergency manual intervention, see
+[Installing EduIDE](../install/installing.md).
 
-The three deployment workflows are:
-
-| Workflow | Trigger | Approval required |
+| Workflow | Trigger | Approval |
 |---|---|---|
-| `deploy-production.yml` | Manual dispatch | Yes |
-| `deploy-staging.yml` | Push to main | No |
-| `deploy-pr.yml` | PR push | Yes |
+| `deploy.yml` | Reusable; called by the others | Inherited from the environment |
+| `deploy-e2e.yml` | Automatic, follows `main` | **None** — an approval gate would block it forever |
+| `deploy-staging.yml` | Manual dispatch | Yes |
+| `deploy-dispatch.yml` | Manual dispatch, any environment | Yes for `production` and `staging` |
+| `deploy-comment.yml` | `/deploy <env>` on a pull request | Yes for `production` and `staging` |
+| `bootstrap-cluster.yml` | Manual dispatch, once per cluster | Yes |
+| `rollback.yml` | Manual dispatch | Yes |
 
-For emergency manual intervention (e.g., when a pipeline is unavailable), the underlying Helm commands are documented in the steps below.
+`e2e-test` is the environment that follows `main` and is tested automatically;
+`staging` is the manual one, where a human puts something to look at before it
+goes near production. Approval is a property of the GitHub Environment, not of
+the workflow — which is why `e2e-test` deliberately has no required reviewers.
+
+The pre-restructure workflows `deploy-production.yml`, `deploy-pr.yml` and
+`deploy-theia.yml` no longer exist.
 
 ## Prerequisites
 

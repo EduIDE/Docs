@@ -11,7 +11,7 @@ that is worth designing for.
 
 ## The loop
 
-```
+```text
 edit in EduIDE  ->  commit and push  ->  Artemis builds and tests  ->  result
        ^                                                                |
        +----------------------------------------------------------------+
