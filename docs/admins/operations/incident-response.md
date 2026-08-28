@@ -371,32 +371,38 @@ kubectl describe certificate <certificate-name> -n eduide-system
 
 **Symptoms:** a `Certificate` sits `Ready=False`, its listener never programs, and there are no `Challenge` resources left to look at.
 
-**Check the order:**
+**Check the order.** The `Certificate`'s own conditions rarely say enough - a `Certificate` owns a `CertificateRequest`, which owns an `Order`, which owns the `Challenge`s, and the real error is usually further down that chain than you started:
 
 ```bash
-kubectl -n eduide-system get certificate <name> \
-  -o jsonpath='{range .status.conditions[*]}{.type}={.status} {.message}{"\n"}{end}'
+kubectl -n eduide-system describe certificate <name>
+kubectl -n eduide-system get certificaterequest,order,challenge
+kubectl -n eduide-system describe order <name>
 ```
 
 Two different situations look the same from outside.
 
 **Finalize failed.** The challenges validated and the CA then failed the final step:
 
-```
+```text
 Failed to finalize Order: 404 urn:ietf:params:acme:error:malformed:
 Certificate not found
 ```
 
-This is transient. cert-manager will retry, but only after an exponential backoff starting at an hour. Clear the backoff to retry now:
+This is transient. cert-manager will retry, but only after an exponential backoff starting at an hour. Clear the backoff to retry now - only once you have read that exact message off the `Order`, since the patch below does nothing for any other cause and just hides how long the certificate has been failing:
 
 ```bash
 kubectl -n eduide-system patch certificate <name> --type=merge --subresource=status \
   -p '{"status":{"lastFailureTime":null,"failedIssuanceAttempts":null}}'
 ```
 
-It normally issues within a minute. Nothing is wrong with the configuration.
+`--subresource` requires kubectl v1.24 or newer; on older clients the flag is silently unavailable and the patch will not apply to status.
 
-**Challenges pending and staying pending.** That is a real fault: the hostname has no listener on the Gateway, or DNS for it does not reach the Gateway's address. A name on a certificate with no listener answers 404 to its HTTP-01 challenge and blocks the whole certificate, including every other name on it.
+It normally issues within a minute. If a cleared retry fails again, it was not transient after all - work back down the chain above, and check the `ClusterIssuer` and the cert-manager controller logs before changing any configuration.
+
+**Challenges pending and staying pending.** That is a real fault, and the error recorded on the `Challenge` distinguishes the two causes:
+
+- **HTTP 404.** Something answered on port 80 but did not route the `/.well-known/acme-challenge/` path. The hostname has no listener on the Gateway, or its listener is on a Gateway the solver route does not attach to. A name on a certificate with no listener blocks the whole certificate, including every other name on it.
+- **DNS failure, connection refused or timeout.** Nothing answered at all: the hostname does not resolve, or it resolves to an address that is not this Gateway. Fix DNS first - no amount of listener configuration helps until the challenge reaches the cluster.
 
 ## Runbook: Storage exhaustion
 
