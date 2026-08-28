@@ -101,7 +101,9 @@ This indicates the session image is unavailable. Verify the image tag in the App
 
 **Symptoms:** Login at Keycloak succeeds, then the session URL returns **403 Forbidden**. Only some users or some sessions are affected. Nothing appears in the operator or service logs, and `status.operatorMessage` on the Session is empty.
 
-**Cause:** the session was assigned a **warm-pool instance**, and a deploy restarted the operator, which recreated those instances and their oauth2-proxy ConfigMaps. Each instance's `authenticated-emails-list` was rebuilt empty. The Session object still points at the instance, but oauth2-proxy denies every authenticated user when that list is empty.
+**Cause:** the session was assigned a **warm-pool instance**, and a deploy changed the AppDefinition's `metadata.generation`. The operator treats the instance's oauth2-proxy ConfigMaps as outdated and recreates them, so each instance's `authenticated-emails-list` is rebuilt empty. The Session object still points at the instance, but oauth2-proxy denies every authenticated user when that list is empty.
+
+A restart of the operator on its own does **not** cause this - it only creates ConfigMaps that are missing. The trigger is the generation change that a helm upgrade produces, which is why it presents as "broken by the last deploy".
 
 **Confirm it:**
 
@@ -121,8 +123,10 @@ kubectl -n <namespace> delete sessions.theia.cloud <session-name>
 
 The user then launches again normally. Their workspace volume is untouched.
 
-:::note Affects every installation
-`eagerStart: true` is the default, so any deploy landing while a user holds a session on a warm instance can cause this. Tracked in EduIDE-Cloud issue 135.
+:::note Fixed in the operator from 2026-08-28
+`eagerStart: true` is the default, so any deploy landing while a user holds a session on a warm instance could cause this. EduIDE-Cloud issue 135 fixed it: the operator now writes the claiming session's user back into the instance's ConfigMap during the same reconcile that recreates it.
+
+Verified on a test environment against a real reproduction: an installation broken by the old operator was **healed within about twenty seconds** of the fixed one starting, with no manual intervention. If you are running an operator from before that date, this runbook still applies and upgrading is the fix.
 :::
 
 ## Runbook: Authentication outage
