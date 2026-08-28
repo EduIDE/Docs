@@ -28,6 +28,18 @@ Three spellings of a git tag existed historically — `1.1.0`, `v1.1.0` and
 this image". A shared CI check now rejects anything that is not `vX.Y.Z`. Old
 tags are not retagged.
 
+:::warning A caller can defeat the `v` stripping
+The shared build workflow derives the image tag with `${RELEASE_TAG#v}`, but an
+`image-tag` **override is used verbatim**. A repository that passes
+`github.event.release.tag_name` as that override therefore publishes `v1.2.0`,
+which no chart can consume, while a tag spelled `1.2.0` produces the right image
+and merely fails the tag-format check.
+
+That combination hides the fault: the spelling that passes CI is the one that
+breaks the images. If a release publishes `v`-prefixed images, this is why.
+Callers should not pass `image-tag` on a release event at all.
+:::
+
 ## Cutting a release
 
 The release train in EduIDE-Helm does it, and defaults to `dry_run: true`.

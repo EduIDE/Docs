@@ -97,6 +97,34 @@ This indicates the session image is unavailable. Verify the image tag in the App
 
 ---
 
+## Runbook: 403 on session launch after a deploy
+
+**Symptoms:** Login at Keycloak succeeds, then the session URL returns **403 Forbidden**. Only some users or some sessions are affected. Nothing appears in the operator or service logs, and `status.operatorMessage` on the Session is empty.
+
+**Cause:** the session was assigned a **warm-pool instance**, and a deploy restarted the operator, which recreated those instances and their oauth2-proxy ConfigMaps. Each instance's `authenticated-emails-list` was rebuilt empty. The Session object still points at the instance, but oauth2-proxy denies every authenticated user when that list is empty.
+
+**Confirm it:**
+
+```bash
+kubectl -n <namespace> get cm -o name | grep -- '-email' | \
+  xargs -n1 kubectl -n <namespace> get -o \
+  jsonpath='{.metadata.name}={.data.authenticated-emails-list}{"\n"}'
+```
+
+An affected instance shows an empty list. A session with its own dedicated pod shows the user's address and works, which is the contrast that identifies this.
+
+**Fix:** delete the orphaned Session so a fresh one is issued.
+
+```bash
+kubectl -n <namespace> delete sessions.theia.cloud <session-name>
+```
+
+The user then launches again normally. Their workspace volume is untouched.
+
+:::note Affects every installation
+`eagerStart: true` is the default, so any deploy landing while a user holds a session on a warm instance can cause this. Tracked in EduIDE-Cloud issue 135.
+:::
+
 ## Runbook: Authentication outage
 
 **Symptoms:** All users are redirected to Keycloak but cannot log in, or receive "Access Denied" after successful login.
@@ -334,6 +362,37 @@ kubectl describe certificate <certificate-name> -n eduide-system
 **Mitigation:** Re-issue the certificate with every hostname the installation serves in its SAN list, then let the listener reload. Envoy Gateway picks up a changed Secret without a Gateway restart, but confirm with step 1 rather than assuming. Adding a hostname to an installation always means widening the certificate as well as adding a listener - the two are separate changes and forgetting the second produces exactly this incident.
 
 ---
+
+## Runbook: Certificate stuck, no challenges outstanding
+
+**Symptoms:** a `Certificate` sits `Ready=False`, its listener never programs, and there are no `Challenge` resources left to look at.
+
+**Check the order:**
+
+```bash
+kubectl -n eduide-system get certificate <name> \
+  -o jsonpath='{range .status.conditions[*]}{.type}={.status} {.message}{"\n"}{end}'
+```
+
+Two different situations look the same from outside.
+
+**Finalize failed.** The challenges validated and the CA then failed the final step:
+
+```
+Failed to finalize Order: 404 urn:ietf:params:acme:error:malformed:
+Certificate not found
+```
+
+This is transient. cert-manager will retry, but only after an exponential backoff starting at an hour. Clear the backoff to retry now:
+
+```bash
+kubectl -n eduide-system patch certificate <name> --type=merge --subresource=status \
+  -p '{"status":{"lastFailureTime":null,"failedIssuanceAttempts":null}}'
+```
+
+It normally issues within a minute. Nothing is wrong with the configuration.
+
+**Challenges pending and staying pending.** That is a real fault: the hostname has no listener on the Gateway, or DNS for it does not reach the Gateway's address. A name on a certificate with no listener answers 404 to its HTTP-01 challenge and blocks the whole certificate, including every other name on it.
 
 ## Runbook: Storage exhaustion
 
