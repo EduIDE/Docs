@@ -97,6 +97,38 @@ This indicates the session image is unavailable. Verify the image tag in the App
 
 ---
 
+## Runbook: 403 on session launch after a deploy
+
+**Symptoms:** Login at Keycloak succeeds, then the session URL returns **403 Forbidden**. Only some users or some sessions are affected. Nothing appears in the operator or service logs, and `status.operatorMessage` on the Session is empty.
+
+**Cause:** the session was assigned a **warm-pool instance**, and a deploy changed the AppDefinition's `metadata.generation`. The operator treats the instance's oauth2-proxy ConfigMaps as outdated and recreates them, so each instance's `authenticated-emails-list` is rebuilt empty. The Session object still points at the instance, but oauth2-proxy denies every authenticated user when that list is empty.
+
+A restart of the operator on its own does **not** cause this - it only creates ConfigMaps that are missing. The trigger is the generation change that a helm upgrade produces, which is why it presents as "broken by the last deploy".
+
+**Confirm it:**
+
+```bash
+kubectl -n <namespace> get cm -o name | grep -- '-email' | \
+  xargs -n1 kubectl -n <namespace> get -o \
+  jsonpath='{.metadata.name}={.data.authenticated-emails-list}{"\n"}'
+```
+
+An affected instance shows an empty list. A session with its own dedicated pod shows the user's address and works, which is the contrast that identifies this.
+
+**Fix:** delete the orphaned Session so a fresh one is issued.
+
+```bash
+kubectl -n <namespace> delete sessions.theia.cloud <session-name>
+```
+
+The user then launches again normally. Their workspace volume is untouched.
+
+:::note Fixed in the operator from 2026-08-28
+`eagerStart: true` is the default, so any deploy landing while a user holds a session on a warm instance could cause this. EduIDE-Cloud issue 135 fixed it: the operator now writes the claiming session's user back into the instance's ConfigMap during the same reconcile that recreates it.
+
+Verified on a test environment against a real reproduction: an installation broken by the old operator was **healed within about twenty seconds** of the fixed one starting, with no manual intervention. If you are running an operator from before that date, this runbook still applies and upgrading is the fix.
+:::
+
 ## Runbook: Authentication outage
 
 **Symptoms:** All users are redirected to Keycloak but cannot log in, or receive "Access Denied" after successful login.
@@ -334,6 +366,43 @@ kubectl describe certificate <certificate-name> -n eduide-system
 **Mitigation:** Re-issue the certificate with every hostname the installation serves in its SAN list, then let the listener reload. Envoy Gateway picks up a changed Secret without a Gateway restart, but confirm with step 1 rather than assuming. Adding a hostname to an installation always means widening the certificate as well as adding a listener - the two are separate changes and forgetting the second produces exactly this incident.
 
 ---
+
+## Runbook: Certificate stuck, no challenges outstanding
+
+**Symptoms:** a `Certificate` sits `Ready=False`, its listener never programs, and there are no `Challenge` resources left to look at.
+
+**Check the order.** The `Certificate`'s own conditions rarely say enough - a `Certificate` owns a `CertificateRequest`, which owns an `Order`, which owns the `Challenge`s, and the real error is usually further down that chain than you started:
+
+```bash
+kubectl -n eduide-system describe certificate <name>
+kubectl -n eduide-system get certificaterequest,order,challenge
+kubectl -n eduide-system describe order <name>
+```
+
+Two different situations look the same from outside.
+
+**Finalize failed.** The challenges validated and the CA then failed the final step:
+
+```text
+Failed to finalize Order: 404 urn:ietf:params:acme:error:malformed:
+Certificate not found
+```
+
+This is transient. cert-manager will retry, but only after an exponential backoff starting at an hour. Clear the backoff to retry now - only once you have read that exact message off the `Order`, since the patch below does nothing for any other cause and just hides how long the certificate has been failing:
+
+```bash
+kubectl -n eduide-system patch certificate <name> --type=merge --subresource=status \
+  -p '{"status":{"lastFailureTime":null,"failedIssuanceAttempts":null}}'
+```
+
+`--subresource` requires kubectl v1.24 or newer; on older clients the flag is silently unavailable and the patch will not apply to status.
+
+It normally issues within a minute. If a cleared retry fails again, it was not transient after all - work back down the chain above, and check the `ClusterIssuer` and the cert-manager controller logs before changing any configuration.
+
+**Challenges pending and staying pending.** That is a real fault, and the error recorded on the `Challenge` distinguishes the two causes:
+
+- **HTTP 404.** Something answered on port 80 but did not route the `/.well-known/acme-challenge/` path. The hostname has no listener on the Gateway, or its listener is on a Gateway the solver route does not attach to. A name on a certificate with no listener blocks the whole certificate, including every other name on it.
+- **DNS failure, connection refused or timeout.** Nothing answered at all: the hostname does not resolve, or it resolves to an address that is not this Gateway. Fix DNS first - no amount of listener configuration helps until the challenge reaches the cluster.
 
 ## Runbook: Storage exhaustion
 
