@@ -78,6 +78,32 @@ installation on the cluster at once. **A release that changes a stored CRD
 version cannot be undone by rolling back the tenant chart** — see
 [Rollback](rollback.md).
 
+## What visitors see during an upgrade
+
+From chart 2.4.0, the landing page never shows Envoy's raw
+`no healthy upstream`. While it has no ready pod, Envoy answers with a static
+page instead: "EduIDE is currently unavailable", with a German line below and a
+reload every 30 seconds. The status code stays 503. It needs Envoy Gateway;
+set `maintenancePage.enabled: false` if you route with something else.
+
+An upgrade rarely gets that far. The landing page and REST service start a new
+pod before stopping an old one and drain for 10 seconds before shutting down.
+With `landingPage.replicas` and `service.replicas` at 2 they also survive a
+node going away, with a PodDisruptionBudget each. On a single-node cluster set
+`podDisruptionBudget.enabled: false`, or every `kubectl drain` hangs.
+
+To show the page on purpose, for maintenance that takes longer than an upgrade,
+scale the landing page to 0 and back:
+
+```bash
+kubectl -n <namespace> scale deploy/landing-page-deployment --replicas=0
+kubectl -n <namespace> scale deploy/landing-page-deployment --replicas=<your landingPage.replicas>
+```
+
+The next `helm upgrade` also brings it back. Only the landing page shows the
+page: the REST service and running sessions keep their own errors, and students
+already in an IDE keep working.
+
 ## After
 
 - All four Deployments Ready, no pod in `ImagePullBackOff`.
