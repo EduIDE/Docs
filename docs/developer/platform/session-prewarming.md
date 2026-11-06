@@ -116,7 +116,7 @@ options:
   dataBridgePort: "16281"
 ```
 
-The bridge runs in the Theia plugin host, which starts only when a browser connects to the session. The operator therefore polls `/health` every two seconds for up to 30 minutes, so a student who opens the claimed session late still gets the values. Once the bridge answers, the operator sends the collected session environment through `POST /data`. It retries a failed POST up to five times and stops as soon as the session is deleted. The payload also carries `THEIACLOUD_SESSION_SECRET`, because a prewarmed pod starts before its session exists and the session monitor needs that secret to answer the operator's activity polls.
+The bridge runs in the Theia plugin host, which starts only when a browser connects to the session. The operator therefore polls `/health` every two seconds for up to 30 minutes, so a student who opens the claimed session late still gets the values. A session first opened after that gets none. Once the bridge answers, the operator sends the collected session environment through `POST /data`. It retries a failed POST up to five times and stops as soon as the session is deleted. The payload also carries `THEIACLOUD_SESSION_SECRET`, because a prewarmed pod starts before its session exists and the session monitor needs that secret to answer the operator's activity polls.
 
 The bridge stores the values in memory and in VS Code secret storage under its internal data bridge key.
 
@@ -124,7 +124,7 @@ The bridge stores the values in memory and in VS Code secret storage under its i
 
 Each browser connection gets its own plugin host, and with it its own data bridge. Only the first one binds the bridge port and receives the `POST`. From data bridge v0.0.16, `dataBridge.getEnv` reads the shared secret storage again when a key is missing, so a second window gets the injected values too.
 
-That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory, taken over after 10 minutes), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. Both fixes reach the sessions with the first EduIDE release after 1.4.0, which bundles data bridge v0.0.17 and Scorpio 2.1.1.
+That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory; a lock older than 10 minutes counts as abandoned, so a clone that runs longer can be started a second time), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. Both fixes reach the sessions with the first EduIDE release after 1.4.0, which bundles data bridge v0.0.17 and Scorpio 2.1.1.
 
 ## Adjusting Injected Values
 
@@ -144,7 +144,7 @@ To add or change runtime values, adjust the component that creates sessions so i
 - `GIT_MAIL`
 - `TEMPLATE`
 
-The operator filters all three before it injects anything, on both the lazy and the eager path. `envVarsFromSecrets` and `envVarsFromConfigMaps` are honoured only for names the administrator lists in `operator.allowedEnvFromSecrets` and `operator.allowedEnvFromConfigMaps`; both lists are empty by default. Reserved names are always removed from `envVars`: the prefixes `THEIACLOUD_`, `KEYCLOAK_`, `BUILD_CACHE_`, `DEPENDENCY_CACHE_`, `DATA_BRIDGE_` and `SIDECAR_`, and `LD_PRELOAD`, `LD_LIBRARY_PATH`, `NODE_OPTIONS`, `BAZEL_BUILD_CACHE_URL` and `SCORPIO_THEIA_ENV_STRATEGY`. A new key of yours must not use these. See [Session Hardening](/admins/security/session-hardening#environment-injection-allowlist).
+The operator filters all three before it injects anything, on both the lazy and the eager path. `envVarsFromSecrets` and `envVarsFromConfigMaps` are honoured only for names the administrator lists in `operator.allowedEnvFromSecrets` and `operator.allowedEnvFromConfigMaps`; both lists are empty by default. Reserved names are always removed from `envVars`: the prefixes `THEIACLOUD_`, `KEYCLOAK_`, `BUILD_CACHE_`, `DEPENDENCY_CACHE_`, `DATA_BRIDGE_` and `SIDECAR_`, and `LD_PRELOAD`, `LD_LIBRARY_PATH`, `NODE_OPTIONS`, `BAZEL_BUILD_CACHE_URL` and `SCORPIO_THEIA_ENV_STRATEGY`. A new key of yours must not use these. With `operator.allowCustomEnvFromMap: false` the operator drops all of `envVars`, including the Artemis values. See [Session Hardening](/admins/security/session-hardening#environment-injection-allowlist).
 
 For secrets, `envVarsFromSecrets` keeps sensitive values in Kubernetes `Secret` objects until injection, once the Secret is on the allowlist. The operator decodes secret data and sends the plain string values to the bridge. Do not add long-lived credentials to app definition options; options are app-level configuration and are not the per-session personalization channel.
 
@@ -179,9 +179,9 @@ For a new extension, follow the same pattern: keep a legacy source if local deve
 
 Prewarming trades latency for reserved cluster resources. A large `minInstances` can consume CPU, memory, PVCs, services, route capacity, and sidecar resources even while no users are active.
 
-Data injection is asynchronous. The session can be marked handled while bridge injection is still being attempted, so extensions that require injected values during activation must poll or otherwise wait for the bridge values.
+Data injection is asynchronous. The session can be marked handled while bridge injection is still being attempted, so extensions that require injected values during activation must poll or otherwise wait for the bridge values. Scorpio waits 10 seconds after activation. If the values arrive later, it uses the process environment, which has no `GIT_URI` on a prewarmed pod, and does not clone.
 
-The data bridge listens on `0.0.0.0` and does not authenticate `POST /data`. With the chart's NetworkPolicies on (the default from chart 2.5.1), only the operator may connect to the bridge port. Keep them on, never expose the bridge through public routes, and do not log injected values.
+The data bridge listens on `0.0.0.0` and does not authenticate `POST /data`. With the chart's NetworkPolicies on (the default from chart 2.5.1) and a CNI that enforces them, only the operator may connect to the bridge port from outside the pod. Processes inside the session pod, including the student's own code, can still reach it on localhost. Keep them on, never expose the bridge through public routes, and do not log injected values.
 
 The current bridge payload is environment-key oriented. It is suitable for small runtime configuration and credentials, not for large files or complex state synchronization.
 

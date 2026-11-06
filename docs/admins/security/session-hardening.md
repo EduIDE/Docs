@@ -35,13 +35,19 @@ therefore bind it to `127.0.0.1:3000`. Only the oauth2-proxy sidecar in the same
 pod reaches it; the gateway reaches the proxy on port 5000, which forces the
 Keycloak login.
 
+Loopback is shared by every container in the pod, so any sidecar you add to a
+session pod can reach Theia without the login. Only add containers you trust as
+much as the IDE itself.
+
 Installations without oauth2-proxy (`keycloak.allowUnauthenticated: true`) keep
 working: from EduIDE-Cloud 1.2.1 the operator's template for that case binds
 Theia to the pod IP instead.
 
 This change ships in the IDE images, not in the chart. Chart 2.6.2 still pins
 EduIDE 1.4.0, whose images listen on all interfaces, so until the next EduIDE
-release the NetworkPolicies below are the only barrier.
+release the NetworkPolicies below are the only barrier. They still let every
+pod in the gateway namespace reach port 3000, so with 1.4.0 images such a pod
+reaches Theia without the login. Run nothing but the gateway in that namespace.
 
 ## NetworkPolicies
 
@@ -49,11 +55,15 @@ release the NetworkPolicies below are the only barrier.
 session pods by their `app.kubernetes.io/component=session` label. They do
 nothing unless your CNI enforces NetworkPolicies, so check that first.
 
+NetworkPolicies only add allowances. If another policy in the namespace already
+selects session pods and allows more, for example egress to private ranges, the
+chart cannot take that away. Review every policy that selects session pods.
+
 | Policy | Effect |
 |---|---|
 | `session-default-deny` | No ingress, no egress, unless another policy allows it |
 | `session-allow-dns` | DNS to `networkPolicies.dnsNamespace` (default `kube-system`) |
-| `session-allow-gateway-ingress` | Ingress on `networkPolicies.sessionPorts` (3000, 5000) from `networkPolicies.gatewayNamespace` (default `envoy-gateway-system`) |
+| `session-allow-gateway-ingress` | Ingress on `networkPolicies.sessionPorts` (3000, 5000) from `networkPolicies.gatewayNamespace`, the namespace of the gateway's proxy pods (default `envoy-gateway-system`). This is not necessarily the namespace of the Gateway resource |
 | `session-allow-operator` | Ingress from the operator on the data bridge port (`networkPolicies.dataBridgePort`, 16281) and the monitor port (`networkPolicies.monitorPort`, 8081) |
 | `session-allow-external-egress` | Egress to the internet, except the metadata endpoint (`networkPolicies.metadataCidr`, `169.254.169.254/32`) and `networkPolicies.privateEgressCidrs` |
 | `session-allow-sidecars` | Egress to language server sidecars in the namespace |
@@ -98,9 +108,12 @@ Check after an upgrade:
 ```bash
 kubectl -n <namespace> get networkpolicy
 kubectl -n <namespace> get pods -l app.kubernetes.io/component=session
+kubectl -n <namespace> get pods
 ```
 
-The second command must list every session pod, including the warm pool.
+Compare the last two lists. Every IDE pod, including the warm pool, must appear
+in both. A pod of a session claimed before the upgrade is missing from the
+filtered list and stays unprotected until that session ends.
 
 ### The data bridge port must match
 
@@ -127,7 +140,12 @@ namespace into its session, including the platform's own.
 | `env.fromMap` | always, unless switched off | `operator.allowCustomEnvFromMap` (default `true`) |
 
 The Artemis flow passes its values through `fromMap`, so the defaults work for
-it. List a Secret or ConfigMap only if a launch path of yours really needs it.
+it. Setting `allowCustomEnvFromMap: false` drops those values too, and Artemis
+sessions start without a repository.
+
+The allowlists apply to every caller that can launch a session. Any of them can
+request a listed Secret and read its values inside their session, so list only
+Secrets and ConfigMaps that are safe to hand to all of them.
 
 Reserved names are always dropped from `fromMap`, whatever the flag says: the
 prefixes `THEIACLOUD_`, `KEYCLOAK_`, `BUILD_CACHE_`, `DEPENDENCY_CACHE_`,
@@ -250,7 +268,10 @@ From the first EduIDE release after 1.4.0:
 
 - **The data bridge does not authenticate `POST /data`.** Only
   `session-allow-operator` keeps other pods from injecting values into a
-  session. Keep NetworkPolicies on.
+  session, and only if your CNI enforces it. Processes inside the session pod,
+  including the student's own code, can still reach the bridge on localhost.
+  Keep NetworkPolicies on and keep `dataBridgePort` out of
+  `networkPolicies.sessionPorts`.
 - **A token inside `gitUri` ends up in the clone's `.git/config`**, because
   pushing from the IDE needs it.
 - The controls above are about sessions. The operator, service and landing page

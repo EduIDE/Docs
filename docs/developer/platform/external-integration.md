@@ -89,7 +89,7 @@ The response is a plain-string session URL.
 
 ### Behaviors
 
-- Workspace reuse: pass a stable `workspaceName` to attach to an existing persistent workspace, which preserves files. Omit it, with `ephemeral: false`, and each call creates a new persistent volume and a fresh clone, with a name like `ws-<appDef>-<user>-<uuid>`. The landing page derives a deterministic name (`ws-<app>-<repo>-<user>-<hash>`); from landing page 1.3.0 the hash covers the full user, the full app key and `gitUri`, because the readable segments are cut at 12 characters. Integrators who want persistence should compute a stable name too.
+- Workspace reuse: pass a stable `workspaceName` to attach to an existing persistent workspace, which preserves files. Omit it, with `ephemeral: false`, and each call creates a new persistent volume and a fresh clone, with a name like `ws-<appDef>-<user>-<uuid>`. The landing page derives a deterministic name (`ws-<app>-<repo>-<user>-<hash>`); from landing page 1.3.0 the hash covers the full user, the full app key and `gitUri`, because the readable segments are cut at 12 characters. Integrators who want persistence should compute a stable name too. Because the name changed with 1.3.0, a repository link opens a new workspace after that upgrade; see [Upgrades](/admins/maintenance/upgrades#behaviour-that-changes-unless-you-set-something).
 - Ephemeral plus sidecars: `ephemeral: true` is rejected with HTTP 400 when the app definition has workspace-mounting sidecars. Use a workspace-backed launch there.
 - Blocking: `POST /service` blocks until the operator reports the session URL, up to `timeout`, which defaults to 3 minutes, then returns the URL string. Set the client HTTP timeout above 3 minutes.
 - `env.fromMap` versus `fromConfigMaps` and `fromSecrets`: `fromConfigMaps` and `fromSecrets` reference names of pre-existing in-cluster Kubernetes ConfigMaps and Secrets. External callers outside the cluster pass values directly via `fromMap`.
@@ -106,15 +106,17 @@ The launch values travel from the request to the running IDE container over one 
 
 Either way, the extensions in the session image read the values: Scorpio configures git and clones `GIT_URI`, and the Artemis extension signs in to Artemis. On both paths the operator applies the allowlist first.
 
-See [Prewarming Architecture](./session-prewarming) for the data-bridge details and [Platform Architecture](./architecture) for the surrounding design. For sensitive values use `envVarsFromSecrets`, with the Secret on the operator allowlist.
+See [Prewarming Architecture](./session-prewarming) for the data-bridge details and [Platform Architecture](./architecture) for the surrounding design. For sensitive values, reference a Secret with `env.fromSecrets` in the launch request (it becomes `envVarsFromSecrets` on the `Session`), with the Secret on the operator allowlist. The allowlist applies to every caller, so list only Secrets every caller may read.
+
+On the eager path, consumers such as Scorpio wait about 10 seconds after they start for the bridge values. If injection arrives later, they fall back to the process environment, and the session opens without a clone; see [Prewarming Architecture](./session-prewarming#known-shortcomings).
 
 ## Git authentication for cloning
 
-There is no separate git-token parameter or `GIT_TOKEN` env var. Scorpio clones `GIT_URI` exactly as provided and does not add any credential. For a private repository the credential must therefore be embedded in the `gitUri` / `GIT_URI` value itself, for example `https://<user>:<token>@host/org/repo.git`. A plain `gitUri` without embedded credentials only clones a public repository. The embedded credential stays in the clone's `.git/config`, because pushing from the IDE needs it.
+There is no separate git-token parameter or `GIT_TOKEN` env var. Scorpio clones `GIT_URI` exactly as provided and does not add any credential. For a private repository the credential must therefore be embedded in the `gitUri` / `GIT_URI` value itself, for example `https://<user>:<token>@host/org/repo.git`. A plain `gitUri` without embedded credentials only clones a public repository. Percent-encode the user and token inside the repository URL, then encode the whole URL again as the `gitUri` query value, or a `+` in a token turns into a space. The embedded credential stays in the clone's `.git/config`, because pushing from the IDE needs it.
 
 Scorpio no longer talks to Artemis itself and does not use `ARTEMIS_TOKEN`. It writes `ARTEMIS_URL` into the `artemis.apiBaseUrl` setting; signing in to Artemis and submitting are the job of the Artemis extension bundled in the IDE images.
 
-Because `gitUri` can carry credentials, treat it as sensitive. It appears in the landing-page URL and in the launch request. From landing page 1.3.0, nginx logs the path without the query string, so it stays out of the access log.
+Because `gitUri` can carry credentials, treat it as sensitive. It appears in the landing-page URL and in the launch request. From landing page 1.3.0, the landing page's nginx logs the path without the query string. Proxies and load balancers in front of it log the full URL unless you configure them not to.
 
 ## Authentication
 

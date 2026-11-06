@@ -200,7 +200,9 @@ options:
 The landing page lists every app whose entry has a `landingPage` block, unless
 that block says `visible: false`. A hidden app still exists in the cluster and
 can be started by a link with `?appDef=`, `gitUri` and `artemisToken`, which is useful for
-staging a new environment before students see it.
+staging a new environment before students see it. Such a link carries the
+user's Artemis token, so treat it like a password: do not paste it into tickets
+or chat.
 
 ```yaml
 appDefinitions:

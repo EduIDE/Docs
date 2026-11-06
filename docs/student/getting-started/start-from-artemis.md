@@ -31,8 +31,12 @@ Usually the IDE starts on its own. Some installations first show a page that
 names where your exercise comes from, for example "This link opens a repository
 from artemis.example.edu", with a **Launch** button below.
 
-Check that the name is your university's Artemis, then click **Launch**. If you
-do not recognise the name, do not click, and ask your tutor.
+Check that the name is a server your course uses, usually your university's
+Artemis, then click **Launch**. If you do not recognise the name, do not click,
+and ask your tutor.
+
+Some installations without a university login ask you to confirm a user name
+first. Check that it is yours before you continue.
 
 ## 5) Use one browser tab
 

@@ -218,7 +218,7 @@ The browser redirects continuously between the application and Keycloak.
 Causes and fixes:
 - **Incorrect redirect URI** — verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
 - **Cookie secret mismatch** — confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
-- **HTTP/HTTPS mismatch** - all redirect URIs and the environment URL must use HTTPS. An installation served over plain HTTP also needs `oauth2Proxy.cookieSecure: false`
+- **HTTP/HTTPS mismatch** - the redirect URIs and the environment URL must use the scheme the installation is served on, which is HTTPS for every normal installation. An installation served over plain HTTP uses `http://` throughout and also needs `oauth2Proxy.cookieSecure: false`
 
 ### "Invalid client" error in Keycloak
 

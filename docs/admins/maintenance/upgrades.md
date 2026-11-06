@@ -139,7 +139,7 @@ you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
 - **Artemis links wait for a click.** A link with `gitUri` and `artemisToken`
   starts the IDE by itself only when both hosts are in
   `landingPage.trustedArtemisHosts`, which is empty by default. List your
-  Artemis host there.
+  Artemis host there, and your git server's host if it differs.
 - **Sentry on the landing page stops.** It no longer has a built-in endpoint.
   With `landingPage.sentry.enable: true`, also set `landingPage.sentry.dsn`, or
   it stays off.
@@ -176,8 +176,10 @@ you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
   other namespaces, set `operator.clusterWideRbac: true`.
 - **The monitor port is 8081.** `appDefinitions.defaults.monitor.port` and
   `networkPolicies.monitorPort` both default to it. If you set a different
-  monitor port on an app, the chart opens it too; keep
-  `networkPolicies.monitorPort` matching the default.
+  monitor port on an app in `appDefinitions.apps`, the chart opens it too;
+  keep `networkPolicies.monitorPort` matching the default. An AppDefinition
+  created outside the chart with another monitor port needs its own
+  NetworkPolicy allowing the operator in on that port.
 - **Two secrets moved.** `SERVICE_AUTH_TOKEN` and `KEYCLOAK_CLIENTSECRET` are in
   the `service-config-secret` Secret now, not in the `service-config` ConfigMap.
   Update any tooling of your own that read them from there.
@@ -200,8 +202,9 @@ you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
 Every chart up to 2.6.2 still pins the IDE images to EduIDE 1.4.0. The IDE-side
 changes (Theia on loopback, no scanoss, the data bridge and Scorpio fixes, the
 session monitor) arrive with the next EduIDE release. That release no longer
-publishes the `rust`, `ocaml` and `haskell` images, so remove `rust-latest` and
-`ocaml-latest` from your app definitions before you move to it, see
+publishes the `rust`, `ocaml` and `haskell` images, so remove `rust-latest`,
+`ocaml-latest` and any app of your own that uses `eduide/haskell` before you
+move to it, see
 [App Definitions](../platform/app-definitions.md).
 
 Until the IDE images carry the session monitor, every activity poll fails, and

@@ -105,9 +105,11 @@ landingPage:
     - artemis.example.edu
 ```
 
-Session pods are isolated by NetworkPolicies from the start. If your gateway does
-not run in `envoy-gateway-system`, set `networkPolicies.gatewayNamespace`, or no
-request reaches a session. See [Session Hardening](../security/session-hardening.md).
+Session pods are isolated by NetworkPolicies from the start. Set
+`networkPolicies.gatewayNamespace` to the namespace where the gateway's **proxy
+pods** run, which is `envoy-gateway-system` for Envoy Gateway even though the
+Gateway resource above is in `eduide-system`. A wrong value blocks every request
+to every session. See [Session Hardening](../security/session-hardening.md).
 
 Secrets go in a second values file, never on the command line: the Keycloak
 cookie secret (`keycloak.cookieSecret`, required, unique per installation) and

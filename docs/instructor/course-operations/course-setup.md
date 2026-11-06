@@ -30,8 +30,9 @@ language image. Some are plain, an empty workspace with the toolchain
 installed, and some ship starter templates with a build-system choice, such as
 Maven or Gradle for Java, Make or Bazel for C.
 
-Images exist for Java 17, Java 25, C, JavaScript and Python. Rust, OCaml and
-Haskell are no longer offered.
+Current releases publish images for Java 17, Java 25, C, JavaScript and
+Python. New releases no longer publish Rust, OCaml and Haskell images, so do not
+plan a course on them even if an installation still offers an older one.
 
 Ask the platform team which are enabled for your installation. The list differs
 between installations, and building an image does not automatically make it
@@ -59,9 +60,9 @@ branch, a session that timed out overnight. Decide in advance who they ask.
   languages you need are offered.
 - Run through one exercise end to end yourself. If the IDE does not open by
   itself after you click **Open online IDE** in Artemis, but shows a
-  **Launch** button, your Artemis server is not on the installation's list of
-  trusted hosts. Students can still click **Launch**; ask the platform team to
-  add the host so they do not have to.
+  **Launch** button, your Artemis server or the server hosting the exercise
+  repositories is not on the installation's list of trusted hosts. Students can
+  still click **Launch**; ask the platform team to check both hosts.
 - Tell students that the first start is slow and the second is not, so they do
   not all reload in the first minute and make it worse.
 - Read [Limitations](../limitations/honest-limitations.md), and set expectations

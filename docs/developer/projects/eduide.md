@@ -37,7 +37,7 @@ EduIDE 1.4.0 still bundles data bridge v0.0.14, Scorpio 2.0.0 and Artemis extens
 
 ## Security
 
-- **Loopback only.** The Theia server has no authentication of its own, so every image binds it to `127.0.0.1:3000`. Only the oauth2-proxy sidecar in the same pod reaches it ([#195](https://github.com/EduIDE/EduIDE/pull/195)). `docker-compose.images.yml` binds to `0.0.0.0` for local testing only; never carry that into Kubernetes.
+- **Loopback only.** The Theia server has no authentication of its own, so every image binds it to `127.0.0.1:3000`. Only containers in the same pod reach it, which in a normal session means the oauth2-proxy sidecar ([#195](https://github.com/EduIDE/EduIDE/pull/195)). Any other container added to the pod bypasses the login. `docker-compose.images.yml` binds to `0.0.0.0` for local testing only; never carry that into Kubernetes.
 - **No SCANOSS.** `@theia/scanoss`, which sent hashes of code snippets to scanoss.com, is removed ([#206](https://github.com/EduIDE/EduIDE/pull/206)).
 - **Insecure host warning.** Theia's warning about a potentially insecure webview host pattern is on again.
 
