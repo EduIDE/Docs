@@ -58,6 +58,28 @@ The editing experience can be prepared in advance through settings, extensions, 
 
 Run and debug profiles can be prepared for the course ahead of time. This is especially useful when exercises have a standard execution flow that students should not have to configure from scratch.
 
+### Experience Levels
+
+EduIDE can show students more or less of the IDE. There are three levels:
+
+| Level | What students see |
+|---|---|
+| **Beginner** | Explorer, Search, the Artemis view and Problems. One labelled **Run** button, a short menu bar, no debugger |
+| **Advanced** | Adds source control, tests, the build tool, the output panel and the terminal. Still no debugger |
+| **Expert** | The full IDE, including the debugger and the full task list |
+
+Students can switch level at any time from the status bar or the **Experience Levels** menu, without reloading.
+
+An exercise can choose the level students start at. Put a file named `.vscode/eduide.json` into the exercise template:
+
+```json
+{ "level": "beginner" }
+```
+
+The file sets the starting level only. Once a student picks a level themselves, their choice wins over the file. The choice is stored in the session, so a new session without a persistent home directory starts from the file again. The file cannot lock students to a level.
+
+Without the file, students start at **Expert** from EduIDE 1.5.0. EduIDE 1.4.0 itself starts them at **Beginner**. Older versions have no experience levels at all. Ask the platform team which version your installation runs.
+
 ### Course-Specific Defaults
 
 The environment can be shaped so that the default behavior already matches course expectations rather than requiring every student to adapt the IDE manually.

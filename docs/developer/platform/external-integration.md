@@ -40,13 +40,14 @@ The landing-page README also lists a `gitToken` parameter, but the current landi
 
 ### Auto-start conditions
 
-A session launches automatically, with no button click, only when all of these hold. Otherwise the user must click launch manually.
+A session launches automatically, with no button click, only when all of these hold. Otherwise the user must click **Launch**.
 
 1. `appDef`, `gitUri`, and `artemisToken` are all present. `appDef` plus `gitUri` alone does not auto-start.
-2. `appDef` is a registered, whitelisted app definition in the landing page config. An unregistered value shows an error and aborts.
-3. If Keycloak is enabled, the user must already be authenticated. Otherwise SSO login happens first.
+2. `appDef` is a registered, whitelisted app definition in the landing page config. An unregistered value shows an error and aborts, and the default app does not start in its place.
+3. The hosts of both `gitUri` and `artemisUrl` are in the installation's `landingPage.trustedArtemisHosts` (landing page 1.3.0, chart 2.5.1). Anyone can write such a link, so a token in it proves nothing. For any other host the page shows which host the repository comes from and waits for **Launch**. The list is empty by default.
+4. If Keycloak is enabled, the user must already be authenticated. Otherwise SSO login happens first. Without Keycloak, a `user` parameter is shown for confirmation before it is used.
 
-On success the browser is redirected to the returned session URL.
+On success the browser is redirected to the returned session URL. The landing page refreshes the login token before each launch and retries only on `502`, `503`, `504` and timeouts, after a random wait of 3 to 10 seconds. The gateway ends a request after 60 seconds while the session keeps starting, so a later request picks up the running session.
 
 ## Path B - Direct REST call to `POST /service`
 
@@ -88,10 +89,12 @@ The response is a plain-string session URL.
 
 ### Behaviors
 
-- Workspace reuse: pass a stable `workspaceName` to attach to an existing persistent workspace, which preserves files. Omit it, with `ephemeral: false`, and each call creates a new persistent volume and a fresh clone, with a name like `ws-<appDef>-<user>-<uuid>`. The landing page derives a deterministic name (`ws-<app>-<repo>-<user>-<hash>`), so integrators who want persistence should compute a stable name too.
+- Workspace reuse: pass a stable `workspaceName` to attach to an existing persistent workspace, which preserves files. Use one name per user and repository: if the workspace's `origin` does not match `GIT_URI`, Scorpio clears it before cloning, which deletes unpushed files. Omit it, with `ephemeral: false`, and each call creates a new persistent volume and a fresh clone, with a name like `ws-<appDef>-<user>-<uuid>`. The landing page derives a deterministic name (`ws-<app>-<repo>-<user>-<hash>`); from landing page 1.3.0 the hash covers the full user, the full app key and `gitUri`, because the readable segments are cut at 12 characters. Integrators who want persistence should compute a stable name too. Because the name changed with 1.3.0, a repository link opens a new workspace after that upgrade; see [Upgrades](/admins/maintenance/upgrades#behaviour-that-changes-unless-you-set-something).
 - Ephemeral plus sidecars: `ephemeral: true` is rejected with HTTP 400 when the app definition has workspace-mounting sidecars. Use a workspace-backed launch there.
 - Blocking: `POST /service` blocks until the operator reports the session URL, up to `timeout`, which defaults to 3 minutes, then returns the URL string. Set the client HTTP timeout above 3 minutes.
 - `env.fromMap` versus `fromConfigMaps` and `fromSecrets`: `fromConfigMaps` and `fromSecrets` reference names of pre-existing in-cluster Kubernetes ConfigMaps and Secrets. External callers outside the cluster pass values directly via `fromMap`.
+- Allowlist: from EduIDE-Cloud 1.2.1 the operator honours `fromSecrets` and `fromConfigMaps` only for names the administrator lists (`operator.allowedEnvFromSecrets`, `operator.allowedEnvFromConfigMaps`, both empty by default) and always drops reserved names from `fromMap`, such as anything starting with `THEIACLOUD_`, `KEYCLOAK_` or `DATA_BRIDGE_`. Dropped values are logged, not reported back to the caller. The full list is in [Session Hardening](/admins/security/session-hardening#environment-injection-allowlist).
+- Ownership: from EduIDE-Cloud 1.2.1 a `workspaceName` that belongs to another user returns HTTP 403. Derive names from the user so they cannot collide.
 
 ## How the values reach the IDE
 
@@ -101,21 +104,22 @@ The launch values travel from the request to the running IDE container over one 
 - Lazy path: the operator writes the vars directly into the IDE container's environment in the pod spec.
 - Eager, prewarmed path: the deployment already exists, so the operator pushes the values asynchronously over HTTP (`POST /data`) to the in-container data-bridge extension.
 
-Either way, the session image (Scorpio) reads the values to configure git, authenticate with Artemis, and clone `GIT_URI`.
+Either way, the extensions in the session image read the values: Scorpio configures git and clones `GIT_URI`, and the Artemis extension signs in to Artemis. On both paths the operator applies the allowlist first.
 
-See [Prewarming Architecture](./session-prewarming) for the data-bridge details and [Platform Architecture](./architecture) for the surrounding design. Recommend `envVarsFromSecrets` for sensitive values.
+See [Prewarming Architecture](./session-prewarming) for the data-bridge details and [Platform Architecture](./architecture) for the surrounding design. For sensitive values, reference a Secret with `env.fromSecrets` in the launch request (it becomes `envVarsFromSecrets` on the `Session`), with the Secret on the operator allowlist. The allowlist applies to every caller, so list only Secrets every caller may read.
+
+On the eager path, consumers such as Scorpio wait about 10 seconds after they start for the bridge values. If injection arrives later, they fall back to the process environment, and the session opens without a clone; see [Prewarming Architecture](./session-prewarming#known-shortcomings).
 
 ## Git authentication for cloning
 
-The session image (Scorpio) obtains the git credential at runtime. There is no separate git-token parameter or `GIT_TOKEN` env var. Two cases apply:
+There is no separate git-token parameter or `GIT_TOKEN` env var. Scorpio clones `GIT_URI` exactly as provided and does not add any credential. For a private repository the credential must therefore be embedded in the `gitUri` / `GIT_URI` value itself, for example `https://<user>:<token>@host/org/repo.git`. A plain `gitUri` without embedded credentials only clones a public repository. Percent-encode the user and token inside the repository URL, then encode the whole URL again as the `gitUri` query value, or a `+` in a token turns into a space. The embedded credential stays in the clone's `.git/config`, because pushing from the IDE needs it.
 
-- Auto-clone on session start: Scorpio clones `GIT_URI` exactly as provided and does not add any credential. For a private repository the credential must therefore be embedded in the `gitUri` / `GIT_URI` value itself, for example `https://<user>:<token>@host/org/repo.git`. A plain `gitUri` without embedded credentials only clones a public repository on this path.
-- Interactive clone: when the user triggers a clone from the Artemis participation, Scorpio authenticates to Artemis with `ARTEMIS_TOKEN`, mints a short-lived participation VCS access token, and injects it into the clone URL.
+Scorpio no longer talks to Artemis itself and does not use `ARTEMIS_TOKEN`. It writes `ARTEMIS_URL` into the `artemis.apiBaseUrl` setting; signing in to Artemis and submitting are the job of the Artemis extension bundled in the IDE images.
 
-Because `gitUri` can carry credentials, treat it as sensitive. It appears in the landing-page URL and in the launch request.
+Because `gitUri` can carry credentials, treat it as sensitive. It appears in the landing-page URL and in the launch request. From landing page 1.3.0, the landing page's nginx logs the path without the query string. Proxies and load balancers in front of it log the full URL unless you configure them not to.
 
 ## Authentication
 
 - `appId` in the body must equal the server's service auth token. Otherwise the service returns HTTP 470 (invalid app id).
 - Keycloak enabled: send `Authorization: Bearer <jwt>`. If `user` is omitted it defaults to the JWT `email`. If supplied it must match the token email, otherwise the service returns HTTP 403.
-- Anonymous mode, with Keycloak disabled: `user` is mandatory. A blank user returns HTTP 400.
+- Anonymous mode, with Keycloak disabled: `user` is mandatory. A blank user returns HTTP 400. From EduIDE-Cloud 1.2.1 it must also start and end with a letter or digit and contain only letters, digits and `._@+-`. Because nothing verifies it, the ownership check above only prevents accidental collisions in this mode.

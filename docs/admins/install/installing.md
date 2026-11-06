@@ -38,7 +38,7 @@ These two commands are the manual path. Day to day, `bootstrap-cluster.yml` and
 
 ```bash
 helm install eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
-  --version 2.0.0 -n eduide-system --create-namespace \
+  --version 2.7.0 -n eduide-system --create-namespace \
   -f cluster-values.yaml
 ```
 
@@ -51,7 +51,7 @@ adding an environment does not mean remembering to edit a second file.
 
 ```bash
 helm install eduide oci://ghcr.io/eduide/charts/eduide \
-  --version 2.0.0 -n eduide-test1 --create-namespace \
+  --version 2.7.0 -n eduide-test1 --create-namespace \
   -f values.yaml -f secrets.yaml
 ```
 
@@ -99,10 +99,21 @@ gateway:
     - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-service }
     - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-instances }
     - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-webview }
+
+landingPage:
+  trustedArtemisHosts:     # links from these hosts start the IDE without a click
+    - artemis.example.edu
 ```
 
-Secrets — the Keycloak cookie secret and the admin API token — go in a second
-values file, never on the command line. `--set` puts them in the process list
+Session pods are isolated by NetworkPolicies from the start. Set
+`networkPolicies.gatewayNamespace` to the namespace where the gateway's **proxy
+pods** run, which is `envoy-gateway-system` for Envoy Gateway even though the
+Gateway resource above is in `eduide-system`. A wrong value blocks every request
+to every session. See [Session Hardening](../security/session-hardening.md).
+
+Secrets go in a second values file, never on the command line: the Keycloak
+cookie secret (`keycloak.cookieSecret`, required, unique per installation) and
+the admin API token. `--set` puts them in the process list
 and in Actions debug logs.
 
 **In normal operation you do not write that file.** The deploy workflow

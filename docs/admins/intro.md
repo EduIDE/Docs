@@ -78,6 +78,7 @@ not been renamed, because renaming an API group is a migration. Do not grep for
 | | |
 |---|---|
 | [Access Control](platform/access-control.md) | The identity provider and the session proxy |
+| [Session Hardening](security/session-hardening.md) | NetworkPolicies, the env injection allowlist, RBAC, and the landing page |
 | [Admin API Tokens](security/admin-api-tokens.md) | The bearer token for the scaling API |
 | [Audit and Compliance](security/audit-and-compliance.md) | What is logged, retention, decommissioning |
 

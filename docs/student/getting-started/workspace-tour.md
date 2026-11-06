@@ -16,6 +16,18 @@ This is the minimal layout you need to start working.
 - **Terminal (bottom):** compile and run commands
 - **Problems (bottom):** diagnostics and warnings
 
+## If something is missing
+
+EduIDE has three experience levels: **Beginner**, **Advanced** and **Expert**.
+Beginner hides the terminal and some menus to keep the screen simple. Your
+exercise may pick a level for you.
+
+If you need something you cannot see, switch to a higher level from the status
+bar at the bottom or from the **Experience Levels** menu. The change applies
+right away, and you can switch back at any time. If there is no
+**Experience Levels** menu, your installation runs an older IDE that always
+shows everything.
+
 ## Useful first action
 
 Open **Terminal -> New Terminal**.
