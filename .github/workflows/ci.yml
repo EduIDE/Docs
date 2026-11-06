@@ -37,5 +37,7 @@ jobs:
 
   # Renovate reports vulnerabilities already on main; this one blocks a PR that
   # is about to add a new dependency with a known advisory.
+  # A push has no base ref to compare against, so the action fails there.
   dependency-review:
+    if: github.event_name == 'pull_request'
     uses: EduIDE/.github/.github/workflows/dependency-review.yml@v1
