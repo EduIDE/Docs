@@ -43,6 +43,6 @@ Confirm that the program output matches the expected sorted order.
 - file saved
 - program runs successfully
 - output matches expectation
-- ready to submit in Scorpio
+- ready to submit from the Artemis view
 
 Then continue with the [Submission Checklist](./submission-checklist.md).

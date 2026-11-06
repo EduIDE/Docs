@@ -1,34 +1,56 @@
 ---
 title: Submission Checklist
-description: Submit with Scorpio and review feedback in Artemis flow.
+description: Submit your exercise from the Artemis view in the IDE and check the result.
 ---
 
 # Submission Checklist
 
 Use this checklist to submit your work from the IDE.
+You submit from the **Artemis** view, which the Artemis extension adds to the activity bar.
 
-## 1) Open Scorpio
+## 1) Save your files
 
-In the IDE activity bar, open **Artemis: Scorpio**.
+Save all open files.
+If a file is still unsaved, the exercise shows **Unsaved files. Save before submitting.**
 
-## 2) Verify exercise details
+## 2) Open the Artemis view
 
-Make sure the correct exercise and task are shown.
+In the activity bar, open **Artemis**.
+The view starts on the dashboard.
 
-## 3) Submit your exercise
+## 3) Open your exercise
 
-Click **Submit Exercise**.
+Under **Current Workspace Exercise**, click the exercise that is open in your workspace.
+Make sure the title matches the exercise you work on.
 
-![Scorpio extension with submit button and feedback area](/img/student/learning/scorpio-01-submit-and-feedback.png)
+Below the exercise, a status line shows whether there is anything to submit:
 
-## 4) Review feedback
+- **Uncommitted changes ready to submit**: you have changes that are not submitted yet.
+- **Committed, not yet submitted**: you committed changes yourself, but they are not on Artemis yet.
+- **Up to date**: Artemis already has your latest work, so **Submit** stays disabled.
 
-Check the latest result in the same panel.
+## 4) Submit your exercise
 
-If feedback is delayed, wait a moment and refresh the panel.
+Click **Submit**.
+To add your own commit message, click the envelope icon next to **Submit** first and type it into **Enter commit message...**.
+
+The IDE commits your changes, syncs with Artemis, and pushes.
+A notification shows the progress and ends with **Successfully submitted "your exercise"**.
+
+If Artemis also changed files you edited, the submission stops with a merge conflict message.
+Resolve the conflict with Git and submit again.
+
+## 5) Review the result
+
+The exercise first shows **Building your submission...** while Artemis builds and tests your code.
+Then the result appears in the same view:
+
+- the number of passed tests, for example **8/10 tests**, and your points
+- **See test results** opens the list of **Failed** and **Passed** tests
+- **Build failed** means your code did not compile; **Go to source** jumps to the error and **Open log** shows the build log
 
 ## Done when
 
-- code is saved
-- submission was sent
-- latest feedback was checked
+- all files are saved
+- the notification confirmed the submission
+- the latest result was checked
