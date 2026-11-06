@@ -30,7 +30,7 @@ During the pilot, it is worth checking:
 - whether the browser-based workflow is sufficient for the course
 - whether the required tools and languages fit the managed environment
 - whether the teaching staff can support students more effectively
-- whether the Artemis integration through Scorpio improves the overall workflow, if Artemis is already used or under evaluation
+- whether the Artemis integration through the Artemis and Scorpio extensions improves the overall workflow, if Artemis is already used or under evaluation
 
 ## What makes a pilot representative
 

@@ -19,7 +19,7 @@ Before adopting EduIDE for a course, a few conditions should be true.
 
 If the course already uses Artemis, or is evaluating Artemis seriously, that is a good fit for EduIDE.
 
-The reason is not only organizational alignment. EduIDE integrates well with Artemis through the Scorpio extension, which makes the overall workflow more coherent than combining Artemis with a disconnected IDE setup.
+The reason is not only organizational alignment. EduIDE integrates well with Artemis through its Artemis and Scorpio extensions, which makes the overall workflow more coherent than combining Artemis with a disconnected IDE setup.
 
 This does not automatically mean the course should adopt EduIDE, but it does mean the platform fit is usually stronger in Artemis-centered teaching environments than in unrelated LMS setups.
 

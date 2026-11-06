@@ -29,4 +29,4 @@ Some steps and screenshots may reflect how EduIDE is currently used at TUM, for 
 - launching from Artemis exercises
 - navigating the IDE layout
 - editing, compiling, and running code from the terminal
-- submitting with the Scorpio extension and checking feedback
+- submitting from the Artemis view and checking feedback
