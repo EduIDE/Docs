@@ -69,8 +69,9 @@ Read the diff, then run it again with `dry_run: false`.
 ## 4. Outside the repositories
 
 - **DNS** for all four hostnames.
-- **Keycloak**: a client matching `clientId`, with redirect URIs for all four
-  hosts. A wrong realm or client fails at login, not at deploy, so nothing in CI
+- **Keycloak**: a client matching `clientId`, with redirect URIs for the landing
+  and instance hosts, post-logout redirect URIs for the landing host, and web
+  origins for both. See [Access Control](../platform/access-control.md).
   catches it.
 - **The webview wildcard certificate**, which cert-manager cannot issue over
   HTTP-01. It goes in the cluster's bootstrap environment as

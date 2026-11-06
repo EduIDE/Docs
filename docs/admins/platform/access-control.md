@@ -53,27 +53,41 @@ Click **Next**.
 Set URLs based on the target environment domain. For production:
 
 ```
-Root URL:                     https://<landing-host>
-Home URL:                     https://<landing-host>
+Root URL:                         https://<landing-host>
+Home URL:                         https://<landing-host>
 Valid redirect URIs:
   https://<landing-host>/*
-  https://service.<landing-host>/*
   https://instance.<landing-host>/*
-  https://*.webview.instance.<landing-host>/*
-Valid post-logout redirect URIs:  +
-Web origins:                  +
+Valid post logout redirect URIs:
+  https://<landing-host>/
+  https://<landing-host>/*
+Web origins:
+  https://<landing-host>
+  https://instance.<landing-host>
 ```
 
-:::warning All four, not two
-An installation serves four hostnames and every one of them takes part in the
-login flow. Listing only the landing and instance hosts is a common mistake with
-a confusing result: login appears to work, and then **webviews inside the IDE
-fail to authenticate** — a failure users hit days later and report as "previews
-are broken".
+Every entry carries the `https://` scheme. The redirect URIs and web origins
+cover **two** hosts, the landing page and the instance host; the post-logout
+entries cover the landing host only, and need both the bare `/` and the `/*`
+form.
 
-Substitute your own landing host; for an installation at `eduide.example.edu`
-the four are `eduide.example.edu`, `service.eduide.example.edu`,
-`instance.eduide.example.edu` and `*.webview.instance.eduide.example.edu`.
+For an installation at `eduide.example.edu` that is:
+
+| Setting | Values |
+|---|---|
+| Valid redirect URIs | `https://eduide.example.edu/*`<br/>`https://instance.eduide.example.edu/*` |
+| Valid post logout redirect URIs | `https://eduide.example.edu/`<br/>`https://eduide.example.edu/*` |
+| Web origins | `https://eduide.example.edu`<br/>`https://instance.eduide.example.edu` |
+
+:::note The service and webview hosts are deliberately absent
+An installation serves four hostnames, but only two of them appear here. The
+REST service host and the `*.webview.instance.` wildcard do not take part in the
+browser redirect flow, so adding them is unnecessary. Do not "fix" this list by
+padding it out to four.
+
+Four hostnames **is** the right number for DNS and for certificates - see
+[Certificates and DNS](../install/certificates.md). Only the Keycloak client is
+different.
 :::
 
 Repeat this for each installation — one client per installation, because each
@@ -191,7 +205,7 @@ openssl rand -base64 32
 The browser redirects continuously between the application and Keycloak.
 
 Causes and fixes:
-- **Incorrect redirect URI** — verify that both the landing page and instance domains are in the client's valid redirect URIs, including the `/*` wildcard suffix
+- **Incorrect redirect URI** — verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
 - **Cookie secret mismatch** — confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
 - **HTTP/HTTPS mismatch** — all redirect URIs and the environment URL must use HTTPS
 
