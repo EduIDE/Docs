@@ -142,9 +142,6 @@ Then move to 2.7.0 as described in
   starts the IDE by itself only when both hosts are in
   `landingPage.trustedArtemisHosts`, which is empty by default. List your
   Artemis host there, and your git server's host if it differs.
-- **Sentry on the landing page stops.** It no longer has a built-in endpoint.
-  With `landingPage.sentry.enable: true`, also set `landingPage.sentry.dsn`, or
-  it stays off.
 - **The footer shows the landing page version.** It now reads the tag of the
   running landing page image, for example `v1.3.1`.
   `landingPage.footerLinks.attribution.version` still overrides it, so remove

@@ -226,9 +226,13 @@ From landing page 1.3.0, which chart 2.5.1 pins:
   Gravatar. A Content-Security-Policy and the usual security headers enforce it.
   This is why the page looks different: a flat background instead of the
   animated birds, the system font, and no profile picture next to the email.
-- **Sentry is off** unless both `landingPage.sentry.enable` and
-  `landingPage.sentry.dsn` are set. There is no built-in endpoint. When it is on,
-  tokens, credentials and URL fragments are stripped from what it reports.
+- **Sentry is off by default.** To enable it on the landing page, set
+  `landingPage.sentry.enable: true` and `landingPage.sentry.dsn` to your
+  project's DSN. Tokens, credentials and URL fragments are stripped from what it
+  reports.
+  The operator and the REST service have their own `operator.sentry.enable` and
+  `service.sentry.enable`. Their DSN is built into the images and points at
+  TUM's Sentry.
 - **No secrets in the access log.** nginx logs the path without the query, since
   `gitUri` and `artemisToken` are in it.
 - **Runs without root**, on port 8080 with a read-only root filesystem, no
