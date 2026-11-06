@@ -17,7 +17,7 @@ each control, the value that turns it, and what to check after a change.
 
 | Control | Where | Default | Since |
 |---|---|---|---|
-| IDE reachable only through oauth2-proxy | IDE images | on | first EduIDE release after 1.4.0 |
+| IDE reachable only through oauth2-proxy | IDE images | on | EduIDE 1.5.0 |
 | Session NetworkPolicies | `networkPolicies.*` | on | chart 2.5.1 |
 | Env injection allowlist | `operator.allowedEnvFromSecrets`, `allowedEnvFromConfigMaps`, `allowCustomEnvFromMap` | Secrets and ConfigMaps denied | chart 2.5.1, EduIDE-Cloud 1.2.1 |
 | Pod securityContext | operator | on | EduIDE-Cloud 1.2.1 |
@@ -43,9 +43,9 @@ Installations without oauth2-proxy (`keycloak.allowUnauthenticated: true`) keep
 working: from EduIDE-Cloud 1.2.1 the operator's template for that case binds
 Theia to the pod IP instead.
 
-This change ships in the IDE images, not in the chart. Chart 2.6.2 still pins
-EduIDE 1.4.0, whose images listen on all interfaces, so until the next EduIDE
-release the NetworkPolicies below are the only barrier. They still let every
+This change ships in the IDE images, not in the chart. Charts up to 2.6.2 pin
+EduIDE 1.4.0, whose images listen on all interfaces, so on those images the
+NetworkPolicies below are the only barrier. They still let every
 pod in the gateway namespace reach port 3000, so with 1.4.0 images such a pod
 reaches Theia without the login. Run nothing but the gateway in that namespace.
 
@@ -254,7 +254,7 @@ Mannheim trust none yet, so their Artemis links need the click.
 
 ## Inside the IDE
 
-From the first EduIDE release after 1.4.0:
+From EduIDE 1.5.0:
 
 - **No code leaves for scanoss.com.** The `@theia/scanoss` extension, which sent
   code snippet hashes there, is gone.

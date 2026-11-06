@@ -18,19 +18,19 @@ The **EduIDE** repository manages the Docker builds for custom Eclipse Theia IDE
 
 ## Published Images
 
-The build publishes `base` and nine IDE images: `java-17`, `java-17-templates`, `java-25`, `java-25-templates`, `thm-java-25`, `c`, `c-templates`, `javascript` and `python`, all under `ghcr.io/eduide/eduide/`. The `rust`, `haskell` and `ocaml` images are no longer published ([#210](https://github.com/EduIDE/EduIDE/pull/210)); their directories stay, so they still build locally with `docker-compose.images.yml`. The last release that published them is EduIDE 1.4.0.
+The build publishes `base` and nine IDE images: `java-17`, `java-17-templates`, `java-25`, `java-25-templates`, `thm-java-25`, `c`, `c-templates`, `javascript` and `python`, all under `ghcr.io/eduide/eduide/`. The `rust`, `haskell` and `ocaml` images are no longer published ([#210](https://github.com/EduIDE/EduIDE/pull/210)); their directories stay, so they still build locally with `docker-compose.images.yml`. EduIDE 1.5.0 is the first release without them; 1.4.0 is the last with them.
 
 The Java 25 images download Maven from Maven Central and still check the pinned SHA-512 ([#205](https://github.com/EduIDE/EduIDE/pull/205)).
 
 ## Bundled Extensions
 
-`images/base-ide/package.json.patch` pins the extensions every image ships. On `main` these are:
+`images/base-ide/package.json.patch` pins the extensions every image ships. EduIDE 1.5.0 bundles:
 
 | Extension | Version | Source |
 |---|---|---|
 | EduIDE Data Bridge | v0.0.17 | GitHub release |
 | Scorpio (`aet-tum.artemis-scorpio`) | 2.1.1 | Open VSX |
-| Theia Cloud session monitor | v1.2.1 | EduIDE-Cloud GitHub release |
+| Theia Cloud session monitor | v1.2.2 | EduIDE-Cloud GitHub release |
 | Artemis extension (`aet-tum.iris-thaumantias`) | 1.2.6 | Open VSX |
 
 EduIDE 1.4.0 still bundles data bridge v0.0.14, Scorpio 2.0.0 and Artemis extension 1.2.0, and no session monitor.
@@ -41,7 +41,7 @@ EduIDE 1.4.0 still bundles data bridge v0.0.14, Scorpio 2.0.0 and Artemis extens
 - **No SCANOSS.** `@theia/scanoss`, which sent hashes of code snippets to scanoss.com, is removed ([#206](https://github.com/EduIDE/EduIDE/pull/206)).
 - **Insecure host warning.** Theia's warning about a potentially insecure webview host pattern is on again.
 
-These are on `main` and ship with the first release after 1.4.0.
+These ship from EduIDE 1.5.0.
 
 ## Experience Levels
 
@@ -49,7 +49,7 @@ The `customization` extension offers three levels, **Beginner**, **Advanced** an
 
 ## Image Version in the IDE
 
-**Help > About** shows the container image and the build revision the session runs, for example `eduide/eduide/java-17:1.4.0`. Images built by hand show `unknown`.
+**Help > About** shows the container image and the build revision the session runs, for example `eduide/eduide/java-17:1.5.0`. Images built by hand show `unknown`.
 
 ## Tech Stack
 

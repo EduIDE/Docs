@@ -191,8 +191,7 @@ difference:
 kubectl -n <namespace> logs deploy/operator-deployment | grep "Could not read activity"
 ```
 
-The monitor extension ships in the IDE images from the first EduIDE release
-after 1.4.0. With 1.4.0 images every poll fails, so sessions are not stopped
+The monitor extension ships in the IDE images from EduIDE 1.5.0. With 1.4.0 images every poll fails, so sessions are not stopped
 for inactivity, only at the app definition's `timeout`.
 
 If idle sessions are never being shut down, confirm these are still enabled and

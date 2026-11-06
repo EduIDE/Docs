@@ -78,7 +78,7 @@ An exercise can choose the level students start at. Put a file named `.vscode/ed
 
 The file sets the starting level only. Once a student picks a level themselves, their choice wins over the file. The choice is stored in the session, so a new session without a persistent home directory starts from the file again. The file cannot lock students to a level.
 
-Without the file, students start at **Expert** from the first EduIDE release after 1.4.0. EduIDE 1.4.0 itself starts them at **Beginner**. Older versions have no experience levels at all. Ask the platform team which version your installation runs.
+Without the file, students start at **Expert** from EduIDE 1.5.0. EduIDE 1.4.0 itself starts them at **Beginner**. Older versions have no experience levels at all. Ask the platform team which version your installation runs.
 
 ### Course-Specific Defaults
 
