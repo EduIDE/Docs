@@ -58,7 +58,7 @@ curl -X POST https://<cloud-service>/service \
   -d '{
     "appId": "<service-auth-token>",
     "user": "student@example.com",
-    "appDefinition": "java-17-latest",
+    "appDefinition": "java-17",
     "workspaceName": "ws-...",
     "ephemeral": false,
     "timeout": 3,

@@ -48,9 +48,9 @@ Prewarming is controlled by the Kubernetes `AppDefinition` custom resource:
 apiVersion: theia.cloud/v1beta10
 kind: AppDefinition
 metadata:
-  name: java-17-latest
+  name: java-17
 spec:
-  name: java-17-latest
+  name: java-17
   image: ghcr.io/eduide/eduide/java-17:latest
   ingressname: theia-cloud-demo-ws-route
   port: 3000
