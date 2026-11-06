@@ -35,6 +35,10 @@ therefore bind it to `127.0.0.1:3000`. Only the oauth2-proxy sidecar in the same
 pod reaches it; the gateway reaches the proxy on port 5000, which forces the
 Keycloak login.
 
+One image is an exception: `thm-java-25` still starts Theia with
+`--hostname=0.0.0.0` in EduIDE 1.5.0. An installation offering it relies on the
+NetworkPolicies alone to keep other pods off port 3000.
+
 Loopback is shared by every container in the pod, so any sidecar you add to a
 session pod can reach Theia without the login. Only add containers you trust as
 much as the IDE itself.

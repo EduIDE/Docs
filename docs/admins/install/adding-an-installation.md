@@ -35,8 +35,13 @@ spec:
 
 `values.yaml` is a plain Helm values file: hosts, Gateway `parentRefs`, Keycloak,
 branding, and the Artemis hosts whose links may start the IDE without a click
-(`landingPage.trustedArtemisHosts`). Nothing else: image tags, app definitions, the preload list and
-the storage class are all derived or come from the cluster.
+(`landingPage.trustedArtemisHosts`), and the apps it offers
+(`appDefinitions.enabled`). Add `networkPolicies.privateEgressCidrs` only when
+the cluster's pod or service CIDRs are outside the default private ranges, or
+sessions must reach a private Artemis or git server; read
+[Private ranges](../security/session-hardening.md#private-ranges) first, since
+the second case opens that range to every session. Image tags, the preload list
+and the storage class are derived or come from the cluster.
 
 ## 2. Create the GitHub Environment
 

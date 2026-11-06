@@ -130,7 +130,9 @@ Then move to 2.7.0 as described in
 - **`versions.cloud` 1.2.1 or later.** The chart passes the new
   `--allowedEnvFromSecrets`, `--allowedEnvFromConfigMaps` and
   `--allowCustomEnvFromMap` flags, which operator 1.2.0 rejects at startup. The
-  chart pins 1.2.2; check only if your values override `versions.cloud`.
+  chart pins 1.2.2; check only if your values override `versions.cloud`,
+  `operator.image` or `service.image`. A full image reference there wins over
+  `versions.cloud`.
 - **`versions.landingPage` 1.3.0 or later.** The landing page Deployment now
   runs as non-root on port 8080. An older image runs as root on port 80 and its
   pods do not start. The chart pins 1.3.1; check only if your values override
@@ -230,6 +232,14 @@ they own, so every running session ends. Upgrade outside lecture hours.
 - the app names your Artemis offers (`theia.images` in its configuration)
 - `theiaImage` of existing Artemis exercises and saved workspaces, which need
   a data migration
+
+### Persistent workspaces get new names
+
+The landing page derives a persistent workspace's name from the app name, so
+after the rename a link opens a new, empty workspace instead of the old one.
+The old workspace is not migrated, and the workspace garbage collector can
+delete it later. Installations with `landingPage.ephemeralStorage: false` should
+tell students to push their work before the upgrade.
 
 ### Which apps you get
 
