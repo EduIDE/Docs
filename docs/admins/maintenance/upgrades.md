@@ -119,6 +119,8 @@ Chart 2.5.1 turns on the session hardening described in
 [Session Hardening](../security/session-hardening.md). Most of it needs nothing
 from you, but some of it refuses to render, or quietly changes behaviour, until
 you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
+Then move to 2.7.0 as described in
+[Upgrading from 2.6 to 2.7.0](#upgrading-from-26-to-270), which renames every app.
 
 ### The upgrade fails without these
 
@@ -201,18 +203,54 @@ you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
 
 Every chart up to 2.6.2 pins the IDE images to EduIDE 1.4.0. The IDE-side
 changes (Theia on loopback, no scanoss, the data bridge and Scorpio fixes, the
-session monitor) arrive with EduIDE 1.5.0. That release no longer publishes the
-`rust`, `ocaml` and `haskell` images. Charts up to 2.6.2 still offer
-`rust-latest` and `ocaml-latest`, so if you pin 1.5.0 through `versions.ide` on
-such a chart, remove them (`rust-latest: null`,
-`ocaml-latest: null` under `appDefinitions.apps`) together with any app of your
-own that uses `eduide/haskell`. The chart 2.7.0 catalog no longer lists them, see
-[App Definitions](../platform/app-definitions.md).
-
-Until the IDE images carry the session monitor, every activity poll fails, and
-from EduIDE-Cloud 1.2.1 the operator keeps such a session running rather than
+session monitor) arrive with EduIDE 1.5.0, which chart 2.7.0 pins. Until the IDE
+images carry the session monitor, every activity poll fails, and from
+EduIDE-Cloud 1.2.1 the operator keeps such a session running rather than
 treating it as idle. Inactivity shutdown therefore does not happen yet; sessions
 end at the app definition's `timeout`.
+
+EduIDE 1.5.0 no longer publishes the `rust`, `ocaml` and `haskell` images, but
+charts up to 2.6.2 still offer `rust-latest` and `ocaml-latest`. Do not set
+`versions.ide: 1.5.0` on such a chart; move to 2.7.0 instead.
+
+## Upgrading from 2.6 to 2.7.0
+
+Chart 2.7.0 replaces the single `appDefinitions.apps` map with a catalog, your
+own apps and an `enabled` list, and renames every app. See
+[App Definitions](../platform/app-definitions.md) for the new keys.
+
+### Running sessions end
+
+Every app loses its `-latest` suffix: `java-17-latest` becomes `java-17`,
+`c-templates-latest` becomes `c-templates`, and so on. Helm deletes the old
+AppDefinitions, and with them the prewarmed pods, session ingresses and sidecars
+they own, so every running session ends. Upgrade outside lecture hours.
+
+### Move every reference to the new names in the same window
+
+- `landingPage.appDefinition` (the chart default is now `java-17-templates`)
+- keys under `appDefinitions.apps` in your values files
+- the app names your Artemis offers (`theia.images` in its configuration)
+- `theiaImage` of existing Artemis exercises and saved workspaces, which need
+  a data migration
+
+### Which apps you get
+
+- **On chart defaults** you lose Rust and OCaml, keep the other six apps, and
+  gain `java-25` and `java-25-templates`.
+- **A list of `null` removals** still works (`apps.<name>: null`), but an
+  `enabled` list naming what you offer is shorter and does not grow when the
+  catalog does. Replace one with the other.
+- **With a non-empty `enabled`**, an app of your own under `apps` renders only
+  if `enabled` names it too.
+- **A name in `enabled` with no definition** is skipped, and `helm upgrade`
+  prints a warning naming it. Read the output after the upgrade.
+- **An image of your own** goes under `apps` with its full reference including
+  the tag, for example `registry.example.edu/ide/haskell:2.1.0`. An `image`
+  without a tag still takes the tag from `versions.ide`.
+
+The cluster chart moves to 2.7.0 without changes; upgrade it to keep both
+versions equal.
 
 ## Two things that do not behave as you would guess
 

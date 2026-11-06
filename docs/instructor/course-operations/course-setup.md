@@ -30,8 +30,8 @@ language image. Some are plain, an empty workspace with the toolchain
 installed, and some ship starter templates with a build-system choice, such as
 Maven or Gradle for Java, Make or Bazel for C.
 
-Current releases publish images for Java 17, Java 25, C, JavaScript and
-Python. New releases no longer publish Rust, OCaml and Haskell images, so do not
+EduIDE publishes images for Java 17, Java 25, C, JavaScript and Python. Since
+EduIDE 1.5.0 it no longer publishes Rust, OCaml and Haskell images, so do not
 plan a course on them even if an installation still offers an older one.
 
 Ask the platform team which are enabled for your installation. The list differs

@@ -85,7 +85,8 @@ Keep these rules in mind:
 
 - With a non-empty `enabled`, an `apps` entry renders only if `enabled` names it. Add your own app to `enabled` as well.
 - A name in `enabled` with no definition in `catalog` or `apps` is skipped. `helm install` and `helm upgrade` print a warning naming it in the release notes, so check the output after every upgrade.
-- `apps.<name>: null` removes an app, even when `enabled` lists it.
+- `apps.<name>: null` removes an app, even when `enabled` lists it; the upgrade then warns about that name.
+- An `image` without a tag takes the tag from `versions.ide` (or the chart's `appVersion`), so a release moves every IDE image at once. A full reference with a tag or digest is used as given; use one for an image from your own registry.
 - An image only one installation uses (for example TH Mannheim's `thm-java-25`) belongs in that installation's `apps`, not in the catalog.
 
 Then upgrade the installation as usual:
@@ -113,8 +114,9 @@ which is the entire reason those images exist.
 cluster-wide. Trimming `enabled` to what your courses actually use is a
 legitimate and effective way to reclaim node storage.
 
-Removing an entry stops new sessions using it. Sessions already running are not
-disturbed.
+Removing an app deletes its AppDefinition, and with it the prewarmed pods,
+session ingresses and sidecars it owns, so running sessions of that app end.
+Remove apps outside lecture hours.
 
 
 ## Adjusting scaling at runtime

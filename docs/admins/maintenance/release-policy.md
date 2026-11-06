@@ -60,7 +60,7 @@ the tag and can fail. Merging the chart pull request runs `release.yml`, which:
 1. **Verifies the pinned images exist**, for both architectures. The IDE image
    list is read from EduIDE's build matrix at run time, not kept by hand. It is
    not compared with the chart's app definitions, so an app whose image left the
-   matrix (such as `rust-latest` after EduIDE stopped publishing it) passes
+   matrix (such as `rust-latest` on chart 2.6.2, which EduIDE 1.5.0 no longer publishes) passes
    this check and fails at pull time. Check the app definitions yourself when a
    release removes an image.
 2. **Publishes each chart version** that is not published yet.
