@@ -118,6 +118,8 @@ The following operations should be treated as high-sensitivity events and review
 | Admin API token request (success) | Service logs | High - means the token is in use |
 | Admin API token request (failure) | Service logs | High - may indicate brute force or a stale token |
 | App Definition scaling change | Service + operator logs | Medium - affects platform capacity |
+| Launch request with env injection the allowlist drops (`Dropped env injection not permitted by the operator allowlist`) | Operator logs | High - a caller tried to mount a Secret or ConfigMap, or to set a reserved variable |
+| Launch refused because the workspace belongs to another user (`403`, `User <name> does not own workspace <workspace>`) | Service logs | High - one user asked for another user's workspace |
 | Workspace force-deletion by admin | Operator logs, plus the Kubernetes API audit log if enabled | Medium - user data deletion |
 | Workspace deletion by TTL | Garbage collector logs | Medium - user data deletion, unattended |
 | Keycloak group membership change | Keycloak admin events | High - grants or removes elevated access |

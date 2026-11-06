@@ -29,12 +29,13 @@ spec:
   cluster: eduide           # must match a file in clusters/
   namespace: eduide-bonn    # every namespace carries the eduide- prefix
   platform:
-    chartVersion: 2.0.0
+    chartVersion: 2.6.2
     channel: release        # release | main
 ```
 
-`values.yaml` is a plain Helm values file: hosts, Gateway `parentRefs`, Keycloak
-and branding. Nothing else — image tags, app definitions, the preload list and
+`values.yaml` is a plain Helm values file: hosts, Gateway `parentRefs`, Keycloak,
+branding, and the Artemis hosts whose links may start the IDE without a click
+(`landingPage.trustedArtemisHosts`). Nothing else: image tags, app definitions, the preload list and
 the storage class are all derived or come from the cluster.
 
 ## 2. Create the GitHub Environment
@@ -72,7 +73,6 @@ Read the diff, then run it again with `dry_run: false`.
 - **Keycloak**: a client matching `clientId`, with redirect URIs for the landing
   and instance hosts, post-logout redirect URIs for the landing host, and web
   origins for both. See [Access Control](../platform/access-control.md).
-  catches it.
 - **The webview wildcard certificate**, which cert-manager cannot issue over
   HTTP-01. It goes in the cluster's bootstrap environment as
   `THEIA_WILDCARD_CERTIFICATE_CERT` and `_KEY`.

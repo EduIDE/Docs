@@ -177,7 +177,26 @@ monitor:
     interval: 1
 ```
 
-If idle sessions are never being shut down, confirm these are still enabled before investigating further. Note that `monitor` here is unrelated to `monitoring`, which is the Prometheus scrape configuration described in [Monitoring Basics](/admins/operations/monitoring-basics). The names are one letter apart and the settings do entirely different things.
+Every `interval` minutes the operator asks each session's monitor extension for
+the last activity, on port 8081 (`appDefinitions.defaults.monitor.port`). The
+request carries the session secret; the monitor answers `401` without it.
+
+When a poll fails or returns no timestamp, the operator (from EduIDE-Cloud 1.2.1)
+counts it as a failure and keeps the session running. Before, it compared the
+timeout against the activity recorded at session start, so a monitor that was
+briefly unreachable got an active session deleted. The operator log shows the
+difference:
+
+```bash
+kubectl -n <namespace> logs deploy/operator-deployment | grep "Could not read activity"
+```
+
+The monitor extension ships in the IDE images from the first EduIDE release
+after 1.4.0. With 1.4.0 images every poll fails, so sessions are not stopped
+for inactivity, only at the app definition's `timeout`.
+
+If idle sessions are never being shut down, confirm these are still enabled and
+that the IDE images carry the monitor before investigating further. Note that `monitor` here is unrelated to `monitoring`, which is the Prometheus scrape configuration described in [Monitoring Basics](/admins/operations/monitoring-basics). The names are one letter apart and the settings do entirely different things.
 
 ## Managing sessions before a large exercise
 

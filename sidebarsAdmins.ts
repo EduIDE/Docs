@@ -37,6 +37,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Security',
       items: [
+        'security/session-hardening',
         'security/admin-api-tokens',
         'security/audit-and-compliance',
       ],

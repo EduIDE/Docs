@@ -42,21 +42,33 @@ Callers should not pass `image-tag` on a release event at all.
 
 ## Cutting a release
 
-The release train in EduIDE-Helm does it, and defaults to `dry_run: true`.
+Each repository releases on its own. EduIDE, EduIDE-Cloud and the landing page
+cut their own versions; a chart release then says which of them belong
+together, and a deployment pull request says which installations get them.
+Moving an installation to a new IDE version is therefore three merges, in this
+order:
 
-1. **Validate** the version is semver and the tag is unused.
-2. **Build every component at that tag** — but tag nothing yet. Building fifteen
-   large images is the flakiest step in the pipeline; tagging afterwards means a
-   flake costs a re-run rather than stranding immutable tags on repositories
-   whose images were never published.
-3. **Verify every expected image exists**, for both architectures. The IDE image
-   list is read from EduIDE's build matrix at run time, not kept by hand — a
-   hand-kept copy went stale within days and would have let a release verify ten
-   of twelve images and pass.
-4. **Only now tag and release** the component repositories.
-5. **Publish both charts** at the same version.
-6. **Open a bump pull request** against each production installation. Production
-   is never deployed automatically.
+| Step | Repository | Result |
+|---|---|---|
+| 1 | EduIDE, EduIDE-Cloud or EduIDE-Landing-Page | A `vX.Y.Z` release; its build publishes the images |
+| 2 | EduIDE-Helm | A pull request moving `appVersion`, `versions.cloud` or `versions.landingPage`, and both chart versions |
+| 3 | EduIDE-deployment | A pull request moving `chartVersion`; merging it is the deploy |
+
+A GitHub release does not prove its images exist: the image build runs after
+the tag and can fail. Merging the chart pull request runs `release.yml`, which:
+
+1. **Verifies every image the chart pins exists**, for both architectures. The
+   IDE image list is read from EduIDE's build matrix at run time, not kept by
+   hand, so a chart cannot pass while naming images nobody pushed.
+2. **Publishes each chart version** that is not published yet.
+3. **Tags the repository** `vX.Y.Z`.
+4. **Creates a GitHub release** that names what the chart version pins.
+
+CI also checks that both charts carry the same version.
+
+The release train in EduIDE-Helm still exists for a **lockstep** release that
+moves all repositories to one number. It is not the ordinary path, and on a
+normal `main` its pre-check fails by design.
 
 ## Channels
 

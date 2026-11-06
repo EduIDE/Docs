@@ -193,10 +193,21 @@ The OAuth2 proxy and service require several secrets to be present before deploy
 | `THEIA_KEYCLOAK_CLIENT_ID` | Client ID configured above |
 | `THEIA_KEYCLOAK_COOKIE_SECRET` | Base64-encoded 32-byte key for cookie encryption |
 
-Generate the cookie secret:
+## OAuth2 proxy cookie secret
+
+oauth2-proxy encrypts its session cookie with `keycloak.cookieSecret`. From
+chart 2.5.1 the chart has no default for it and refuses to render without one,
+because a shared default would let anyone who knows it forge cookies for every
+installation that kept it. Use a different value per installation.
+
+Generate one:
 ```bash
-openssl rand -base64 32
+openssl rand -base64 32 | tr -- '+/' '-_'
 ```
+
+The cookie is sent over HTTPS only (`oauth2Proxy.cookieSecure: true`, the
+default). Set it to `false` only for an installation served over plain HTTP,
+where the browser would otherwise drop the cookie and login never completes.
 
 ## Troubleshooting
 
@@ -207,7 +218,7 @@ The browser redirects continuously between the application and Keycloak.
 Causes and fixes:
 - **Incorrect redirect URI** — verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
 - **Cookie secret mismatch** — confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
-- **HTTP/HTTPS mismatch** — all redirect URIs and the environment URL must use HTTPS
+- **HTTP/HTTPS mismatch** - all redirect URIs and the environment URL must use HTTPS. An installation served over plain HTTP also needs `oauth2Proxy.cookieSecure: false`
 
 ### "Invalid client" error in Keycloak
 

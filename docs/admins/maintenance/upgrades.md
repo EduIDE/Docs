@@ -113,6 +113,102 @@ already in an IDE keep working.
 - If the AppDefinition set changed, check the landing page offers what you
   expect.
 
+## Upgrading from 2.4 or 2.5.0 to 2.5.1 and later
+
+Chart 2.5.1 turns on the session hardening described in
+[Session Hardening](../security/session-hardening.md). Most of it needs nothing
+from you, but some of it refuses to render, or quietly changes behaviour, until
+you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
+
+### The upgrade fails without these
+
+- **`keycloak.cookieSecret`.** The chart no longer ships a default and fails to
+  render without one. Set a unique value per installation, see
+  [Access Control](../platform/access-control.md#oauth2-proxy-cookie-secret).
+- **`versions.cloud` 1.2.1 or later.** The chart passes the new
+  `--allowedEnvFromSecrets`, `--allowedEnvFromConfigMaps` and
+  `--allowCustomEnvFromMap` flags, which operator 1.2.0 rejects at startup. The
+  chart pins 1.2.2; check only if your values override `versions.cloud`.
+- **`versions.landingPage` 1.3.0 or later.** The landing page Deployment now
+  runs as non-root on port 8080. An older image runs as root on port 80 and its
+  pods do not start. The chart pins 1.3.1; check only if your values override
+  `versions.landingPage` or `landingPage.image`.
+
+### Behaviour that changes unless you set something
+
+- **Artemis links wait for a click.** A link with `gitUri` and `artemisToken`
+  starts the IDE by itself only when both hosts are in
+  `landingPage.trustedArtemisHosts`, which is empty by default. List your
+  Artemis host there.
+- **Sentry on the landing page stops.** It no longer has a built-in endpoint.
+  With `landingPage.sentry.enable: true`, also set `landingPage.sentry.dsn`, or
+  it stays off.
+- **The footer shows the landing page version.** It now reads the tag of the
+  running landing page image, for example `v1.3.1`.
+  `landingPage.footerLinks.attribution.version` still overrides it, so remove
+  that value to show the real version.
+- **Session cookies need HTTPS.** `oauth2Proxy.cookieSecure` defaults to
+  `true`. An installation served over plain HTTP must set it to `false`, or
+  login never completes.
+- **Repository links get a new workspace.** Landing page 1.3.0 puts the user
+  and the full app key into the workspace name, so two users can no longer end
+  up with the same name. The first launch of each repository link after the
+  upgrade creates a new workspace. The old ones stay until the
+  [garbage collector](../operations/garbage-collection.md) removes them, and
+  work in them that was never pushed is no longer reachable from the landing
+  page. Playground workspaces keep their names. Upgrade between exercises, and
+  tell students to push first.
+
+### Check these against your cluster
+
+- **NetworkPolicies are on.** They need a CNI that enforces them.
+  `networkPolicies.gatewayNamespace` must name the namespace of your gateway
+  (default `envoy-gateway-system`), or no request reaches a session. If your pod
+  or service CIDR is outside the private ranges, or sessions must reach a host
+  inside them, adjust `networkPolicies.privateEgressCidrs`. See
+  [Session Hardening](../security/session-hardening.md#networkpolicies).
+- **Launch requests can no longer mount Secrets or ConfigMaps.** If something
+  of yours sends `env.fromSecrets` or `env.fromConfigMaps`, list those names in
+  `operator.allowedEnvFromSecrets` and `operator.allowedEnvFromConfigMaps`.
+  Sessions that are running keep what they already received; restart them to
+  revoke it.
+- **The operator's rights are namespaced.** If your setup needs it to act in
+  other namespaces, set `operator.clusterWideRbac: true`.
+- **The monitor port is 8081.** `appDefinitions.defaults.monitor.port` and
+  `networkPolicies.monitorPort` both default to it. If you set a different
+  monitor port on an app, the chart opens it too; keep
+  `networkPolicies.monitorPort` matching the default.
+- **Two secrets moved.** `SERVICE_AUTH_TOKEN` and `KEYCLOAK_CLIENTSECRET` are in
+  the `service-config-secret` Secret now, not in the `service-config` ConfigMap.
+  Update any tooling of your own that read them from there.
+
+### 2.6.0 to 2.6.2
+
+- **2.6.0** adds `preloading.nodeSelector`, so the preloading DaemonSet can be
+  limited to labelled nodes. Empty, the default, renders as before. Sessions
+  are not pinned by it: one that lands on another node pulls its image cold.
+- **2.6.0** stops serving the AppDefinition versions `v1beta8` to `v1beta10`,
+  which the conversion webhook cannot map. Every read at those versions failed
+  anyway, and the API server retried them about six times a second, flooding its
+  log. Use `theia.cloud/v1beta11`. This change is in `eduide-cluster`, so
+  upgrade the cluster chart too. 2.5.1 was published without it.
+- **2.6.1** pins landing page 1.3.1 and **2.6.2** pins EduIDE-Cloud 1.2.2. Both
+  carry dependency security fixes only.
+
+### Still on EduIDE 1.4.0
+
+Every chart up to 2.6.2 still pins the IDE images to EduIDE 1.4.0. The IDE-side
+changes (Theia on loopback, no scanoss, the data bridge and Scorpio fixes, the
+session monitor) arrive with the next EduIDE release. That release no longer
+publishes the `rust`, `ocaml` and `haskell` images, so remove `rust-latest` and
+`ocaml-latest` from your app definitions before you move to it, see
+[App Definitions](../platform/app-definitions.md).
+
+Until the IDE images carry the session monitor, every activity poll fails, and
+from EduIDE-Cloud 1.2.1 the operator keeps such a session running rather than
+treating it as idle. Inactivity shutdown therefore does not happen yet; sessions
+end at the app definition's `timeout`.
+
 ## Two things that do not behave as you would guess
 
 **`minInstances` and `maxInstances` stop taking effect after the first install.**

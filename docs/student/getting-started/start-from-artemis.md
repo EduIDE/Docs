@@ -25,6 +25,20 @@ If you are asked to log in, complete login, return to the Artemis exercise page,
 
 This can happen on the first login.
 
-## 4) Continue in EduIDE
+## 4) If you see a Launch button
+
+Usually the IDE starts on its own. Some installations first show a page that
+names where your exercise comes from, for example "This link opens a repository
+from artemis.example.edu", with a **Launch** button below.
+
+Check that the name is your university's Artemis, then click **Launch**. If you
+do not recognise the name, do not click, and ask your tutor.
+
+## 5) Use one browser tab
+
+Keep the IDE open in one tab. If you open the same session in a second tab, it
+shows the same files and does not download your exercise again.
+
+## 6) Continue in EduIDE
 
 When the IDE opens, continue with the [Workspace Tour](./workspace-tour.md).

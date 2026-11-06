@@ -36,6 +36,27 @@ The chart ships eight, and they are not all visible:
 | `python-latest` | `eduide/python` | yes |
 | `rust-latest` | `eduide/rust` | yes |
 
+:::warning Rust and OCaml are going away
+EduIDE stops publishing the `rust`, `ocaml` and `haskell` images with its first
+release after 1.4.0. The chart still lists `rust-latest` and `ocaml-latest`, so
+an installation that moves to that IDE release with the defaults offers two
+apps whose images do not exist. Remove them in your values before that:
+
+```yaml
+appDefinitions:
+  apps:
+    rust-latest: null
+    ocaml-latest: null
+```
+
+The image directories stay in the EduIDE repository and still build locally.
+:::
+
+EduIDE publishes these IDE images: `java-17`, `java-17-templates`, `java-25`,
+`java-25-templates`, `thm-java-25`, `c`, `c-templates`, `javascript` and
+`python`. The Java 25 images are not in the chart's list; add them as shown
+below.
+
 The `-templates` variants ship a starter project and a build-system picker; the
 plain ones give an empty workspace. Both are deployable — a hidden definition can
 still be launched by name — but only the visible ones appear in the drop-down.
@@ -53,12 +74,19 @@ App definitions live in your installation's values for the `eduide` chart, under
 ```yaml
 appDefinitions:
   apps:
-    haskell-latest:
-      image: eduide/haskell        # tag comes from versions.ide
-      requestsMemory: 800M         # only what differs from defaults
+    java-25-templates-latest:
+      image: eduide/java-25-templates  # tag comes from versions.ide
+      requestsCpu: 500m                # only what differs from defaults
+      limitsMemory: 3000M
       landingPage:
-        label: Haskell             # omit this key to deploy it but hide it
+        label: Java 25                 # omit this key to deploy it but hide it
+        image: java-logo.png           # the landing page bundles no java-25 logo
+        buildSystems:
+          - { id: maven, label: Maven }
+          - { id: gradle, label: Gradle }
 ```
+
+Setting an entry to `null` removes an app the chart ships.
 
 Then upgrade the installation as usual:
 
@@ -158,7 +186,7 @@ The `options` map allows per-definition configuration. Currently used options:
 | Key | Description |
 |---|---|
 | `dataBridgeEnabled` | Set to `"true"` to enable the Artemis data bridge for this session type |
-| `dataBridgePort` | Port the data bridge listens on inside the session container (default: `"16281"`) |
+| `dataBridgePort` | Port the data bridge listens on inside the session container (default: `"16281"`). Must equal `networkPolicies.dataBridgePort`, or the chart refuses to render |
 
 Example:
 ```yaml
@@ -169,13 +197,16 @@ options:
 
 ## Landing page visibility
 
-The landing page only shows session types listed under `additionalApps` in the main values file. An App Definition can exist in the cluster without appearing in the UI — useful for staging new environments before making them user-visible.
+The landing page lists every app whose entry has a `landingPage` block, unless
+that block says `visible: false`. A hidden app still exists in the cluster and
+can be started by a link with `?appDef=`, `gitUri` and `artemisToken`, which is useful for
+staging a new environment before students see it.
 
 ```yaml
-landingPage:
-  additionalApps:
-    java-17-latest: { label: Java 17 }
-    python-latest:  { label: Python }
+appDefinitions:
+  apps:
+    java-25-templates-latest:
+      landingPage:
+        label: Java 25
+        visible: false
 ```
-
-Remove an entry from `additionalApps` to hide it from users without deleting the underlying App Definition.

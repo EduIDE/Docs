@@ -16,6 +16,12 @@ The **EduIDE Data Bridge** repository is a VS Code extension designed to facilit
 - **Storage**: Stores injected data in memory and VS Code secret storage.
 - **Centralized Logging**: Includes a robust logging service for easier debugging of the bridge's operation.
 
+## Behaviour Worth Knowing
+
+- **Port and trust.** The HTTP server listens on `0.0.0.0:16281` (`DATA_BRIDGE_PORT`) and does not authenticate `POST /data`. The chart's NetworkPolicies let only the operator reach that port. See [Prewarming Architecture](/developer/platform/session-prewarming#data-bridge).
+- **Several browser windows.** Each browser connection starts its own plugin host and its own bridge, and only the first one gets the port. From v0.0.16, `dataBridge.getEnv` re-reads the shared secret storage when a key is missing, so a second window receives the injected environment too.
+- **Releases.** v0.0.16 carries the second window fix, v0.0.17 dependency security updates (`@hono/node-server` 2.x, minimatch 11). EduIDE pins v0.0.17 on `main`.
+
 ## Tech Stack
 
 - **TypeScript**: Implementation language.

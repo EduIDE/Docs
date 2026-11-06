@@ -19,6 +19,7 @@ Everything here is installed **once per cluster**, not once per installation.
 | **A LoadBalancer** | Something must give the Gateway an external address — a cloud provider's controller, MetalLB, or equivalent |
 | **DNS you can change** | Four records per installation, **one of them a wildcard**. See [Certificates and DNS](certificates.md) — check early that your DNS team permits wildcards |
 | **An OIDC provider** | Keycloak is what EduIDE is tested against |
+| **A CNI that enforces NetworkPolicies** | The chart isolates session pods with NetworkPolicies. A CNI without policy support accepts them and enforces nothing |
 
 ## 1. Gateway API CRDs
 
@@ -161,6 +162,7 @@ Before installing EduIDE:
 - [ ] A Gateway controller running, GatewayClass `Accepted`
 - [ ] cert-manager running, **with `enableGatewayAPI=true`**
 - [ ] A storage class chosen, with dynamic provisioning
+- [ ] A CNI that enforces NetworkPolicies
 - [ ] ~20 GB of image space per node
 - [ ] DNS you can change, **wildcards permitted**
 - [ ] A certificate plan — read [Certificates and DNS](certificates.md) before

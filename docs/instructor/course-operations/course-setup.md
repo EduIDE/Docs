@@ -26,9 +26,12 @@ exercises need something not already offered, raise it early.
 ## What is already available
 
 The platform offers a fixed set of environments, each corresponding to a
-language image. Some are plain — an empty workspace with the toolchain
-installed — and some ship starter templates with a build-system choice, such as
+language image. Some are plain, an empty workspace with the toolchain
+installed, and some ship starter templates with a build-system choice, such as
 Maven or Gradle for Java, Make or Bazel for C.
+
+Images exist for Java 17, Java 25, C, JavaScript and Python. Rust, OCaml and
+Haskell are no longer offered.
 
 Ask the platform team which are enabled for your installation. The list differs
 between installations, and building an image does not automatically make it
@@ -54,7 +57,11 @@ branch, a session that timed out overnight. Decide in advance who they ask.
 
 - Confirm with the platform team that your environment is up and that the
   languages you need are offered.
-- Run through one exercise end to end yourself.
+- Run through one exercise end to end yourself. If the IDE does not open by
+  itself after you click **Open online IDE** in Artemis, but shows a
+  **Launch** button, your Artemis server is not on the installation's list of
+  trusted hosts. Students can still click **Launch**; ask the platform team to
+  add the host so they do not have to.
 - Tell students that the first start is slow and the second is not, so they do
   not all reload in the first minute and make it worse.
 - Read [Limitations](../limitations/honest-limitations.md), and set expectations
