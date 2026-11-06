@@ -93,11 +93,12 @@ Tune these values based on your cluster capacity and expected peak concurrent se
 Individual session resource requests and limits are set per App Definition:
 
 ```yaml
-apps:
-  - name: java-17-latest
-    requestsMemory: 2000M
-    requestsCpu: 500m
-    limitsMemory: 3000M
+appDefinitions:
+  apps:
+    java-17:              # merged over the catalog entry of the same name
+      requestsMemory: 2000M
+      requestsCpu: 500m
+      limitsMemory: 3000M
 ```
 
 | Field | Meaning |

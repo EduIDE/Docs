@@ -202,9 +202,11 @@ you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
 Every chart up to 2.6.2 still pins the IDE images to EduIDE 1.4.0. The IDE-side
 changes (Theia on loopback, no scanoss, the data bridge and Scorpio fixes, the
 session monitor) arrive with the next EduIDE release. That release no longer
-publishes the `rust`, `ocaml` and `haskell` images, so remove `rust-latest`,
-`ocaml-latest` and any app of your own that uses `eduide/haskell` before you
-move to it, see
+publishes the `rust`, `ocaml` and `haskell` images. Charts up to 2.6.2 still
+offer `rust-latest` and `ocaml-latest`, so if you pin that IDE release through
+`versions.ide` on such a chart, remove them (`rust-latest: null`,
+`ocaml-latest: null` under `appDefinitions.apps`) together with any app of your
+own that uses `eduide/haskell`. The chart 2.7.0 catalog no longer lists them, see
 [App Definitions](../platform/app-definitions.md).
 
 Until the IDE images carry the session monitor, every activity poll fails, and
