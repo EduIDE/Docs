@@ -23,42 +23,70 @@ Each App Definition specifies:
 | `maxInstances` | Maximum number of concurrent sessions allowed for this type |
 | `options` | Additional per-definition configuration, such as data bridge settings |
 
-The chart ships eight, and they are not all visible:
+The chart's catalog holds the IDE images EduIDE officially releases. Each app is
+named after its image:
 
 | Name | Image | Offered on the landing page |
 |---|---|---|
-| `java-17-templates-latest` | `eduide/java-17-templates` | yes, with a Maven/Gradle choice |
-| `java-17-latest` | `eduide/java-17` | no — hidden behind the templates variant |
-| `c-templates-latest` | `eduide/c-templates` | yes, with a Make/Bazel choice |
-| `c-latest` | `eduide/c` | no |
-| `javascript-latest` | `eduide/javascript` | yes |
-| `ocaml-latest` | `eduide/ocaml` | yes |
-| `python-latest` | `eduide/python` | yes |
-| `rust-latest` | `eduide/rust` | yes |
+| `java-17-templates` | `eduide/java-17-templates` | yes, with a Maven/Gradle choice |
+| `java-17` | `eduide/java-17` | no, hidden behind the templates variant |
+| `java-25-templates` | `eduide/java-25-templates` | yes, with a Maven/Gradle choice |
+| `java-25` | `eduide/java-25` | no, hidden behind the templates variant |
+| `c-templates` | `eduide/c-templates` | yes, with a Make/Bazel choice |
+| `c` | `eduide/c` | no |
+| `javascript` | `eduide/javascript` | yes |
+| `python` | `eduide/python` | yes |
 
 The `-templates` variants ship a starter project and a build-system picker; the
-plain ones give an empty workspace. Both are deployable — a hidden definition can
-still be launched by name — but only the visible ones appear in the drop-down.
+plain ones give an empty workspace. Both are deployable. A hidden definition can
+still be launched by name, but only the visible ones appear in the drop-down.
 
 Defaults are `requestsMemory: 500M`, `requestsCpu: 200m`, `limitsMemory: 2400M`,
 `limitsCpu: "2"`, `minInstances: 0`, `maxInstances: 1000`, with Java overriding
 the CPU and memory upward.
 
+:::note Renamed in chart 2.7.0
+Before chart 2.7.0 every name ended in `-latest` (`java-17-latest`,
+`c-templates-latest`, ...). The rename replaces every AppDefinition, which ends
+running sessions. Anything that refers to an app by name has to move to the new
+name: Artemis exercises (`theiaImage`), saved workspaces,
+`landingPage.appDefinition` and `apps` overrides in your values files.
+:::
+
 ## Changing which applications are offered
 
 App definitions live in your installation's values for the `eduide` chart, under
-`appDefinitions.apps`. It is a **map keyed by definition name**, with a
-`defaults` block that every entry inherits.
+`appDefinitions`. Three keys work together:
+
+| Key | Owner | Purpose |
+|---|---|---|
+| `catalog` | the chart | The IDE images EduIDE officially releases. Do not edit it; override an entry through `apps` |
+| `apps` | your installation | Your own apps, and overrides of catalog entries. A key matching a catalog entry is merged over it, so you only write the fields that differ |
+| `enabled` | your installation | The names this installation offers. Empty (the default) offers every definition from `catalog` and `apps` |
+
+A `defaults` block supplies every field an app does not state itself.
 
 ```yaml
 appDefinitions:
+  # Offer only these. Leave empty to offer everything.
+  enabled: [java-25-templates, python, haskell]
   apps:
-    haskell-latest:
-      image: eduide/haskell        # tag comes from versions.ide
-      requestsMemory: 800M         # only what differs from defaults
+    python:
+      limitsMemory: 4000M          # one field changed, the rest comes from the catalog
+    haskell:                       # your own image, not in the catalog
+      image: registry.example.edu/ide/haskell:2.1.0
+      limitsMemory: 4000M
       landingPage:
-        label: Haskell             # omit this key to deploy it but hide it
+        label: Haskell             # omit landingPage to deploy it but hide it
+        image: theia-logo.png      # a logo the landing page ships, or a path starting with /
 ```
+
+Keep these rules in mind:
+
+- With a non-empty `enabled`, an `apps` entry renders only if `enabled` names it. Add your own app to `enabled` as well.
+- A name in `enabled` with no definition in `catalog` or `apps` is skipped. `helm install` and `helm upgrade` print a warning naming it in the release notes, so check the output after every upgrade.
+- `apps.<name>: null` removes an app, even when `enabled` lists it.
+- An image only one installation uses (for example TH Mannheim's `thm-java-25`) belongs in that installation's `apps`, not in the catalog.
 
 Then upgrade the installation as usual:
 
@@ -69,9 +97,9 @@ helm upgrade eduide oci://ghcr.io/eduide/charts/eduide \
 
 ### One entry, three effects
 
-That single map drives the AppDefinition custom resource, the landing page's
+The merged app list drives the AppDefinition custom resource, the landing page's
 app list, **and** the set of images preloaded onto every node. You do not
-maintain a preload list — an earlier design did, and production ended up
+maintain a preload list. An earlier design did, and production ended up
 offering an application whose image was never preloaded, so every student who
 picked it waited for a cold multi-gigabyte pull.
 
@@ -82,7 +110,7 @@ picked it waited for a cold multi-gigabyte pull.
 which is the entire reason those images exist.
 
 **Adding an application costs disk on every node.** Each image is preloaded
-cluster-wide. Trimming the list to what your courses actually use is a
+cluster-wide. Trimming `enabled` to what your courses actually use is a
 legitimate and effective way to reclaim node storage.
 
 Removing an entry stops new sessions using it. Sessions already running are not
@@ -108,13 +136,13 @@ curl -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
 
 # Get a specific app definition
 curl -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
-  https://service.<landing-host>/service/admin/appdefinition/java-17-latest
+  https://service.<landing-host>/service/admin/appdefinition/java-17
 ```
 
 Response shape:
 ```json
 {
-  "appDefinitionName": "java-17-latest",
+  "appDefinitionName": "java-17",
   "minInstances": 3,
   "maxInstances": 1000
 }
@@ -127,7 +155,7 @@ curl -X PATCH \
   -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"minInstances": 10, "maxInstances": 500}' \
-  https://service.<landing-host>/service/admin/appdefinition/java-17-latest
+  https://service.<landing-host>/service/admin/appdefinition/java-17
 ```
 
 Validation rules enforced by the service:
@@ -169,13 +197,19 @@ options:
 
 ## Landing page visibility
 
-The landing page only shows session types listed under `additionalApps` in the main values file. An App Definition can exist in the cluster without appearing in the UI — useful for staging new environments before making them user-visible.
+The landing page offers every rendered app that has a `landingPage` block. To
+keep an app deployable but out of the drop-down, set `landingPage.visible: false`
+on it (the plain `java-17`, `java-25` and `c` entries do this), or drop its
+`landingPage` block entirely.
 
 ```yaml
-landingPage:
-  additionalApps:
-    java-17-latest: { label: Java 17 }
-    python-latest:  { label: Python }
+appDefinitions:
+  apps:
+    javascript:
+      landingPage:
+        visible: false
 ```
 
-Remove an entry from `additionalApps` to hide it from users without deleting the underlying App Definition.
+`landingPage.additionalApps` replaces the derived list completely when set. It
+exists as an escape hatch only: the page can then advertise an app the
+installation never deployed.
