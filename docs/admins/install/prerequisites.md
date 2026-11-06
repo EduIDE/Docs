@@ -142,8 +142,9 @@ EduIDE authenticates through OIDC, tested against Keycloak. You need:
 - A realm your students can authenticate to.
 - A **public** client — EduIDE's landing page is a browser application and holds
   no secret.
-- Redirect URIs for **all four** of the installation's hostnames. Three is a
-  common mistake and breaks webviews specifically.
+- Redirect URIs for the landing page and instance hosts, post-logout redirect
+  URIs for the landing host, and web origins for both. Four hostnames need DNS
+  and certificates, but the Keycloak client only names two of them.
 
 See [Access Control](../platform/access-control.md) for the full client setup.
 
