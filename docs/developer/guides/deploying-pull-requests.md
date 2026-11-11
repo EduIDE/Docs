@@ -53,7 +53,7 @@ The relevant `workflow_dispatch` inputs are:
 
 For an EduIDE Cloud PR, set:
 
-- `environment` to the target test environment such as `test1`, `test2`, or `test3`
+- `environment` to the target test environment such as `test1` or `test2`
 - `theia_cloud_tag` to `pr-<number>`
 - `ide_images_tag` to `latest` unless you also need preview IDE images
 - `helm_chart_tag` empty unless you also need preview Helm charts
