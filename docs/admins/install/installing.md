@@ -38,7 +38,7 @@ These two commands are the manual path. Day to day, `bootstrap-cluster.yml` and
 
 ```bash
 helm install eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
-  --version 2.7.0 -n eduide-system --create-namespace \
+  --version 2.7.3 -n eduide-system --create-namespace \
   -f cluster-values.yaml
 ```
 
@@ -51,7 +51,7 @@ adding an environment does not mean remembering to edit a second file.
 
 ```bash
 helm install eduide oci://ghcr.io/eduide/charts/eduide \
-  --version 2.7.0 -n eduide-test1 --create-namespace \
+  --version 2.7.3 -n eduide-test1 --create-namespace \
   -f values.yaml -f secrets.yaml
 ```
 

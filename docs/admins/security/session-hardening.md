@@ -256,9 +256,14 @@ landingPage:
     - artemis.example.edu
 ```
 
-The TUM installations trust `artemis.cit.tum.de` (production) and
-`artemis-test1/2/3.artemis.cit.tum.de` (test1 to test3). Staging, e2e, Bonn and
-Mannheim trust none yet, so their Artemis links need the click.
+The TUM installations trust `artemis.tum.de` (production) and
+`artemis-test1.artemis.cit.tum.de` and `artemis-test2.artemis.cit.tum.de` (test1
+and test2). Production also keeps `artemis.cit.tum.de`, which redirects to
+`artemis.tum.de`, so real links never carry it; the landing page compares hosts
+exactly, so list the host Artemis actually puts in its links. Staging, e2e, Bonn
+and Mannheim trust none: no Artemis links to staging or e2e yet, and Bonn's and
+Mannheim's Artemis hosts still have to be confirmed. Their Artemis links need
+the click.
 
 ## Inside the IDE
 

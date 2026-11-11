@@ -119,7 +119,7 @@ Chart 2.5.1 turns on the session hardening described in
 [Session Hardening](../security/session-hardening.md). Most of it needs nothing
 from you, but some of it refuses to render, or quietly changes behaviour, until
 you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
-Then move to 2.7.0 as described in
+Then move to 2.7.3 as described in
 [Upgrading from 2.6 to 2.7.0](#upgrading-from-26-to-270), which renames every app.
 
 ### The upgrade fails without these
@@ -216,7 +216,16 @@ charts up to 2.6.2 still offer `rust-latest` and `ocaml-latest`. Do not set
 
 Chart 2.7.0 replaces the single `appDefinitions.apps` map with a catalog, your
 own apps and an `enabled` list, and renames every app. See
-[App Definitions](../platform/app-definitions.md) for the new keys.
+[App Definitions](../platform/app-definitions.md) for the new keys. Go to 2.7.3
+directly, and skip 2.7.1:
+
+- **2.7.1** preloads the oauth2-proxy image when Keycloak is on, so the first
+  session on a node no longer pulls it. Its preload container cannot start in
+  that image, which has no shell, so the preloading DaemonSet crash-loops on
+  every node.
+- **2.7.2** fixes that.
+- **2.7.3** updates the workspace garbage collector with security dependency
+  fixes.
 
 ### Running sessions end
 
