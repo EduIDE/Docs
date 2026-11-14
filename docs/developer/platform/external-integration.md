@@ -77,7 +77,7 @@ curl -X POST https://<cloud-service>/service \
   }'
 ```
 
-The response is a plain-string session URL.
+The response is a plain-string session URL. When that session later ends, its URL no longer answers with an error: the gateway redirects the request to the landing page's `/session-ended` page, see [Session Lifecycle](./session-lifecycle#the-session-ended-page).
 
 `GET /service/{appId}` is available as an optional health or readiness probe. It returns a boolean and is not a prerequisite for launching. It establishes no session state.
 
@@ -95,6 +95,10 @@ The response is a plain-string session URL.
 - `env.fromMap` versus `fromConfigMaps` and `fromSecrets`: `fromConfigMaps` and `fromSecrets` reference names of pre-existing in-cluster Kubernetes ConfigMaps and Secrets. External callers outside the cluster pass values directly via `fromMap`.
 - Allowlist: from EduIDE-Cloud 1.2.1 the operator honours `fromSecrets` and `fromConfigMaps` only for names the administrator lists (`operator.allowedEnvFromSecrets`, `operator.allowedEnvFromConfigMaps`, both empty by default) and always drops reserved names from `fromMap`, such as anything starting with `THEIACLOUD_`, `KEYCLOAK_` or `DATA_BRIDGE_`. Dropped values are logged, not reported back to the caller. The full list is in [Session Hardening](/admins/security/session-hardening#environment-injection-allowlist).
 - Ownership: from EduIDE-Cloud 1.2.1 a `workspaceName` that belongs to another user returns HTTP 403. Derive names from the user so they cannot collide.
+
+### Templates
+
+Without a repository, a launch can ask for a starter project. Set `TEMPLATE` in `env.fromMap` to a template id such as `maven`, `gradle`, `python`, `cargo` or `go`. If `GIT_URI` is also set, `GIT_URI` wins. Scorpio copies `/home/theia/templates/<id>` of the image into an empty workspace; an unknown id shows a notification and the session opens with an empty workspace. The landing page sets `TEMPLATE` itself only for a standalone start, that is without `gitUri` and `artemisToken`: from the build system the student picks, or from the only one the app lists (`buildSystems` in the chart's app definition). The ids come from `images/<lang>/templates/<id>/` in the EduIDE repository; see [EduIDE](/developer/projects/eduide#project-templates).
 
 ## How the values reach the IDE
 

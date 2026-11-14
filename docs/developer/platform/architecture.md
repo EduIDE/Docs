@@ -42,6 +42,10 @@ Each session needs a **reachable URL** that only the right user should use. The 
 
 Installations can tune **how** sessions appear: for example **on-demand** creation when a user launches, or **prewarmed** pools that keep generic IDE instances ready and **personalize** them at runtime to cut perceived startup time. The same architectural split—**API → custom resources → operator → cluster**—applies; only reconciliation strategies and timing differ.
 
+## Ending sessions
+
+The operator ends sessions that exceed their lifetime or stay idle too long, and records why on the workspace so that a client can explain it to the user. See [Session Lifecycle and Ending](./session-lifecycle).
+
 ## Summary
 
 **EduIDE** is a **session orchestration** stack on Kubernetes: the **service** exposes a stable API and writes **desired state** as custom resources; the **operator** implements that state with workloads, routing, and storage; **workspaces** keep continuity while **sessions** provide the live IDE. Understanding that pipeline is enough to place the rest of the documentation (API, operator behavior, operations) without memorizing every subcomponent upfront.

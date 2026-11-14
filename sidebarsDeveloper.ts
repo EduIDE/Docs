@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
         'projects/eduide-lsp-extension',
         'projects/eduide-data-bridge',
         'projects/eduide',
+        'projects/eduide-image-mannheim',
         'projects/theia-arc-runners',
         'projects/workspace-garbage-collector',
       ],
@@ -24,6 +25,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'platform/architecture',
         'platform/session-prewarming',
+        'platform/session-lifecycle',
         'platform/api-specification',
         'platform/external-integration',
       ],
