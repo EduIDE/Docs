@@ -128,7 +128,7 @@ Whether anything answers on `/metrics` depends entirely on the IDE image you run
 
 - **The operator exposes metrics only if you ask for them.** See [Operator metrics](#operator-metrics) below. Everything else you learn about the operator comes from its logs and its pod status.
 - **The landing page exposes no metrics.**
-- There is **one EduIDE-specific metric**, `theiacloud_sessions_ended_total`, and nothing like `eduide_sessions_active`. The other signals below are therefore derived from Kubernetes-level exporters (kube-state-metrics, cAdvisor) rather than read off an EduIDE counter. Where a signal has no metric behind it at all, this page says so.
+- The operator exports **one EduIDE-specific metric**, `theiacloud_sessions_ended_total`, and there is nothing like `eduide_sessions_active`. The other signals below are therefore derived from Kubernetes-level exporters (kube-state-metrics, cAdvisor) rather than read off an EduIDE counter. Where a signal has no metric behind it at all, this page says so.
 
 ## Operator metrics
 

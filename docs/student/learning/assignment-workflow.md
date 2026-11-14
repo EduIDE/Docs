@@ -48,16 +48,14 @@ Confirm that the program output matches the expected sorted order.
 
 ## Other languages
 
-For Python, JavaScript, C, Rust and Go, start with the README in your workspace.
-It names the task or command that runs your project.
-In the Beginner level, the **Run** button in the editor toolbar starts it.
+For Python, JavaScript, C, Rust and Go, a starter template brings the tasks that run your project.
+In the Beginner level, the **Run** button in the toolbar starts them.
 In the Advanced and Expert levels, you can also pick a task from the **Terminal** menu.
 
 ## Help while you type
 
-- The **spell checker** marks typos in comments and text.
-- **Error Lens** shows errors and warnings next to the line.
-- In Python, **Ruff** formats the file every time you save it.
+The spell checker, Error Lens and, in Python, Ruff help you while you type.
+See [Languages and Starter Templates](../getting-started/languages-and-templates.md#what-every-language-includes).
 
 ## Preview an HTML page
 

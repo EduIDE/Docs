@@ -148,8 +148,8 @@ browser blocks that cross-origin request over an invalid certificate.
 ## Feedback links
 
 The landing page footer carries "Report a bug" and "Request a feature" links.
-Both default to the issue tracker of the chart's example values, so point them
-at the place where your users should report problems. They are per installation,
+Unset, both fall back to the EduIDE-Cloud issue tracker built into the landing
+page, so point them at the place where your users should report problems. They are per installation,
 under `landingPage.footerLinks`:
 
 ```yaml

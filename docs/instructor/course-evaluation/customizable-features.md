@@ -71,9 +71,9 @@ EduIDE can show students more or less of the IDE. There are three levels:
 Levels exist for every language: Java, C, Python, JavaScript, Rust and Go.
 Students can switch level at any time from the status bar or the **Experience Levels** menu, and the change applies immediately, without reloading.
 
-The tasks in the **Run** menu follow the level:
+The tasks offered by the **Run** button in the toolbar follow the level:
 
-- **Beginner** offers Run and Test.
+- **Beginner** offers Run, and Test where the template has tests (the C templates have none).
 - **Advanced** adds Build, and for some languages Lint, Vet, Clippy and Valgrind.
 - **Expert** offers the full task list.
 
@@ -83,7 +83,7 @@ An exercise can choose the level students start at. Put a file named `.vscode/ed
 { "level": "beginner" }
 ```
 
-Beyond the three levels, the **Customize** panel (**Experience Levels**, then **Customize individual elements**) switches single elements on or off, for example the spell checker, Clippy lints for Rust, the linter findings, the Maven view or the workspace mode in the status bar.
+Beyond the three levels, the **Customize** panel (**Experience Levels**, then **Customize Individual Elements**) switches single elements on or off, for example the spell checker, Clippy lints for Rust, the linter findings, the Maven view or the workspace mode in the status bar.
 
 ![Customize panel](/img/instructor/customize-panel.png)
 
@@ -94,7 +94,7 @@ Without the file, students start at **Expert** from EduIDE 1.5.0. EduIDE 1.4.0 i
 ### Starter Templates
 
 For students who start a language themselves, the image ships starter templates, for example Maven or Gradle for Java, Make or Bazel for C, and Cargo for Rust.
-A template is a small example project with a README.
+A template is a small example project with its tasks for running and testing it.
 Students pick one on the launcher page.
 Exercises you start from Artemis bring their own files, so no template applies.
 See [Languages and Starter Templates](/student/getting-started/languages-and-templates) for the list.
@@ -102,7 +102,7 @@ See [Languages and Starter Templates](/student/getting-started/languages-and-tem
 ### Formatting and Spell Checking
 
 Every image includes a spell checker (English and German), Error Lens and EditorConfig support.
-In Python, Ruff formats files on save, also for Artemis submissions.
+In Python, Ruff formats files on save at the Beginner and Advanced levels, also for Artemis submissions. Expert, the default without `.vscode/eduide.json`, leaves format on save off.
 
 ### Course-Specific Defaults
 

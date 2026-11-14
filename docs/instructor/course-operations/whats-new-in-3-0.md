@@ -71,7 +71,7 @@ findings, the Maven view and the workspace mode.
 - HTML files open in a preview through **Open Preview to the Side**. The old
   Live Preview extension is gone.
 - A spell checker (English and German) and Error Lens are in every image.
-- Ruff formats Python on save, Artemis submissions included.
+- Ruff formats Python on save at the Beginner and Advanced levels, Artemis submissions included.
 - In sessions that students start themselves, Git credentials are cached in
   memory for 3 hours.
 - Dialogs say "EduIDE" instead of "Theia IDE".

@@ -22,7 +22,7 @@ Your installation may show only some of them.
 ## Starter templates
 
 When you start a language yourself, you can pick a starter template.
-It puts a small example project into your workspace, with a README that explains how to run it.
+It puts a small example project into your workspace, with tasks that run and test it.
 
 | Language | Templates |
 |---|---|
@@ -38,11 +38,11 @@ See [Start from Artemis](./start-from-artemis.md).
 
 ## What every language includes
 
-- a **spell checker** for English and German that marks typos in comments and text as quiet hints
+- a **spell checker** for English and German that marks typos in comments and text
 - **Error Lens**, which shows errors and warnings next to the line they belong to
 - **EditorConfig** support, so the formatting rules of a project apply automatically
 
-In the Python workspace, **Ruff** formats your code every time you save a file.
+In the Python workspace, **Ruff** formats your code every time you save a file, in the Beginner and Advanced levels.
 The Python image also ships `numpy`, `pandas`, `matplotlib`, `uv` and `ruff`.
 
 ## Preview HTML files

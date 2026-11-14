@@ -67,7 +67,7 @@ How a template reaches a session:
 2. The launch carries `TEMPLATE=<id>`, which the landing page sets for a standalone start. On a prewarmed pod it arrives through the data bridge, so Scorpio treats `TEMPLATE` like `GIT_URI` when deciding that the bridge is complete.
 3. Scorpio copies `/home/theia/templates/<id>` into the workspace, but only if the workspace is empty and no `GIT_URI` is set. If both the workspace and the template have `.vscode/settings.json`, it merges them (JSONC, the template's keys win). The `template.json` itself is not copied.
 
-Every template has a `.vscode/tasks.json` with Run (the default build task), Build where the language has one, and Test (`"group": "test"`), so the experience levels can show tasks by level. A task without a group, such as Lint or Clippy, sets `"eduide": { "minLevel": "advanced" }`.
+Every template has a `.vscode/tasks.json` with Run (the default build task, called Start in the web template), Build where the language has one, and Test (`"group": "test"`) where the template has tests (the C templates have none), so the experience levels can show tasks by level. A task without a group, such as Lint or Clippy, sets `"eduide": { "minLevel": "advanced" }`.
 
 To add a template, add the folder with its `template.json`, offer it in the app's `buildSystems` in the EduIDE-Helm catalog (`{ id, label }`), and extend the template table in the docs. CI publishes each image's template list as the build artifact `templates-<image>.json`, and the Helm release check reads the `template.json` files from the published images with `crane` to compare them with the catalog.
 

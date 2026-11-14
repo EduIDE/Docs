@@ -434,8 +434,9 @@ do not need it, see [Rollback](rollback.md).
 ### Idle sessions end now
 
 Since chart 2.8.1 the limits are `notifyAfter: 50` and `timeoutAfter: 60`, but
-the timer only fires with an operator from EduIDE-Cloud 2.0.0 and IDE images that
-carry `theia-cloud-monitor` v1.4.0 (the pin in EduIDE 2.0.0). Before, sessions
+an open idle tab only times out with IDE images that carry `theia-cloud-monitor`
+v1.4.0 (the pin in EduIDE 2.0.0), and a closed tab only ends its session with an
+operator from EduIDE-Cloud 1.4.0 or later. Before, sessions
 effectively ran until the 24 hour lifetime. Expect more "my session closed"
 questions in the first weeks, especially from students who listen to a lecture
 with the IDE open but untouched. Raise `timeoutAfter` and `notifyAfter` per
