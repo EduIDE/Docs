@@ -10,13 +10,15 @@ const sidebars: SidebarsConfig = {
         'getting-started/first-login',
         'getting-started/first-start',
         'getting-started/start-from-artemis',
+        'getting-started/languages-and-templates',
         'getting-started/workspace-tour',
+        'getting-started/session-timeout',
       ],
     },
     {
       type: 'category',
       label: 'Learning',
-      items: ['learning/assignment-workflow', 'learning/submission-checklist'],
+      items: ['learning/assignment-workflow', 'learning/submission-checklist', 'learning/get-help'],
     },
   ],
 };

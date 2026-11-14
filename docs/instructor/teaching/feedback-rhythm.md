@@ -21,15 +21,16 @@ The push is the only handoff. Everything before it is local to the workspace and
 invisible to Artemis; everything after it is Artemis's business.
 
 This has one practical consequence that dominates all others: **students who do
-not push get no feedback.** Not delayed feedback — none. The most common cause
+not push get no feedback.** Not delayed feedback - none. The most common cause
 of "the system didn't tell me anything" is work that never left the workspace.
 
 ## What to say in week one
 
 - Commit and push at the end of every session, even if the work is unfinished.
 - Pushing is how you ask for feedback. It is not a submission ceremony.
-- The IDE keeps your files between sessions, but only pushed work reaches
-  Artemis.
+- A saved workspace keeps your files between sessions, a temporary one loses
+  them after 60 minutes without input, and in both cases only pushed work
+  reaches Artemis.
 
 Say it again in week two.
 
@@ -62,7 +63,7 @@ state.
 | During a lab | Push early and often; treat the first push as a smoke test, not a submission |
 | End of every session | Push, unconditionally |
 | Between sessions | Students act on automated results themselves |
-| Weekly | You look at aggregate results, not individuals — the common failure across a cohort is usually an exercise problem, not thirty independent student problems |
+| Weekly | You look at aggregate results, not individuals - the common failure across a cohort is usually an exercise problem, not thirty independent student problems |
 
 That last row is the one people skip. When most of a cohort fails the same test,
 the exercise is telling you something.

@@ -10,7 +10,7 @@ What to do in the room, in the order you will need it.
 ## Before
 
 - Open the exercise yourself, from Artemis, on the room's network. Not at home
-  the night before — the network between this room and the cluster is part of
+  the night before - the network between this room and the cluster is part of
   the system.
 - Have the exercise URL ready to paste. Do not make 200 people navigate.
 - Know who to contact if the platform is down, and have that open already.
@@ -37,16 +37,21 @@ again. This is a known first-login quirk, not a failure.
 session is server-side; the tab is just a view of it. This is the one time
 reloading is the right answer.
 
-**"I can't push."** Almost always a git problem, not a platform problem — wrong
+**"I can't push."** Almost always a git problem, not a platform problem - wrong
 branch, nothing committed, or a conflict. Treat it as you would in any other
 environment.
 
-**"My session closed."** It timed out from inactivity. Reopening the exercise
-gives the workspace back. Files are not lost by a timeout.
+**"My session closed."** It timed out after 60 minutes without input, or reached
+its maximum run time. The IDE asked "Are you still here?" after 50 minutes.
+Students who listen to a lecture with the IDE open but untouched are the usual
+case. If the workspace is **Saved**, **Resume my session** on the session ended
+page (or starting the exercise from Artemis again) gives the files back. If it
+is **Temporary**, the unpushed files are gone.
 
 **"I lost my work."** Distinguish immediately: pushed work is in Artemis and is
-safe. Unpushed work lives in the workspace volume and is almost certainly still
-there when they reopen. Work that was never saved in the editor is gone, exactly
+safe. Unpushed work in a saved workspace lives in the workspace volume and is almost
+certainly still there when they reopen. In a temporary workspace it is lost
+when the session ends. Work that was never saved in the editor is gone, exactly
 as it would be locally.
 
 ## When it is not one student
@@ -68,5 +73,8 @@ cluster; that is the trade for not having 200 local setups to debug.
 
 - Tell students to commit and push before they leave. That is what Artemis
   grades and what survives everything.
-- If something went wrong, report it even if it resolved itself. A transient
-  failure nobody reports is one nobody fixes.
+- If something went wrong, report it even if it resolved itself. Use the GitHub
+  issues of `EduIDE/EduIDE` (the **Report a bug** link in the launcher footer),
+  and GitHub Discussions for questions. Issues are public, so leave out
+  personal data and Artemis links. A transient failure nobody reports is one
+  nobody fixes.

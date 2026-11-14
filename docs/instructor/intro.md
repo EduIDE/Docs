@@ -15,6 +15,8 @@ Some examples in this section may be scoped to how EduIDE is currently implement
 
 ## What lives here
 
+- [What changed in 3.0](./course-operations/whats-new-in-3-0.md)
+- What changed in release 3.0 (read this first if you used an earlier version)
 - Which course setups fit EduIDE well
 - What can realistically be evaluated during a pilot
 - What cannot be judged fairly in a shallow demo

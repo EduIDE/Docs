@@ -26,7 +26,7 @@ This does not automatically mean the course should adopt EduIDE, but it does mea
 ## Questions instructors should answer
 
 - Which languages and tools are required?
-- Which exercises need persistence between sessions?
+- Which exercises need persistence between sessions? Temporary workspaces lose their files at the end of a session, so ask the platform team which languages offer saved workspaces.
 - How important is local IDE freedom?
 - Do students need access to capabilities that a managed environment may restrict?
 - Is the course willing to adapt some workflows to gain consistency?
