@@ -64,7 +64,7 @@ EduIDE can show students more or less of the IDE. There are three levels:
 
 | Level | What students see |
 |---|---|
-| **Beginner** | Explorer, Search, the Artemis view and Problems. One labelled **Run** button, a short menu bar, no debugger |
+| **Beginner** | Explorer, Search and Problems, plus the Artemis view in Artemis sessions. One labelled **Run** button, a short menu bar, no debugger |
 | **Advanced** | Adds source control, tests, the build tool, the output panel and the terminal. Still no debugger |
 | **Expert** | The full IDE, including the debugger and the full task list |
 
