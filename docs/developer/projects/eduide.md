@@ -112,7 +112,7 @@ The Java 25 images download Maven from Maven Central and still check the pinned 
 | Theia Cloud session monitor | v1.2.2 | EduIDE-Cloud GitHub release |
 | Artemis extension (`aet-tum.iris-thaumantias`) | 1.2.6 | Open VSX |
 
-In EduIDE 2.0.0 the Artemis extension moves into `base-artemis`, the session monitor is pinned to v1.4.0 ([#224](https://github.com/EduIDE/EduIDE/pull/224), needed for the idle timeout of open tabs), and Scorpio points at a prerelease (v2.2.0-rc.3, with `TEMPLATE` support) that the final Scorpio release replaces before the release.
+In EduIDE 2.0.0 the Artemis extension moves into `base-artemis`, the session monitor is pinned to v1.4.0 ([#224](https://github.com/EduIDE/EduIDE/pull/224), needed for the idle timeout of open tabs), Scorpio 2.2.0 adds `TEMPLATE` support, and data bridge 0.0.18 sets all injected variables before the first save, so Scorpio never starts with only part of them.
 
 EduIDE 1.4.0 still bundles data bridge v0.0.14, Scorpio 2.0.0 and Artemis extension 1.2.0, and no session monitor.
 
