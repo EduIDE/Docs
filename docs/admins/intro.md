@@ -58,10 +58,10 @@ not been renamed, because renaming an API group is a migration. Do not grep for
 
 | | |
 |---|---|
-| [Session Management](operations/session-management.md) | Sessions, limits, and what times them out |
+| [Session Management](operations/session-management.md) | Sessions, limits, what times them out, and the session ended page |
 | [Storage and Quotas](platform/storage-and-quotas.md) | Volumes, sizing, namespace quotas |
 | [Garbage Collection](operations/garbage-collection.md) | How old workspaces are reclaimed |
-| [App Definitions](platform/app-definitions.md) | Which languages and templates are offered |
+| [App Definitions](platform/app-definitions.md) | Which languages, editions and templates are offered |
 | [Monitoring](operations/monitoring-basics.md) | Metrics, and what EduIDE actually exposes |
 | [Incident Response](operations/incident-response.md) | Runbooks, including routing and certificate failures |
 
@@ -70,7 +70,7 @@ not been renamed, because renaming an API group is a migration. Do not grep for
 | | |
 |---|---|
 | [Release and Version Policy](maintenance/release-policy.md) | What a version number means here |
-| [Upgrades](maintenance/upgrades.md) | Moving an installation to a new version |
+| [Upgrades](maintenance/upgrades.md) | Moving an installation to a new version, including [2.x to 3.0.0](maintenance/upgrades.md#upgrading-from-2x-to-300) |
 | [Rollback](maintenance/rollback.md) | Undoing a deploy that succeeded and behaves badly |
 
 ## Security

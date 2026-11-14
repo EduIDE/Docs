@@ -65,6 +65,17 @@ Note that sessions launched from Artemis carry their own workspace regardless,
 so this setting governs the landing-page path specifically. Test the path your
 students will actually use.
 
+From chart 3.0.0 each app can override the setting with its own
+`landingPage.ephemeral`, see
+[Temporary or saved sessions per app](app-definitions.md#temporary-or-saved-sessions-per-app).
+The standalone apps that replace the old `*-templates` apps follow it, where the
+template apps were always persistent.
+
+A temporary session also ends 60 minutes after the last input, not only at the
+24 hour lifetime, see
+[Session Management](../operations/session-management.md#when-a-session-ends-for-inactivity).
+Everything in it is gone then.
+
 ## Namespace resource quotas
 
 Kubernetes resource quotas limit the total compute and storage consumed within a namespace. For EduIDE, these are set at the namespace level to bound the blast radius of a runaway workload or misconfigured App Definition.

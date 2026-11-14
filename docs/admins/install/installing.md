@@ -38,7 +38,7 @@ These two commands are the manual path. Day to day, `bootstrap-cluster.yml` and
 
 ```bash
 helm install eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
-  --version 2.7.3 -n eduide-system --create-namespace \
+  --version 3.0.0 -n eduide-system --create-namespace \
   -f cluster-values.yaml
 ```
 
@@ -51,7 +51,7 @@ adding an environment does not mean remembering to edit a second file.
 
 ```bash
 helm install eduide oci://ghcr.io/eduide/charts/eduide \
-  --version 2.7.3 -n eduide-test1 --create-namespace \
+  --version 3.0.0 -n eduide-test1 --create-namespace \
   -f values.yaml -f secrets.yaml
 ```
 
@@ -144,6 +144,38 @@ listener healthy — Gateway API never compares a certificate's names against a
 listener's hostname — so the first symptom is a browser warning, and the second
 is the landing page being unable to call its own REST service, because the
 browser blocks that cross-origin request over an invalid certificate.
+
+## Feedback links
+
+The landing page footer carries "Report a bug" and "Request a feature" links.
+Both default to the issue tracker of the chart's example values, so point them
+at the place where your users should report problems. They are per installation,
+under `landingPage.footerLinks`:
+
+```yaml
+landingPage:
+  footerLinks:
+    bugReport:
+      text: Report a bug
+      url: https://github.com/EduIDE/EduIDE/issues
+    featureRequest:
+      text: Request a feature
+      url: https://github.com/EduIDE/EduIDE/issues
+    about:                       # optional, as is attribution
+      text: About
+      url: https://eduide.example.edu/about
+```
+
+Each link also takes `target` and `rel`, and the URLs go through Helm's `tpl`.
+The TUM installations set both links to `https://github.com/EduIDE/EduIDE/issues`
+in `environments/_base.yaml` of EduIDE-deployment.
+
+The "Report Issue" entry in the IDE's Help menu opens
+`https://github.com/eduide/eduide/issues` and cannot be changed per
+installation, because the URL is part of the IDE image. Tell your users which
+channel is yours if they should not file issues on the public tracker. Those
+issues are public, so students should not include personal data, Artemis links
+(they hold tokens) or exercise code.
 
 ## Verifying
 
