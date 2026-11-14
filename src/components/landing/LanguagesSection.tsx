@@ -13,8 +13,8 @@ const languages: Language[] = [
   { name: 'Python', logoSrc: '/img/marketing/python-svgrepo-com.svg' },
   { name: 'C', logoSrc: '/img/marketing/C_Programming_Language.svg' },
   { name: 'JavaScript', logoSrc: '/img/marketing/javascript-svgrepo-com.svg' },
-  { name: 'OCaml', logoSrc: '/img/marketing/OCaml_Sticker.svg' },
   { name: 'Rust', logoSrc: '/img/marketing/rust-svgrepo-com.svg' },
+  { name: 'Go', logoSrc: '/img/marketing/go-wordmark.svg' },
 ];
 
 const LangItem = React.memo<{ language: Language }>(function LangItem({ language }) {

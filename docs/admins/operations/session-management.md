@@ -174,25 +174,117 @@ monitor:
   activityTracker:
     enable: true
     # minutes between re-pinging the pods
-    interval: 1
+    interval: 1            # the chart default; the TUM installations use 3
 ```
 
 Every `interval` minutes the operator asks each session's monitor extension for
 the last activity, on port 8081 (`appDefinitions.defaults.monitor.port`). The
 request carries the session secret; the monitor answers `401` without it.
 
-When a poll fails or returns no timestamp, the operator (from EduIDE-Cloud 1.2.1)
-counts it as a failure and keeps the session running. Before, it compared the
-timeout against the activity recorded at session start, so a monitor that was
-briefly unreachable got an active session deleted. The operator log shows the
-difference:
+### When a session ends for inactivity
 
-```bash
-kubectl -n <namespace> logs deploy/operator-deployment | grep "Could not read activity"
+The limits are explicit chart values per app definition, in minutes:
+
+```yaml
+appDefinitions:
+  defaults:
+    monitor:
+      activityTracker:
+        notifyAfter: 50    # "Are you still here?" dialog in the IDE
+        timeoutAfter: 60   # the operator deletes the session
 ```
 
-The monitor extension ships in the IDE images from EduIDE 1.5.0. With 1.4.0 images every poll fails, so sessions are not stopped
-for inactivity, only at the app definition's `timeout`.
+Chart 2.8.1 sets 60 and 50 (before, 60 and 55 came from template fallbacks).
+Raise both per installation if the limits are too short, for example for courses
+where students listen to a lecture with the IDE open but untouched. Keep the gap
+between them larger than `monitor.activityTracker.interval`, or the warning can
+be skipped. 50 and 60 with an `interval` of 3 is fine.
+
+Only input from the user counts as activity: typing, clicking, mouse moves and
+scrolling in the IDE tab, and editing or saving files. Output from Artemis, Git
+or language servers does not count. This needs the IDE images from EduIDE 2.0.0
+and the monitor extension `theia-cloud-monitor` v1.4.0 in them. With version
+1.2.2 an open but idle tab is never timed out.
+
+The operator also ends a session whose **tab was closed**. When a poll fails and
+the monitor answered before (since the operator started), and the last activity
+is older than `timeoutAfter`, the session is deleted. A monitor that never
+answered still keeps the session running, as with a failed poll from EduIDE-Cloud
+1.2.1 on, so a briefly unreachable monitor does not cost an active session. The
+operator log shows the difference:
+
+```bash
+kubectl -n <namespace> logs deploy/operator-deployment | grep -E "Could not read activity|Monitor stopped answering|timeout of|was stopped after"
+```
+
+The lines to know:
+
+| Log line contains | Meaning |
+|---|---|
+| `Could not read activity` | A poll failed or returned no timestamp |
+| `Monitor stopped answering (IDE tab closed?)` | A monitor that answered before no longer does |
+| `Notifying session as timeout of N minutes was reached!` | The warning dialog is requested |
+| `Deleting session as timeout of N minutes was reached!` | The session ends for inactivity |
+| `was stopped after N minutes` | The session ended at its lifetime limit (`timeout`) |
+
+After an operator restart, which every `helm upgrade` causes, a session whose tab
+is already closed runs until its lifetime limit once, because its monitor has not
+answered since the restart.
+
+### Why a session ended
+
+Before the operator stops a session for inactivity or for reaching its lifetime,
+it annotates the workspace:
+
+```bash
+kubectl -n <namespace> get workspace <name> \
+  -o jsonpath='{.metadata.annotations}'
+```
+
+| Annotation | Value |
+|---|---|
+| `theia-cloud.io/last-session-end-reason` | `inactivity` or `lifetime` |
+| `theia-cloud.io/last-session-end-time` | when the operator stopped it |
+
+`GET /service/workspace/{appId}/{user}` returns both as `lastSessionEndReason`
+and `lastSessionEndTime`. A session a user or an admin stopped carries no
+reason. No CRD changes are involved, and the operator's ClusterRole already
+allows `patch` on workspaces. The landing page uses the reason on its
+`/session-ended` page.
+
+### What visitors see after a session ended
+
+Chart 2.9.0 adds a catch-all rule to the instances route. A request for a
+session that no longer exists, for example a reload of the old tab, gets a `302`
+to `https://<landing host>/session-ended`, with the query string passed on. A
+live session's longer path still wins. The page says why the session ended and
+offers **Resume my session** for a session with a saved workspace.
+
+```yaml
+gateway:
+  routes:
+    sessionEndedRedirect:
+      enabled: true          # default; needs landingPage.enabled
+      path: /session-ended   # default
+      statusCode: 302        # the only accepted value
+```
+
+Only `302` is accepted, because eager sessions reuse instance paths and a cached
+`301` would break them. Pair chart 2.9.0 or later with a landing page image that
+serves `/session-ended`: an older image shows its start page on the redirect.
+Turn the redirect off with `gateway.routes.sessionEndedRedirect.enabled: false`.
+
+Inside the open IDE the tab does not switch pages by itself. It shows "Your
+session has timed out" or goes "Offline", and the page appears on reload.
+Resume works in the same browser tab for 24 hours.
+
+:::warning Temporary sessions lose their files
+A temporary session, one without a PersistentVolumeClaim, loses its files as
+soon as it ends. With the inactivity timeout working that is after 60 minutes
+without input, not after the 24 hour lifetime. Before the timeout worked, sessions
+effectively ran for the whole lifetime. Tell students to push or download their
+work before a long break.
+:::
 
 If idle sessions are never being shut down, confirm these are still enabled and
 that the IDE images carry the monitor before investigating further. Note that `monitor` here is unrelated to `monitoring`, which is the Prometheus scrape configuration described in [Monitoring Basics](/admins/operations/monitoring-basics). The names are one letter apart and the settings do entirely different things.

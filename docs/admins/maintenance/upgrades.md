@@ -206,7 +206,8 @@ session monitor) arrive with EduIDE 1.5.0, which chart 2.7.0 pins. Until the IDE
 images carry the session monitor, every activity poll fails, and from
 EduIDE-Cloud 1.2.1 the operator keeps such a session running rather than
 treating it as idle. Inactivity shutdown therefore does not happen yet; sessions
-end at the app definition's `timeout`.
+end at the app definition's `timeout`. It starts working with
+[Upgrading from 2.x to 3.0.0](#upgrading-from-2x-to-300).
 
 EduIDE 1.5.0 no longer publishes the `rust`, `ocaml` and `haskell` images, but
 charts up to 2.6.2 still offer `rust-latest` and `ocaml-latest`. Do not set
@@ -267,6 +268,188 @@ tell students to push their work before the upgrade.
 
 The cluster chart moves to 2.7.0 without changes; upgrade it to keep both
 versions equal.
+
+## Upgrading from 2.7 to 2.8, 2.9 and 2.10
+
+Chart 2.8.0 to 2.10.0 add behaviour that is off or harmless until you use it.
+Go to 3.0.0 directly if you can, see
+[Upgrading from 2.x to 3.0.0](#upgrading-from-2x-to-300). Where you stop on one
+of these, this is what each adds:
+
+- **2.8.0** adds `global.nodeSelector`, which pins every EduIDE workload to the
+  nodes carrying those labels. See
+  [Pinning EduIDE to a node pool](../install/prerequisites.md#pinning-eduide-to-a-node-pool).
+  Empty, the default, renders as before. The chart pins EduIDE-Cloud 1.3.0, the
+  first release with `--sessionNodeSelector`, and updates the workspace garbage
+  collector to chart 0.2.0, which reads the value too. Set the same value on
+  `eduide-cluster` to pin the conversion webhook, and delete prewarmed sessions
+  once after setting it.
+- **2.8.1** shows the "Are you still here?" dialog after 50 minutes without
+  input instead of 55 and times out after 60. Both are explicit in
+  `appDefinitions.defaults.monitor.activityTracker` (`notifyAfter: 50`,
+  `timeoutAfter: 60`). Whether the timeout fires depends on the operator and the
+  IDE images, see [Session Management](../operations/session-management.md#when-a-session-ends-for-inactivity).
+- **2.9.0** redirects a request for an ended session to the landing page's
+  `/session-ended` page instead of answering 5xx. Pair it with a landing page
+  image that serves that page; an older image shows its start page, which is
+  still better than the 5xx it replaces. Turn it off with
+  `gateway.routes.sessionEndedRedirect.enabled: false`.
+- **2.10.0** adds `operator.metricsPort` and, in `eduide-cluster`, a `PodMonitor`
+  and a "Sessions ended per hour, by reason" dashboard panel, see
+  [Operator metrics](../operations/monitoring-basics.md#operator-metrics). Set
+  `operator.metricsPort` only with an EduIDE-Cloud release that has
+  `--metricsPort`; an older operator does not start with it.
+
+Both charts move together to 2.10.0 and 3.0.0, so upgrade the cluster chart
+first as usual. Landing page logout also changed in this window: the landing
+page drops the Keycloak callback fragment from its redirect URI, which fixes
+"Invalid redirect uri" on logout. The Keycloak client needs no change, see
+[Access Control](../platform/access-control.md#invalid-redirect-uri-when-logging-out).
+
+## Upgrading from 2.x to 3.0.0
+
+Chart 3.0.0 is a breaking release. It introduces two editions per language, a
+new app catalog and renames three apps, and it needs three matching releases:
+
+| Component | Version |
+|---|---|
+| Helm charts `eduide` and `eduide-cluster` | 3.0.0 |
+| EduIDE IDE images (`appVersion`) | 2.0.0 |
+| EduIDE-Cloud (operator and REST service) | 2.0.0 |
+| EduIDE-Landing-Page | a release that reads the per-app `ephemeral` flag |
+
+The old image names are frozen at their last tag, so 3.0.0 only works with
+EduIDE 2.0.0. Go to 3.0.0 from 2.10.0; read the sections above if you are
+older.
+
+### What changes
+
+- **Two editions per language.** The Artemis apps (`java-17`, `java-25`,
+  `python`, `javascript`, `c`, and new `rust` and `go`) keep their names and now
+  use the images `eduide/<lang>-artemis`. All of them are hidden from the
+  landing page. New `<lang>-standalone` apps use `eduide/<lang>-standalone`, are
+  offered on the landing page and list their starter projects in
+  `landingPage.buildSystems`. See [App Definitions](../platform/app-definitions.md).
+- **Three apps are renamed.** `java-17-templates`, `java-25-templates` and
+  `c-templates` are now `java-17-standalone`, `java-25-standalone` and
+  `c-standalone`. The render fails while `appDefinitions.enabled` still names an
+  old one, with the new name in the message.
+- **`python` and `javascript` are hidden Artemis apps.** An installation that
+  offered them on the landing page switches to `python-standalone` and
+  `javascript-standalone`.
+- **Empty `enabled` offers and preloads 14 images** on every node, two editions
+  of seven languages. List the apps you use.
+- **`landingPage.appDefinition` defaults to `java-17`**, the app for links
+  without `?appDef=`, which is the Artemis start. The render fails when it names
+  an app the installation does not render, so update an override that still
+  names a `*-templates` app.
+- **Per-app `landingPage.ephemeral`** overrides `landingPage.ephemeralStorage`.
+  Template apps were persistent before; the standalone apps follow the setting
+  now. The privacy page states the workspace as persistent when any rendered
+  app, hidden ones included, is persistent.
+- **Temporary sessions lose their files after 60 minutes without input**, not
+  after the 24 hour lifetime. The timeout now works, see below.
+- **A closed tab ends its session too**, 60 minutes after the last input.
+- **Ended sessions land on `/session-ended`**, with an explanation and a resume
+  button for a saved workspace.
+- **Installation-specific images need a full path and tag.** The chart prefixes
+  `imageRegistry` to anything else. Derive such an image `FROM` an edition image,
+  see [Installation-specific images](../platform/app-definitions.md#installation-specific-images).
+- **The images `java-17`, `java-25`, `python`, `javascript`, `c`, the
+  `*-templates` images and `thm-java-25` get no new tags.** Only the
+  `<lang>-artemis` and `<lang>-standalone` images are built from 2.0.0 on.
+
+### What a running installation loses
+
+Removing or renaming an app deletes its AppDefinition, and with it the prewarmed
+pods, session ingresses and sidecars it owns. **Running sessions of the renamed
+apps end.** The new images also replace every running session. Persistent
+workspaces created under the old template apps are not reachable afterwards:
+the landing page names a workspace after its app, so a link opens a new, empty
+one. The old workspaces stay until the
+[garbage collector](../operations/garbage-collection.md) removes them, and work
+in them that was never pushed is gone for the student.
+
+### Steps, in order
+
+1. **Pick a maintenance window** outside lecture hours and exercises. Tell
+   students to push their work before it.
+2. **Check the version pins.** `versions.cloud` must be EduIDE-Cloud 2.0.0 or
+   later, `versions.landingPage` a landing page release that reads the per-app
+   `ephemeral` flag (older ones ignore it and use `landingPage.ephemeralStorage`
+   for every app), and the IDE images EduIDE 2.0.0. The chart's `appVersion` is
+   2.0.0; check your values only if they override `versions.*`, `operator.image`,
+   `service.image` or `landingPage.image`. Do not release or deploy 3.0.0 before
+   these exist.
+3. **Update your values files.**
+   - In `appDefinitions.enabled`, rename the three `*-templates` names, and add
+     `python-standalone`, `javascript-standalone` and any of the new `rust-standalone`
+     and `go-standalone` you want. List every app explicitly.
+   - Rename the keys under `appDefinitions.apps` that override a renamed app.
+   - Update `landingPage.appDefinition` if it names a `*-templates` app.
+   - Keep the app name where persistent workspaces exist for it, as TH Mannheim
+     does with `thm-java-25-latest`. Only its `image` changes, to a full path and
+     tag.
+   - Decide per app whether sessions are temporary. To keep the standalone
+     sessions persistent as the template ones were, set
+     `landingPage.ephemeral: false` on the `-standalone` apps.
+   - Review `timeoutAfter` and `notifyAfter` (see below).
+4. **Look at the diff.** `helm diff upgrade` shows which AppDefinitions are
+   deleted and created, and which images join the preload list.
+5. **Upgrade the cluster chart**, then the installation, with a generous
+   `--timeout` or without `--wait`, because every node preloads the new images
+   (see [`--wait` and image preloading](#--wait-and-image-preloading)).
+6. **Move `minInstances` to the new apps.** The chart reads the live
+   `minInstances` back, so a new AppDefinition starts with the catalog value
+   (`0`, and `3` for `java-17`) and your setting on the old app is gone. Patch the
+   new ones through the admin API, see
+   [Adjusting scaling at runtime](../platform/app-definitions.md#adjusting-scaling-at-runtime):
+
+   ```bash
+   curl -X PATCH \
+     -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"minInstances": 10}' \
+     https://service.<landing-host>/service/admin/appdefinition/java-25-standalone
+   ```
+
+7. **Check afterwards.**
+   - `kubectl -n <namespace> get appdefinitions.theia.cloud` lists what you
+     expect, and the landing page offers one tile per language with a
+     "Temporary" or "Saved" badge.
+   - Start a session from the landing page and one from Artemis. Open a webview
+     panel in each.
+   - Check the idle timeout. The operator log shows
+     `Notifying session as timeout of N minutes was reached!` after an idle
+     period, and a closed tab ends its session.
+   - The Artemis configuration still names the Artemis apps (`java-17`, `c`,
+     `python`, ...), which keep their names. A configuration that names a
+     `*-templates` app needs the new name, and existing exercises that carry one
+     in `theiaImage` need a data migration.
+
+Rolling back from 3.0.0 to 2.x deletes the new AppDefinitions and recreates the
+old ones, which ends running sessions a second time. Plan the window so that you
+do not need it, see [Rollback](rollback.md).
+
+### Idle sessions end now
+
+Since chart 2.8.1 the limits are `notifyAfter: 50` and `timeoutAfter: 60`, but
+an open idle tab only times out with IDE images that carry `theia-cloud-monitor`
+v1.4.0 (the pin in EduIDE 2.0.0), and a closed tab only ends its session with an
+operator from EduIDE-Cloud 1.4.0 or later. Before, sessions
+effectively ran until the 24 hour lifetime. Expect more "my session closed"
+questions in the first weeks, especially from students who listen to a lecture
+with the IDE open but untouched. Raise `timeoutAfter` and `notifyAfter` per
+installation if 60 and 50 are too short, and keep the gap between them larger
+than `monitor.activityTracker.interval`.
+
+Two details to know: a monitor older than v1.4.0 never times out an open idle
+tab, and after the operator restart that every `helm upgrade` causes, sessions
+whose tab was already closed run until their lifetime limit once.
+
+If you set `operator.metricsPort`, the sessions dashboard shows the sessions
+that ended for inactivity and for lifetime, see
+[Operator metrics](../operations/monitoring-basics.md#operator-metrics).
 
 ## Two things that do not behave as you would guess
 

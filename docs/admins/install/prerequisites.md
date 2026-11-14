@@ -118,10 +118,39 @@ kubectl get storageclass -o custom-columns=NAME:.metadata.name,DEFAULT:.metadata
 EduIDE preloads every IDE image onto **every node**, so a session starts in
 seconds rather than waiting on a multi-gigabyte pull.
 
-Budget accordingly: each IDE image is roughly 0.5–1 GB, and the default set is
-eight. Allow **at least 20 GB** of image storage per node, and more if you add
-languages. Trim the app list in the tenant values if that is too much — see
+Budget accordingly: each IDE image is roughly 0.5-1 GB. Until chart 2.10 the
+default set was eight images and **20 GB** of image storage per node was enough.
+From chart 3.0.0 the default set is 14 images, two editions of seven languages,
+so allow more, or trim the app list in the tenant values: list the apps your
+courses use in `appDefinitions.enabled`, see
 [Applications](../platform/app-definitions.md).
+
+### Pinning EduIDE to a node pool
+
+If only some nodes can hold the images, pin every EduIDE workload to them with
+`global.nodeSelector` (chart 2.8.0), a plain map of node labels:
+
+```yaml
+global:
+  nodeSelector:
+    aet.cit.tum.de/pool: pve     # example: the label of your node pool
+```
+
+The operator, the REST service, the landing page, image preloading, the
+workspace garbage collector and, through `--sessionNodeSelector`, the session
+pods then land on matching nodes only. No taint is needed, so other workloads
+may share the nodes. Empty, the default, schedules anywhere.
+
+- Set the same `global.nodeSelector` in the `eduide-cluster` values to pin the
+  conversion webhook.
+- `preloading.nodeSelector` falls back to `global.nodeSelector` when empty. Set,
+  it wins.
+- Session pods follow only with an operator from EduIDE-Cloud 1.3.0 or later.
+  An older operator rejects `--sessionNodeSelector` and does not start, so leave
+  `global.nodeSelector` unset on such a release.
+- Prewarmed sessions that were created before you set the value keep running
+  where they are. Delete them once so they are recreated on the pool.
+- The shared cache does not read it, and is off in every installation.
 
 ## 6. Prometheus Operator — only if you want metrics
 
@@ -163,7 +192,7 @@ Before installing EduIDE:
 - [ ] cert-manager running, **with `enableGatewayAPI=true`**
 - [ ] A storage class chosen, with dynamic provisioning
 - [ ] A CNI that enforces NetworkPolicies
-- [ ] ~20 GB of image space per node
+- [ ] Image space per node: about 20 GB for eight images, more for the 14 of the default set
 - [ ] DNS you can change, **wildcards permitted**
 - [ ] A certificate plan — read [Certificates and DNS](certificates.md) before
       going further, because the wildcard requirement surprises people

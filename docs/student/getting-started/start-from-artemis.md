@@ -43,6 +43,12 @@ first. Check that it is yours before you continue.
 Keep the IDE open in one tab. If you open the same session in a second tab, it
 shows the same files and does not download your exercise again.
 
-## 6) Continue in EduIDE
+## 6) Come back after a break
+
+If your session ends, start the exercise from Artemis again, or use **Resume my session** on the session ended page.
+Both reopen the same workspace.
+See [When Your Session Ends](./session-timeout.md).
+
+## 7) Continue in EduIDE
 
 When the IDE opens, continue with the [Workspace Tour](./workspace-tour.md).

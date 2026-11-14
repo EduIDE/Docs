@@ -29,7 +29,7 @@ spec:
   cluster: eduide           # must match a file in clusters/
   namespace: eduide-bonn    # every namespace carries the eduide- prefix
   platform:
-    chartVersion: 2.7.3
+    chartVersion: 3.0.0
     channel: release        # release | main
 ```
 

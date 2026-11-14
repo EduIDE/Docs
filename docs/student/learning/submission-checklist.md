@@ -49,6 +49,12 @@ Then the result appears in the same view:
 - **See test results** opens the list of **Failed** and **Passed** tests
 - **Build failed** means your code did not compile; **Go to source** jumps to the error and **Open log** shows the build log
 
+## 6) Before a long break
+
+Pushing and submitting are what keep your work.
+In a **Temporary workspace** your files are lost 60 minutes after your last input, so submit before you leave.
+See [When Your Session Ends](../getting-started/session-timeout.md).
+
 ## Done when
 
 - all files are saved

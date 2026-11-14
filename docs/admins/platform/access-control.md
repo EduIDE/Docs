@@ -90,8 +90,16 @@ Four hostnames **is** the right number for DNS and for certificates - see
 different.
 :::
 
-Repeat this for each installation — one client per installation, because each
-has its own hostnames.
+Repeat this for each installation. Check first whether the client already
+exists: installations on the same Keycloak server and realm with the same
+`clientId` share **one** client, so adding one usually means appending its two
+hostnames to the lists above. At TUM, for example, the four test installations
+share one client, and Bonn and Mannheim share another. Editing a shared client
+edits it for everyone on it, and a removed or mistyped entry breaks their login
+too. Copy the current lists first, add rather than replace, and log in to an
+installation that already worked right after you save. Give an installation a
+client of its own only as a deliberate decision: change `keycloak.clientId` in
+its values and create that client.
 
 Click **Save**.
 
@@ -219,6 +227,15 @@ Causes and fixes:
 - **Incorrect redirect URI** — verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
 - **Cookie secret mismatch** — confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
 - **HTTP/HTTPS mismatch** - the redirect URIs and the environment URL must use the scheme the installation is served on, which is HTTPS for every normal installation. An installation served over plain HTTP uses `http://` throughout and also needs `oauth2Proxy.cookieSecure: false`
+
+### "Invalid redirect uri" when logging out
+
+Keycloak rejects any redirect URI that contains a fragment. Landing page
+versions before EduIDE-Landing-Page#64 passed the `#state=...&code=...` fragment
+Keycloak adds after a login on as the post-logout redirect, so every logout
+ended on "Invalid redirect uri", whatever wildcards the client had. Update the
+landing page image; the client configuration needs no change. The query string
+(`gitUri`, `artemisToken`) is kept.
 
 ### "Invalid client" error in Keycloak
 

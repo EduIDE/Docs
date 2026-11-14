@@ -126,9 +126,45 @@ Whether anything answers on `/metrics` depends entirely on the IDE image you run
 
 ### What is not scraped
 
-- **The operator exposes no Prometheus metrics.** There is no metrics dependency in the operator build and no `PodMonitor` for it. Everything you learn about the operator comes from its logs and its pod status.
+- **The operator exposes metrics only if you ask for them.** See [Operator metrics](#operator-metrics) below. Everything else you learn about the operator comes from its logs and its pod status.
 - **The landing page exposes no metrics.**
-- There are **no EduIDE-specific metric names** - nothing like `eduide_sessions_active`. The signals below are therefore derived from Kubernetes-level exporters (kube-state-metrics, cAdvisor) rather than read off an EduIDE counter. Where a signal has no metric behind it at all, this page says so.
+- The operator exports **one EduIDE-specific metric**, `theiacloud_sessions_ended_total`, and there is nothing like `eduide_sessions_active`. The other signals below are therefore derived from Kubernetes-level exporters (kube-state-metrics, cAdvisor) rather than read off an EduIDE counter. Where a signal has no metric behind it at all, this page says so.
+
+## Operator metrics
+
+From chart 2.10.0 the operator can serve Prometheus metrics:
+
+```yaml
+operator:
+  metricsPort: 9464    # default 0, which serves nothing
+```
+
+The operator then exposes `/metrics` on a container port named `metrics`. The
+`eduide-cluster` chart adds a `PodMonitor` named `theia-cloud-operator` that
+scrapes it every 30 seconds in every namespace listed in `targetNamespaces`.
+Without `operator.metricsPort` that `PodMonitor` finds no target.
+
+:::warning Needs EduIDE-Cloud 2.0.0
+Set `operator.metricsPort` only with an operator that knows `--metricsPort`,
+which is EduIDE-Cloud 2.0.0 (the first release containing EduIDE-Cloud#167). An
+older operator rejects the flag and does not start. Check `versions.cloud` if your values override it.
+:::
+
+The first metric is:
+
+```
+theiacloud_sessions_ended_total{reason, app_definition}
+```
+
+It counts sessions the operator stopped, with `reason` either `inactivity` (the
+idle timeout) or `lifetime` (the app definition's maximum session time).
+Sessions a student or an admin stopped are not counted. The sessions dashboard
+(the `eduide-dashboard-sessions` ConfigMap, shown in Rancher monitoring) has a
+panel "Sessions ended per hour, by reason" built on it, filtered by namespace.
+The panel stays empty until `operator.metricsPort` is set.
+
+A rising `inactivity` rate right after an upgrade is expected, because idle
+sessions now really end, see [Session Management](session-management.md).
 
 ## Key signals
 

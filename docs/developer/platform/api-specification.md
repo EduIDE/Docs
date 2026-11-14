@@ -85,6 +85,8 @@ Workspace APIs are the explicit lifecycle endpoints for persistent user context:
 - optional `appDefinition`
 - optional `label`
 
+`GET /service/workspace/{appId}/{user}` returns `UserWorkspace` objects. Besides `name`, `label`, `appDefinition`, `user` and `active`, they carry two optional fields: `lastSessionEndReason` (`inactivity` or `lifetime`) and `lastSessionEndTime` (ISO-8601 instant). The operator sets them when it stops a session on that workspace and leaves them unchanged for any other stop, so compare the time with the start of the session you ask about. See [Session Lifecycle](./session-lifecycle#end-reason-on-the-workspace).
+
 Architecturally, these endpoints operate on the durable side of the platform model. They describe what a user can return to later, even when no live session is currently running.
 
 ### Session management

@@ -15,5 +15,6 @@ The developer section includes the project catalog that previously lived in the 
 - [EduIDE LSP Extension](/developer/projects/eduide-lsp-extension): Remote language-server connector for Theia and VS Code.
 - [EduIDE Data Bridge](/developer/projects/eduide-data-bridge): Runtime data and credential injection bridge for cloud IDE sessions.
 - [EduIDE](/developer/projects/eduide): Custom Eclipse Theia Docker images and packaged IDE environments.
+- [EduIDE Image Mannheim](/developer/projects/eduide-image-mannheim): Reference example and template for an installation-specific image derived from an EduIDE edition image.
 - [Theia ARC Runners](/developer/projects/theia-arc-runners): Self-hosted GitHub Actions runner infrastructure on Kubernetes.
 - [Workspace Garbage Collector](/developer/projects/workspace-garbage-collector): Cleanup operator for expired workspaces and storage hygiene.
