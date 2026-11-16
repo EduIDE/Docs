@@ -103,7 +103,17 @@ gateway:
 landingPage:
   trustedArtemisHosts:     # links from these hosts start the IDE without a click
     - artemis.example.edu
+  allowedGitHosts:         # hosts other links may clone from (default: github.com, gitlab.com)
+    - github.com
+    - gitlab.com
+    - git.example.edu      # your Gitea, Forgejo or GitLab
 ```
+
+`allowedGitHosts` lists the hosts that links without Artemis credentials, such
+as [repository links](/instructor/course-operations/open-a-git-repository), may
+clone from. Such links must use HTTPS, must not carry credentials and always
+wait for a click. Setting the list replaces the default, so keep `github.com`
+and `gitlab.com` if you still want them. Only public repositories work.
 
 Session pods are isolated by NetworkPolicies from the start. Set
 `networkPolicies.gatewayNamespace` to the namespace where the gateway's **proxy

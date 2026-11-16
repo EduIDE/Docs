@@ -247,6 +247,12 @@ From landing page 1.3.0, which chart 2.5.1 pins:
   `gitUri` and `artemisUrl` are in `landingPage.trustedArtemisHosts`. Otherwise
   the page names the repository host and waits for **Launch**. Anyone can write
   such a link, so a token in it proves nothing.
+- **External repository links are checked.** Every other link with a `gitUri`
+  must use HTTPS, carry no credentials and name a host in
+  `landingPage.allowedGitHosts` (default `github.com` and `gitlab.com`) or
+  `trustedArtemisHosts`. Only the repository and `gitRef` pass on, and the page
+  always waits for a click. Scorpio asks before it runs the repository's Gradle
+  prewarm.
 - **Anonymous mode asks first.** Without Keycloak, a `?user=` in the link is
   shown for confirmation instead of being taken as the identity.
 
