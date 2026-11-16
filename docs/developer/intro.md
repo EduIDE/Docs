@@ -18,7 +18,7 @@ Some repository links and integration notes may reflect how EduIDE is currently 
 - Project overviews for the repositories in the EduIDE ecosystem
 - Platform architecture and technical boundaries
 - API and service integration references
-- Developer workflows for local setup and validation
+- Developer workflows for local setup, validation and [releases](/developer/guides/releases-and-dependencies)
 
 ## Start here
 
