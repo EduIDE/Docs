@@ -46,7 +46,7 @@ https://eduide.example.edu/?gitUri=https://git.example.edu/my-org/my-exercise.gi
 - The page shows the repository and waits for one click. A link never starts a session by itself.
 - A wrong or missing `gitRef` gives a warning in the IDE, and the default branch opens.
 - For a repository that is not from Artemis, the IDE asks before it prewarms the Gradle build, because that runs the repository's own build code.
-- A workspace belongs to one user, app, repository and ref. A persistent workspace keeps its files, and each ref gets its own. A temporary session belongs to one user, app and repository, so a second ref of the same repository reuses it.
+- A workspace belongs to one user, app, repository and ref. A persistent workspace keeps its files, and each ref gets its own. A temporary session belongs to one user, app, repository and ref in the same way.
 
 ## Limits
 
@@ -56,4 +56,4 @@ https://eduide.example.edu/?gitUri=https://git.example.edu/my-org/my-exercise.gi
 
 ## Browser extension
 
-The "Open in EduIDE" browser extension adds an **Open in EduIDE** button on GitHub repository pages and builds the link for you. A toolbar button for GitLab and Gitea pages is in progress.
+The "Open in EduIDE" browser extension adds an **Open in EduIDE** button on GitHub repository pages and builds the link for you. A toolbar button for GitLab and Gitea pages is tracked in [EduIDE-Browser-Extension#2](https://github.com/EduIDE/EduIDE-Browser-Extension/pull/2).
