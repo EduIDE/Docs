@@ -379,7 +379,9 @@ in them that was never pushed is gone for the student.
    `ephemeral` flag (older ones ignore it and use `landingPage.ephemeralStorage`
    for every app), and the IDE images EduIDE 2.0.0. The chart's `appVersion` is
    2.0.0; check your values only if they override `versions.*`, `operator.image`,
-   `service.image` or `landingPage.image`. Do not release or deploy 3.0.0 before
+   `service.image` or `landingPage.image`, and check `appDefinitions.apps` for
+   an `image` override: an old tagged override keeps the old image, for example
+   one without the monitor v1.4.0. Do not release or deploy 3.0.0 before
    these exist.
 3. **Update your values files.**
    - In `appDefinitions.enabled`, rename the three `*-templates` names, and add

@@ -96,7 +96,7 @@ A `defaults` block supplies every field an app does not state itself.
 ```yaml
 appDefinitions:
   # Offer only these. Leave empty to offer everything.
-  enabled: [java-25-standalone, python-standalone, haskell]
+  enabled: [java-17, java-25-standalone, python-standalone, haskell]
   apps:
     python-standalone:
       limitsMemory: 4000M          # one field changed, the rest comes from the catalog
@@ -269,7 +269,7 @@ registry:
 
 ```yaml
 appDefinitions:
-  enabled: [thm-java-25-latest]
+  enabled: [java-17, thm-java-25-latest]
   apps:
     thm-java-25-latest:
       image: ghcr.io/eduide/eduide-image-mannheim/java-25:<tag>
@@ -297,8 +297,9 @@ appDefinitions:
 
 A link without `?appDef=` launches `landingPage.appDefinition`, which defaults to
 `java-17` from chart 3.0.0. The chart refuses to render when that is not an app
-the installation renders, so update an override that still names a `*-templates`
-app.
+the installation renders, so keep `java-17` in `enabled` or set
+`landingPage.appDefinition` to an app that is, and update an override that still
+names a `*-templates` app.
 
 A hidden app can still be started by a link with `?appDef=`, `gitUri` and
 `artemisToken`. Such a link carries the user's Artemis token, so treat it like a

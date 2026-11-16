@@ -56,6 +56,10 @@ Check what you actually deployed before a cohort relies on it:
 ```bash
 kubectl -n <namespace> get cm landing-page-config -o jsonpath='{.data.config\.js}' | grep useEphemeralStorage
 ```
+
+From chart 3.0.0 a per-app `landingPage.ephemeral` overrides this value, so the
+effective setting of an app is its own `ephemeral` if set, else the global one.
+Also check `appDefinitions.apps.<name>.landingPage.ephemeral` in your values files.
 :::
 
 Ephemeral mode is the right default for evaluation and demos — nothing to clean

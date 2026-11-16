@@ -53,10 +53,11 @@ to close the ones they have forgotten about, not to raise the limit.
 
 ## Sessions end, and so can workspaces
 
-An idle session is shut down. After 50 minutes without input the IDE asks
-students whether they are still there, and after 60 minutes without input the
-session stops. Closing the browser tab does not keep a session alive: it ends
-60 minutes after the last input.
+An idle session is shut down. By default, after 50 minutes without input the IDE
+asks students whether they are still there, and after 60 minutes without input
+the session stops. Installations may change these values, so confirm them with
+the platform team. Closing the browser tab does not keep a session alive: it
+ends after the same period of inactivity.
 
 What happens to the files depends on the workspace mode, which the launcher
 page shows as a **Temporary** or **Saved** badge and the IDE status bar shows

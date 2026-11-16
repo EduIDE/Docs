@@ -69,8 +69,9 @@ branch, a session that timed out overnight. Decide in advance who they ask.
   **Launch** button, your Artemis server or the server hosting the exercise
   repositories is not on the installation's list of trusted hosts. Students can
   still click **Launch**; ask the platform team to check both hosts.
-- Tell students that a session ends after 60 minutes without input, and that
-  unpushed files in a temporary workspace are lost then (see
+- Tell students that a session ends after 60 minutes without input (the
+  default; confirm the value with the platform team), and that unpushed files in
+  a temporary workspace are lost then (see
   [What changed in 3.0](./whats-new-in-3-0.md)).
 - Tell students that the first start is slow and the second is not, so they do
   not all reload in the first minute and make it worse.
