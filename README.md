@@ -2,6 +2,11 @@
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
+## Project dashboard
+
+The [EduIDE dashboard](https://eduide.github.io/dashboard/) shows the open pull requests, open issues and release state of every public EduIDE repository on one page.
+It refreshes every 15 minutes ([source](https://github.com/EduIDE/dashboard)).
+
 ## Installation
 
 ```bash
