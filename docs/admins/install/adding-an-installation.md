@@ -22,7 +22,7 @@ interprets it.
 apiVersion: eduide.dev/v1
 kind: Environment
 metadata:
-  name: bonn.eduide.aet.cit.tum.de
+  name: bonn
   displayName: EduIDE Bonn
   tier: production          # test | staging | production
 spec:

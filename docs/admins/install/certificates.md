@@ -125,8 +125,8 @@ managedCertificates:
 
 An issuer name that does not match leaves every certificate pending forever
 while the Gateway still reports `Programmed=True`. The HTTP-01 solver also needs
-plain HTTP listeners on port 80 for each host. In the TUM setup the environment
-manifest turns them on with `spec.tls.acmeHttp`.
+plain HTTP listeners on port 80 for each host. In the TUM setup the cluster manifest
+(`clusters/<name>.yaml`) turns them on with `spec.tls.acmeHttp`.
 
 ## Option B - bring your own wildcard certificate
 

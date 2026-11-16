@@ -320,7 +320,7 @@ data bridge. It needs these matching releases:
 | EduIDE-Cloud (operator, REST service, conversion webhook) | 3.0.0, and 3.0.1 once released (see [Admin API off by default](#admin-api-off-by-default)) |
 | EduIDE-Landing-Page | 1.4.1 |
 | EduIDE-data-bridge (inside the IDE images) | 2.0.0 |
-| Scorpio (inside the IDE images) | 3.x |
+| Scorpio (inside the IDE images) | 3.0.0 (3.1.0 with the next EduIDE release) |
 | workspace-garbage-collector | 1.0.0 |
 
 The chart pins all of them, so on chart defaults you only choose the chart
@@ -351,8 +351,8 @@ earlier version once the upgrade is possible, and do the two admin tasks in
    token. An old operator does not send it, and sessions then open without
    their Artemis credentials: no auto-clone, no Artemis sign-in. The chart pins
    a matching set, so this matters only if you pin `versions.*` or image tags
-   yourself, or run your own RBAC (grant the operator `get`, `create`, `update`,
-   `patch` and `delete` on `secrets` in its namespace, see
+   yourself, or run your own RBAC (grant the operator `get`, `create`, `update`
+   and `delete` on `secrets` in its namespace, see
    [Access Control](../platform/access-control.md#operator-and-secrets)).
 4. **Restart the operator** after the upgrade, so it reconciles the warm pool.
    It replaces unclaimed instances that carry the old pod settings. Instances
@@ -449,8 +449,8 @@ The admin API token protected scaling endpoints are off by default, see
 [Admin API Tokens](../security/admin-api-tokens.md). The toggle
 `service.adminApiEnabled` ships with EduIDE-Cloud 3.0.1. Until the service runs
 3.0.1, leave `service.adminApiTokenSecret` unset where you do not need the
-scaling API. If you use it, set `service.adminApiEnabled: true` and expect
-`minInstances` changes in step 6 below to need it.
+scaling API. If you use it, set `service.adminApiEnabled: true`; the scaling API then works
+for the PATCH call in step 6, and `kubectl patch` works either way.
 
 ### Rotate the secrets
 

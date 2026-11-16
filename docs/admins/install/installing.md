@@ -12,7 +12,7 @@ is the platform version.
 | Chart | Installed | Owns |
 |---|---|---|
 | `eduide-cluster` | once per **cluster** | CRDs, the conversion webhook, ClusterRoles, cert-manager issuers, the shared Gateway, PodMonitors and dashboards |
-| `eduide` | once per **environment** | operator, REST service, landing page, routes, app definitions, image preloading |
+| `eduide` | once per **installation** | operator, REST service, landing page, routes, app definitions, image preloading |
 
 The split exists because the two halves have different cardinality. CRDs and a
 Gateway must exist once on a cluster; a tenant install exists once per namespace,

@@ -15,7 +15,7 @@ Each EduIDE installation lives in its own namespace, named `eduide-<name>` by co
 
 ## Why a separate token
 
-The admin API token exists because the scaling endpoints are designed to be called by automation (deployment pipelines, scripts, cron jobs) rather than by human users logged in through a browser. OAuth flows are not well-suited to machine-to-machine calls. A static bearer token is simpler to use in that context.
+The admin API token exists because the scaling endpoints are designed to be called by automation (deployment pipelines, scripts, cron jobs) rather than by human users logged in through a browser. OAuth flows are not well-suited to machine-to-machine calls. A static token sent in the `X-Admin-Api-Token` header is simpler to use in that context.
 
 The trade-off is that token compromise grants direct access to the scaling endpoints. This is why token rotation and secure storage matter.
 

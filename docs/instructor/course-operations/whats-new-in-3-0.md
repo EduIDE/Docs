@@ -18,7 +18,7 @@ Before 3.0, the inactivity timer never fired, so sessions effectively ran for
 - After 60 minutes without input the session stops.
 - A closed browser tab ends the session 60 minutes after the last input.
 
-Typing, clicking, mouse moves, scrolling and saving files count as input.
+Typing, clicking, mouse moves, scrolling, saving files and starting or ending a task count as input.
 Background output from Artemis, Git or language servers does not.
 Expect more "my session closed" questions in the first weeks, especially from
 students who listen to a lecture with the IDE open but untouched.

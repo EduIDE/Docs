@@ -23,14 +23,14 @@ Every released repository keeps a `CHANGELOG.md`. Add user-facing changes under 
 
 ## Tags and versions
 
-Tags are `vX.Y.Z` (`vX.Y.Z-rc.N` for a release candidate). A `tag-format` workflow rejects other spellings. Versions follow semver: a breaking change is a major release.
+Tags are `vX.Y.Z` (`vX.Y.Z-rc.N` for a release candidate). A `tag-format` workflow rejects other spellings in the repositories that have it. Versions follow semver: a breaking change is a major release.
 
 ## Checks in CI
 
 - The build and test workflow of the repository. EduIDE-Cloud runs its Java tests on every pull request that touches `java/`.
-- `dependency-review` on pull requests.
-- A secret scan (the reusable gitleaks workflow of the org `.github` repository).
-- Actions are pinned by digest, and Renovate proposes updates through the shared preset.
+- `dependency-review` on pull requests, in the repositories that have it.
+- A reusable gitleaks workflow exists in the org `.github` repository (`secret-scan.yml`); no repository calls it yet.
+- Actions are mostly pinned by tag today. Renovate pins digests going forward through the shared preset.
 
 ## Docs
 

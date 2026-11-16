@@ -15,7 +15,7 @@ The **Theia Scale Tests** repository provides an end-to-end (E2E) integration an
 - **Scalability/Load Testing**: Simulates hundreds of concurrent IDE instances to benchmark cluster performance.
 - **Artemis Integration**: Specifically tests the integration between Artemis and the Theia IDE deployment.
 - **Model Context Protocol (MCP)**: Includes tests for AI-assisted features via MCP.
-- **Multi-Language Support**: Tests various programming languages including Java, Python, Rust, Go, C, and JavaScript.
+- **Multi-Language Support**: Tests various programming languages including Java, Python, Rust, C, OCaml, and JavaScript.
 
 ## Tech Stack
 

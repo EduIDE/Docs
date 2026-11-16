@@ -7,14 +7,14 @@ sidebar_label: EduIDE
 
 ## Overview
 
-The **EduIDE** repository manages the Docker builds for custom Eclipse Theia IDE instances. These images are pre-configured with the specific tools, plugins, and settings required for student exercises on the Artemis platform. Once built, these images are deployed to Kubernetes clusters via [Theia Deployment](/developer/projects/eduide-deployment).
+The **EduIDE** repository manages the Docker builds for custom Eclipse Theia IDE instances. These images are pre-configured with the specific tools, plugins, and settings required for student exercises on the Artemis platform. Once built, these images are deployed to Kubernetes clusters via [EduIDE Deployment](/developer/projects/eduide-deployment).
 
 ## Key Features
 
 - **Customized IDEs**: Tailored environments for Java 17, Java 25, Python, JavaScript, C, Rust and Go, each in a standalone and an Artemis edition (from 2.0.0).
 - **Optimized Build Process**: Uses multi-stage Docker builds to ensure small and efficient production images.
 - **Security-First**: Configured to run as a non-root `theia` user for better container security in cloud environments.
-- **Plugin Integration**: Includes pre-installed VS Code extensions and Theia plugins (such as the [EduIDE LSP Extension](/developer/projects/eduide-lsp-extension) and [EduIDE Data Bridge](/developer/projects/eduide-data-bridge)) necessary for the educational ecosystem.
+- **Plugin Integration**: Includes pre-installed VS Code extensions and Theia plugins (such as [Scorpio](https://github.com/EduIDE/scorpio) and the [EduIDE Data Bridge](/developer/projects/eduide-data-bridge); the images ship no LSP extension) necessary for the educational ecosystem.
 
 ## Image Layering and Editions
 
@@ -81,7 +81,7 @@ To add a template, add the folder with its `template.json`, offer it in the app'
 
 ## HTML Preview
 
-Live Preview does not work in the cloud, because it serves on `127.0.0.1` inside the container. The images use Theia's built-in mini-browser, which serves files through the IDE server. Each `ToolDockerfile` sets
+Live Preview does not work in the cloud (the Mannheim image installs `ms-vscode.live-server` as its own choice), because it serves on `127.0.0.1` inside the container. The images use Theia's built-in mini-browser, which serves files through the IDE server. Each `ToolDockerfile` sets
 
 ```
 THEIA_MINI_BROWSER_HOST_PATTERN="{{uuid}}.webview.{{hostname}}"
@@ -120,6 +120,7 @@ EduIDE 2.0.0 bundles:
 |---|---|
 | EduIDE Data Bridge | 2.0.0 (per-instance token required, known keys only) |
 | Scorpio | 3.0.0 (`TEMPLATE` bootstrap, never clears a non-empty workspace, Gradle prompt). Scorpio 3.1.0 adds the progress notification and reaches the images with the next EduIDE release ([#233](https://github.com/EduIDE/EduIDE/pull/233)) |
+| Spell checker (English, German), Error Lens, EditorConfig | in every image (`images/base-ide/package.json.patch`) |
 | Theia Cloud session monitor | 3.0.0 (needed for the idle timeout of open tabs, [#224](https://github.com/EduIDE/EduIDE/pull/224)) |
 
 The Artemis extension lives in `base-artemis` only. The Artemis edition images set `GRADLE_PREWARM_AUTO_CONFIRM=true` (Java images and the base), so Scorpio starts the Gradle prewarm without a prompt; standalone editions keep the prompt. The data bridge 2.0.0 images work only with EduIDE-Cloud 3.x and chart 3.x, see [Prewarming Architecture](/developer/platform/session-prewarming#data-bridge-token).
@@ -142,7 +143,7 @@ The `customization` extension offers three levels, **Beginner**, **Advanced** an
 
 ## Image Version in the IDE
 
-**Help > About** shows the container image and the build revision the session runs, for example `eduide/eduide/java-17:1.5.0`. Images built by hand show `unknown`.
+**Help > About** shows the container image and the build revision the session runs, for example `eduide/eduide/java-17-artemis:2.0.0`. Images built by hand show `unknown`.
 
 ## Tech Stack
 

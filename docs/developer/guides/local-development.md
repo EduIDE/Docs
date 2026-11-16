@@ -96,7 +96,7 @@ These are the commands that work today. Each repository's `AGENTS.md` is the ref
 
 | Repository | What to run |
 |---|---|
-| EduIDE | Build and run an image: `docker compose -f docker-compose.images.yml up --build java-17-standalone`. Each service publishes its own port on `127.0.0.1` (`3103` for `java-17-standalone`). Check a built image: `scripts/smoke-test-image.sh <image> <standalone\|artemis>`, which also runs every template's Test task without network access. |
+| EduIDE | Build and run an image: `docker compose -f docker-compose.images.yml up --build java-17-standalone`. Each service publishes its own port on `127.0.0.1` (`3103` for `java-17-standalone`). Check a built image: `scripts/smoke-test-image.sh <image> <standalone\|artemis>`, which also runs every template's Test task (or its build task when it has none) without network access; templates marked `needsNetwork` keep network access. |
 | EduIDE-Cloud, Java | There is no aggregator POM. Install the modules by hand in order (`java/common/maven-conf`, `org.eclipse.theia.cloud.common`, `org.eclipse.theia.cloud.operator`, then `defaultoperator`), each with `mvn clean install -Drevision=<version>-SNAPSHOT`. Run the service tests with `cd java/service/org.eclipse.theia.cloud.service && mvn verify`. Use JDK 21. The tests start containers; on OrbStack set `DOCKER_API_VERSION=1.44`, and if port 8081 is taken pass `-Dquarkus.http.test-port=18081`. |
 | EduIDE-Cloud, monitor | `cd node/monitor && npm test` (runs under `node:test`, no VS Code needed). |
 | EduIDE-data-bridge | pnpm 10 only. `vscode-test` needs a real VS Code; locally, run the compiled tests with mocha and a stub for the `vscode` module. |

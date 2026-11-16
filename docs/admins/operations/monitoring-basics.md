@@ -29,7 +29,7 @@ The chart creates:
 
 - `PodMonitor` resources (`monitoring.coreos.com/v1`) for the REST service (on its `management` port, plus a `-legacy` monitor for the `http` port during the 3.0 transition) and for the operator. They are not `ServiceMonitor`s.
 - Four Grafana dashboard `ConfigMap`s, labelled `grafana_dashboard: "1"`.
-- A `PrometheusRule` with 16 alerts, and with `monitoring.alerting.enabled` an `AlertmanagerConfig`, see [Alerts](#alerts).
+- With `monitoring.alerting.enabled` as well, a `PrometheusRule` with 16 alerts and an `AlertmanagerConfig`, see [Alerts](#alerts).
 - With `monitoring.certManager.enabled`, a `ServiceMonitor` for cert-manager's controller, so certificate expiry can be alerted on.
 
 ### Prerequisites
@@ -327,7 +327,7 @@ Returns `200 OK` when healthy.
 
 ## Alerts
 
-With `monitoring.enabled`, the cluster chart ships a `PrometheusRule` with 16 alerts. Each carries a `runbook_url` that points to [Incident Response](incident-response.md#alert-runbooks). They cover components down or crash looping, the warm pool, session crashes, OOM kills, evictions, slow startup (`EduIDESessionStartupSlow`, p95 above 90 seconds), pending pods and volumes, image pulls, volume space and inodes, and certificates.
+With `monitoring.enabled` and `monitoring.alerting.enabled` both on, the cluster chart ships a `PrometheusRule` with 16 alerts. Each carries a `runbook_url` that points to [Incident Response](incident-response.md#alert-runbooks). They cover components down or crash looping, the warm pool, session crashes, OOM kills, evictions, slow startup (`EduIDESessionStartupSlow`, p95 above 90 seconds), pending pods and volumes, image pulls, volume space and inodes, and certificates.
 
 Routing is optional. With `monitoring.alerting.enabled: true` the chart also renders an `AlertmanagerConfig` that sends alerts at or above `monitoring.alerting.minSeverity` (default `warning`) to the `monitoring.alerting.channels` you list, with webhook URLs from a Secret (`monitoring.alerting.webhookSecret`). `monitoring.alerting.thresholds` tunes the limits (for example `startupSeconds: 90`, `volumePercent: 85`, `certExpiryDays: 21`). `monitoring.certManager.enabled: true` adds the certificate metrics that the two certificate alerts need.
 

@@ -5,7 +5,7 @@ description: How the EduIDE repositories depend on each other and how a manual r
 
 # Releases and Dependencies
 
-Every released EduIDE repository is released by hand. Nothing publishes on a push to `main`. This page shows which repository pins which other repository, in which order to release, and how one release runs.
+Every released EduIDE repository is released by hand. No release happens on a push to `main`. A push builds and publishes `latest` and preview images, nothing else. This page shows which repository pins which other repository, in which order to release, and how one release runs.
 
 ## Dependency graph
 
@@ -34,7 +34,7 @@ flowchart LR
   helm -- "versions.cloud" --> cloud
   helm -- "versions.landingPage" --> landing
   helm -- "chart dependency" --> cache
-  helm -- "chart dependency + image tag" --> gc
+  helm -- "chart dependency (the chart pins its image via appVersion)" --> gc
   helm -. "versions.poolScaler (not released yet)" .-> pool
   mannheim -- "EDUIDE_VERSION" --> ide
   deploy -- "chartVersion" --> helm
@@ -69,7 +69,7 @@ The security fixes of the audit made several of these major releases: EduIDE-Clo
 | EduIDE-pool-scaler | image | `vX.Y.Z` | none |
 | EduIDE | IDE images (`base` plus the language images) | `vX.Y.Z` | scorpio, data-bridge and the Cloud monitor vsix (`images/base-ide/package.json.patch`, `theiaPlugins`) |
 | EduIDE-image-mannheim | image | `vX.Y.Z` | EduIDE (`Dockerfile`, `ARG EDUIDE_VERSION`) |
-| EduIDE-Helm | charts `eduide` and `eduide-cluster` (OCI) | `vX.Y.Z` (chart version) | EduIDE (`Chart.yaml` `appVersion`), EduIDE-Cloud (`values.yaml` `versions.cloud`), Landing-Page (`versions.landingPage`), shared-cache and garbage-collector (`Chart.yaml` `dependencies`, plus the garbage-collector image tag in `values.yaml`) |
+| EduIDE-Helm | charts `eduide` and `eduide-cluster` (OCI) | `vX.Y.Z` (chart version) | EduIDE (`Chart.yaml` `appVersion`), EduIDE-Cloud (`values.yaml` `versions.cloud`), Landing-Page (`versions.landingPage`), shared-cache and garbage-collector (`Chart.yaml` `dependencies`; the garbage-collector image follows that chart's `appVersion`, Helm does not pin it separately) |
 | eduide-keycloak-theme | JAR and checksum release assets | `vX.Y.Z` | none |
 | EduIDE-deployment | not released | none | EduIDE-Helm (`environments/*/env.yaml`, `spec.platform.chartVersion`) |
 
@@ -110,13 +110,13 @@ Each released repository has a release skill at `.claude/skills/release/SKILL.md
 
 A failed run therefore leaves a draft and no tag. Fix the cause and use "Re-run failed jobs": the draft is reused. A new dispatch of the same version replaces the leftover draft, but fails where a version cannot be pushed twice (charts, Open VSX). If the multi-arch merge of an image fails, use "Re-run all jobs", because the shared image build names its per-architecture digests per attempt.
 
-Release candidates (`-rc.N`) publish GitHub release assets and images only, never to Open VSX.
+Release candidates (`-rc.N`) publish GitHub release assets, images and charts, never to Open VSX.
 
 A tag or Release created with `GITHUB_TOKEN` does not trigger other workflows. This is why the publish jobs run from `release.yml` and not from `on: release`.
 
 ## CI checks every repository shares
 
 - **Java tests in EduIDE-Cloud.** `tests.yml` runs the operator and service unit tests on every pull request that touches `java/`. The service tests start Docker containers (Testcontainers); on OrbStack set `DOCKER_API_VERSION=1.44` and use JDK 21.
-- **Secret scanning.** A reusable gitleaks workflow in the org `.github` repository scans for committed secrets; repositories call it instead of copying it.
-- **Actions pinned by digest.** Third-party actions are pinned to a commit digest. The shared Renovate preset of the org `.github` repository proposes the updates, including new EduIDE-Cloud and EduIDE-Landing-Page releases for the chart pins (`# renovate:` comments).
+- **Secret scanning.** `secret-scan.yml` in the org `.github` repository is a reusable gitleaks workflow. No repository calls it yet.
+- **Action pinning.** Most actions are pinned by tag today. The shared Renovate preset pins digests going forward and of the org `.github` repository proposes the updates, including new EduIDE-Cloud and EduIDE-Landing-Page releases for the chart pins (`# renovate:` comments).
 - **Release inputs through `env:`.** Release workflows pass `inputs.version` to scripts through an environment variable, not by string interpolation into the shell.

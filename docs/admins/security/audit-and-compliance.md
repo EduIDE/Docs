@@ -118,8 +118,7 @@ The following operations should be treated as high-sensitivity events and review
 
 | Operation | Where logged | Sensitivity |
 |---|---|---|
-| Admin API token request (success) | Service logs | High - means the token is in use |
-| Admin API token request (failure) | Service logs | High - may indicate brute force or a stale token |
+| Admin API token request (rejected) | Service logs | High - may indicate brute force or a stale token |
 | App Definition scaling change | Service + operator logs | Medium - affects platform capacity |
 | Launch request with env injection the allowlist drops (`Dropped env injection not permitted by the operator allowlist`) | Operator logs | High - a caller tried to mount a Secret or ConfigMap, or to set a reserved variable |
 | Launch refused because the workspace belongs to another user (`403`, `User <name> does not own workspace <workspace>`) | Service logs | High - one user asked for another user's workspace |
@@ -153,7 +152,7 @@ Run through this checklist on the indicated cadence. Substitute your own group a
 ### Monthly
 
 - [ ] Review membership of the EduIDE admin group in Keycloak (the group named in your installation's Keycloak configuration). Remove any users who no longer require admin access.
-- [ ] Check service logs for unexplained spikes in admin API token requests, successful or failed.
+- [ ] Check service logs for unexplained spikes in rejected admin API token requests. Accepted requests are not logged.
 - [ ] Verify that every EduIDE namespace on the cluster corresponds to an installation you still intend to run:
       ```bash
       kubectl get namespace -o name | grep eduide-
@@ -178,7 +177,7 @@ Run through this checklist on the indicated cadence. Substitute your own group a
 
 - [ ] Rotate the admin API token for every installation. See [Admin API Tokens](/admins/security/admin-api-tokens).
 - [ ] Rotate the oauth2-proxy cookie secret for every installation. This invalidates all active sessions, so schedule it.
-- [ ] Review your alert thresholds against current cohort sizes. Note that the charts ship Grafana dashboards but **no alerting rules** - any alerts you have are ones you wrote, and they live wherever you defined them, not in the EduIDE charts. See [Monitoring Basics](/admins/operations/monitoring-basics).
+- [ ] Review your alert thresholds against current cohort sizes. Note that the cluster chart ships 16 alert rules when `monitoring.enabled` and `monitoring.alerting.enabled` are on, and that any alerts of your own live wherever you defined them. See [Monitoring Basics](/admins/operations/monitoring-basics).
 - [ ] Verify certificate coverage for every hostname each installation serves. A certificate that has stopped covering a hostname produces no cluster-side error; see [Incident Response](/admins/operations/incident-response).
 
 ### On personnel changes

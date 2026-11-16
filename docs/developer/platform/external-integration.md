@@ -119,7 +119,7 @@ Consumers such as Scorpio wait about 10 seconds after they start for the bridge 
 
 There is no separate git-token parameter or `GIT_TOKEN` env var. Scorpio clones `GIT_URI` exactly as provided and does not add any credential. For a private repository the credential must therefore be embedded in the `gitUri` / `GIT_URI` value itself, for example `https://<user>:<token>@host/org/repo.git`. A plain `gitUri` without embedded credentials only clones a public repository. Percent-encode the user and token inside the repository URL, then encode the whole URL again as the `gitUri` query value, or a `+` in a token turns into a space. The embedded credential stays in the clone's `.git/config`, because pushing from the IDE needs it.
 
-Scorpio no longer talks to Artemis itself and does not use `ARTEMIS_TOKEN`. It writes `ARTEMIS_URL` into the `artemis.apiBaseUrl` setting; signing in to Artemis and submitting are the job of the Artemis extension bundled in the IDE images.
+Scorpio no longer talks to Artemis itself and does not use `ARTEMIS_TOKEN`. It writes `ARTEMIS_URL` into the `scorpio.artemis.apiBaseUrl` setting; signing in to Artemis and submitting are the job of the Artemis extension bundled in the IDE images.
 
 Because `gitUri` can carry credentials, treat it as sensitive. It appears in the landing-page URL and in the launch request. From landing page 1.3.0, the landing page's nginx logs the path without the query string. Proxies and load balancers in front of it log the full URL unless you configure them not to.
 

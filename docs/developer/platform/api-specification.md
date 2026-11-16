@@ -16,7 +16,7 @@ At a high level, the API covers five areas:
 - service health and connectivity
 - app definition discovery and scaling
 - workspace creation, listing, and deletion
-- session launch, listing, stopping, and activity reporting
+- session launch, listing and stopping
 - selected session-level runtime configuration and performance access
 
 ## Base Paths
@@ -147,7 +147,7 @@ This is one of the clearest examples of the service exposing a control-plane ope
 The current API uses a fairly pragmatic mix of response types:
 
 - plain `String` responses for launch and session-start URLs
-- `Boolean` responses for several ping, stop, delete, and activity operations
+- `Boolean` responses for several ping, stop and delete operations
 - JSON resource lists for workspace and session listings
 - structured JSON responses for app definitions and performance metrics
 
@@ -160,7 +160,7 @@ If you are integrating against the service, the main distinction to keep in mind
 - use `/service` when you want a high-level launch operation
 - use `/service/workspace` when you are managing durable user context
 - use `/service/session` when you are managing live runtime instances
-- use `/service/appdefinition` when you need launchable session types or scaling-related control
+- use `/service/appdefinition` when you need the launchable session types, and `/service/admin/appdefinition` for scaling control
 
 In other words, the API is modeled around platform lifecycle stages rather than around pages of a user interface.
 

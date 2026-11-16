@@ -225,11 +225,11 @@ During storage pressure, lower the TTL temporarily to accelerate cleanup without
 1. Lower `theia-workspace-garbage-collector.env.WORKSPACE_TTL` in the installation values file - to `259200s` (3 days), for example.
 2. Run `helm upgrade` on the installation to apply.
 3. Confirm the new value landed with the verification commands above.
-4. Wait for the next GC run, or restart the pod to trigger one immediately.
+4. Wait for the next GC run. A restart does not trigger one: the collector runs on a ticker only.
 5. Once storage pressure is resolved, restore the original TTL.
 
 ```bash
-# Restart the GC pod to trigger an immediate run with the new config
+# Restart the GC pod to load new config (the next run comes one interval later)
 kubectl rollout restart deployment/garbage-collector -n <namespace>
 kubectl rollout status deployment/garbage-collector -n <namespace>
 ```

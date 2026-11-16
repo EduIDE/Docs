@@ -139,7 +139,7 @@ Lazy session pods are labelled `app: <sessionName>-<sessionUID>`, so that label 
 
 ```bash
 kubectl get pods -n <namespace> \
-  -l 'app notin (operator,service,landing-page,image-preloading)'
+  -l app.kubernetes.io/component=session
 ```
 
 A session whose App Definition no longer exists is never timed out by the operator and keeps the pod settings it was created with. This happens after apps are removed or renamed, as in the 3.0.0 upgrade. Find and delete them, see [Delete orphaned sessions](../maintenance/upgrades.md#delete-orphaned-sessions):
@@ -198,9 +198,9 @@ between them larger than `monitor.activityTracker.interval`, or the warning can
 be skipped. 50 and 60 with an `interval` of 3 is fine.
 
 Only input from the user counts as activity: typing, clicking, mouse moves and
-scrolling in the IDE tab, and editing or saving files. Output from Artemis, Git
+scrolling in the IDE tab, editing or saving files, and starting or ending a task or debug session. Output from Artemis, Git
 or language servers does not count. This needs the IDE images from EduIDE 2.0.0
-and the monitor extension `theia-cloud-monitor` v1.4.0 in them. With version
+and the monitor extension `theia-cloud-monitor` 3.0.0 in them. With version
 1.2.2 an open but idle tab is never timed out.
 
 The operator also ends a session whose **tab was closed**. When a poll fails and

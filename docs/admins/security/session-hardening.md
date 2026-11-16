@@ -303,9 +303,9 @@ From EduIDE 1.5.0:
 - **Browser origins**: CORS allows the landing page and `service.corsOrigins` only. TLS to Keycloak is verified, with `service.oidcTrustStore` for a private CA, and `keycloak.audience` adds an audience check.
 - **`service.sessionsPerUser`** limits active sessions per user.
 - **Management port 9000** carries metrics and OpenAPI and is not routed through the gateway.
-- **The session proxy's skip-auth route is anchored** to `^/health$`, so no other path bypasses the login.
+- **The session proxy skips authentication only for `/health`.** The route is anchored to `^/health$`.
 - **Non-root images** (uid 10001) for operator, service and conversion webhook.
-- **TUM extra egress ranges**: the TUM installations add `198.18.0.0/15` and `131.159.88.0/24` to `networkPolicies.privateEgressCidrs`.
+- **TUM extra egress ranges**: only the TUM production cluster adds both `198.18.0.0/15` and `131.159.88.0/24` to `networkPolicies.privateEgressCidrs`. The student cluster adds `198.18.0.0/15` only, and Bonn and Mannheim add neither.
 
 ## What this does not cover
 

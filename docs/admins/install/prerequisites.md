@@ -170,7 +170,7 @@ may share the nodes. Empty, the default, schedules anywhere.
 
 ## 6. Prometheus Operator - only if you want metrics
 
-EduIDE ships PodMonitors, Grafana dashboards, a `PrometheusRule` with 16 alerts, an optional `AlertmanagerConfig` (`monitoring.alerting.*`) and an optional cert-manager `ServiceMonitor` (`monitoring.certManager`). They are **off by default**
+EduIDE ships PodMonitors, Grafana dashboards, with `monitoring.alerting.enabled` a `PrometheusRule` with 16 alerts and an `AlertmanagerConfig` (`monitoring.alerting.*`), and an optional cert-manager `ServiceMonitor` (`monitoring.certManager`). They are **off by default**
 because they are not portable: they need the Prometheus Operator CRDs, and the
 namespaces they target differ per monitoring stack.
 

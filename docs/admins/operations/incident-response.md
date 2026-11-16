@@ -587,7 +587,7 @@ The `PrometheusRule` of the cluster chart links every alert to this section, see
 
 | Alert | Meaning | First checks |
 |---|---|---|
-| `EduIDEComponentDown` | The operator, service or landing page Deployment has no ready pod for 5 minutes | `kubectl get pods -n <namespace>`, then `kubectl describe pod` and the logs of the failing component |
+| `EduIDEComponentDown` | The operator, service, landing page or garbage collector Deployment has no ready pod for 5 minutes | `kubectl get pods -n <namespace>`, then `kubectl describe pod` and the logs of the failing component |
 | `EduIDEConversionWebhookDown` | The conversion webhook in `eduide-system` is down, for every installation | `kubectl get pods -n eduide-system`; custom resources cannot be read at other versions until it is back |
 | `EduIDEComponentCrashLooping` | A platform container restarted more than 3 times in 15 minutes | `kubectl logs --previous` of the container. After an upgrade, check the chart notes and the operator flags |
 | `EduIDEServiceScrapeDown` | Prometheus cannot scrape the service for 10 minutes | The service scrape uses the `management` port 9000 from chart 3.0.0, check the `PodMonitor` and the pod label `eduide.io/metrics-port` |

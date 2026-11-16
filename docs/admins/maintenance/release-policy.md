@@ -55,7 +55,7 @@ order:
 |---|---|---|
 | 1 | EduIDE, EduIDE-Cloud or EduIDE-Landing-Page | A `vX.Y.Z` release; its build publishes the images |
 | 2 | EduIDE-Helm | A release pull request moving `appVersion`, `versions.cloud` or `versions.landingPage`, and both chart versions, then a dispatch of `release.yml` |
-| 3 | EduIDE-deployment | A pull request moving `chartVersion`; merging it is the deploy |
+| 3 | EduIDE-deployment | A pull request moving `chartVersion`; merging it deploys only `e2e`, every other environment is deployed with `Deploy environment` |
 
 Every step is a manual release: the repository's release skill
 (`.claude/skills/release/SKILL.md`) opens the release pull request and then
@@ -86,7 +86,7 @@ An installation is `release`, `main` or `pinned`.
 - `release` pins whatever its values file says. Nothing that happens on `main`
   can move a production image.
 - `main` keeps the chart's pins and restarts the operator, the service and the landing page after the upgrade, so a floating tag is pulled again. The deploys that follow component branches (`e2e` and `staging`) pass immutable `latest-<sha>` tags instead. A floating tag alone would leave the pod template unchanged, so Helm would see no difference and report success without pulling.
-- `pinned` uses the image tag named in `spec.imageTag` of the environment.
+- `pinned` is accepted by the environment schema, but the manifest has no field for an image tag. Do not use it until the deployment repository documents what it pins.
 
 ## Upgrading an installation
 

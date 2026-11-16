@@ -137,14 +137,14 @@ Add to access token:   ON
 Add to userinfo:       ON
 ```
 
-This claim is how the EduIDE service identifies the acting user for workspace and session operations.
+The service identifies the acting user by the `email` claim, not by `username`. The `username` mapper is optional.
 
 ### Audience mapper
 
 ```
 Name:                       audience
 Mapper type:                Audience
-Included client audience:   theia-cloud   (your client ID)
+Included client audience:   eduide        (the value of keycloak.audience, usually your client ID)
 Add to ID token:            ON
 Add to access token:        ON
 ```
@@ -181,7 +181,7 @@ From EduIDE-Cloud 3.0 the service always verifies the TLS certificate of Keycloa
 
 ## Operator and secrets
 
-The `eduide` chart gives the operator a namespaced Role, `operator-bridge-token-secrets`, with `get`, `create`, `update`, `patch` and `delete` on `secrets` in the installation namespace (no `list`, no `watch`). The operator keeps the data bridge tokens of the sessions there, see [Data bridge token](app-definitions.md#data-bridge-token). An installation with its own RBAC instead of the chart's must grant the same verbs.
+The `eduide` chart gives the operator a namespaced Role, `operator-bridge-token-secrets`, with `get`, `create`, `update` and `delete` on `secrets` in the installation namespace (no `list`, no `watch`). The operator keeps the data bridge tokens of the sessions there, see [Data bridge token](app-definitions.md#data-bridge-token). An installation with its own RBAC instead of the chart's must grant the same verbs.
 
 The `eduide-cluster` chart gives the operator `create`, `get` and `delete` on `networkpolicies`, for the per-session NetworkPolicy of sidecars. Upgrade the cluster chart first, see [Upgrades](../maintenance/upgrades.md#order-of-the-upgrade).
 
@@ -263,9 +263,9 @@ Causes and fixes:
 The user authenticates in Keycloak but receives an access denied response from EduIDE.
 
 Causes and fixes:
-- The `username`, `audience`, or `groups` mapper is missing or misconfigured in the client scope
+- The `email`, `audience` or `groups` mapper is missing or misconfigured in the client scope
 - The client scope is not assigned as a **Default** scope on the client
-- The audience claim does not match the client ID
+- The `aud` claim does not match `keycloak.audience`
 
 Use Keycloak's **Evaluate** tab (under the client's Client Scopes section) to inspect what claims are actually issued for a given user before debugging further.
 

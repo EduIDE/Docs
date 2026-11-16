@@ -87,7 +87,7 @@ GET   /service/admin/appdefinition/{appDefinitionName}
 PATCH /service/admin/appdefinition/{appDefinitionName}
 ```
 
-These endpoints are off by default and answer with 404 until the service runs with `THEIA_CLOUD_ADMIN_API_ENABLED=true` (chart: `service.adminApiEnabled`).
+From EduIDE-Cloud 3.0.1 these endpoints are off by default and answer with 404 until the service runs with `THEIA_CLOUD_ADMIN_API_ENABLED=true` (chart: `service.adminApiEnabled`).
 
 The `PATCH` body accepts `minInstances` and `maxInstances`:
 
@@ -144,7 +144,7 @@ Rollout order matters, see [Releases and Dependencies](/developer/guides/release
 
 ### A second browser window
 
-Each browser connection gets its own plugin host, and with it its own data bridge. Only the first one binds the bridge port and receives the `POST`. `dataBridge.getEnv` reads the shared secret storage again when a key is missing, so a second window gets the injected values too.
+Each browser connection gets its own plugin host, and with it its own data bridge. Only the first one binds the bridge port and receives the `POST`. `dataBridge.getEnv` reloads the shared secret storage on every call, so a second window gets the injected values too.
 
 That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory; a lock older than 10 minutes counts as abandoned, so a clone that runs longer can be started a second time), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. EduIDE 2.0.0 bundles data bridge 2.0.0 and Scorpio 3.0.0.
 
