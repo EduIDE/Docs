@@ -18,7 +18,7 @@ It ends when you are away for too long, or when it reaches the maximum run time 
 These are the default limits.
 Your installation can use other values, so ask your instructor if you are not sure.
 
-Input means typing, clicking, moving the mouse and scrolling in the IDE tab, and editing or saving files.
+Input means typing, clicking, moving the mouse and scrolling in the IDE tab, editing or saving files, and starting or ending a task or debug session.
 Background output from Artemis, Git or language servers does not count.
 Scrolling inside a panel that shows a web page, for example the Artemis problem statement, does not count either.
 
@@ -27,6 +27,8 @@ If you close the tab, the session ends 60 minutes after your last input.
 Click or type in the IDE when you see the question, and the timer starts again.
 
 ## Your files
+
+A **Saved** workspace is not kept forever: the administrators of your installation delete workspaces after a time limit (two weeks by default) after they were created, whether or not you used them recently. Push your work to keep it.
 
 :::warning Temporary workspaces lose their files
 If the status bar shows **Temporary workspace**, your files are gone when the session ends, also after 60 minutes without input.

@@ -22,6 +22,8 @@ Edit the method for your task.
 
 ## 3) Run in terminal
 
+The terminal is hidden at the Beginner level. Switch to Advanced, or use the **Run** button instead.
+
 Run:
 
 ```bash
@@ -48,8 +50,8 @@ Confirm that the program output matches the expected sorted order.
 
 ## Other languages
 
-For Python, JavaScript, C, Rust and Go, a starter template brings the tasks that run your project.
-In the Beginner level, the **Run** button in the toolbar starts them.
+For Python, JavaScript, C, Rust and Go, a starter template brings the tasks that run your project. The Java templates have tasks too.
+In the Beginner level, the **Run** button in the toolbar starts them (the default task of the Web template is **Start**).
 In the Advanced and Expert levels, you can also pick a task from the **Terminal** menu.
 
 ## Help while you type

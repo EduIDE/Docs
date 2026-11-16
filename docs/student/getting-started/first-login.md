@@ -9,7 +9,7 @@ Use this page for your first login flow.
 
 ## 1) Open the login page
 
-Open `https://theia.artemis.cit.tum.de/` in your browser.
+Open `https://eduide.artemis.cit.tum.de/` in your browser (the old address `theia.artemis.cit.tum.de` redirects there).
 
 ![Landing page with login button](/img/student/getting-started/first-login-01-landing-login.png)
 

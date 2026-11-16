@@ -50,7 +50,7 @@ All repositories also use the org `.github` repository through moving refs (`@v1
 | EduIDE (IDE images) | 2.0.0 |
 | EduIDE-Cloud | 3.0.0, 3.0.1 for the admin API toggle, no environment values in operator logs and the data bridge in lazy sessions |
 | EduIDE-data-bridge | 2.0.0 |
-| scorpio | 3.0.0, 3.1.0 for the progress notification |
+| scorpio | 3.0.0, 3.1.0 for the progress notification (not yet pinned by EduIDE) |
 | workspace-garbage-collector | 1.0.0 |
 | EduIDE-Landing-Page | 1.4.1 |
 

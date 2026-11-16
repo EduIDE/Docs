@@ -5,24 +5,24 @@ description: Keycloak client configuration, admin group assignment, and access r
 
 # Access Control
 
-EduIDE uses Keycloak as its identity provider, fronted by an OAuth2 proxy (`oauth2-proxy` v7.12.0). Authentication is not optional — every request to the landing page or IDE session goes through this layer. Admin access is controlled by Keycloak group membership.
+EduIDE uses Keycloak as its identity provider. The landing page signs users in with the public Keycloak client directly, and every IDE session sits behind its own `oauth2-proxy` sidecar (v7.12.0), which forces the Keycloak login. Admin access is controlled by Keycloak group membership. An installation without Keycloak (`keycloak.enable: false`) needs `keycloak.allowUnauthenticated: true`, and is only for throwaway environments, because there the `user` of a request is the identity.
 
 This page covers the full Keycloak client setup, the admin group model, and ongoing access review practices.
 
 ## How authentication works
 
-1. A user navigates to the EduIDE landing page.
-2. The OAuth2 proxy intercepts the request and redirects to Keycloak.
-3. The user authenticates in Keycloak.
-4. Keycloak issues a token containing the user's `username`, `groups`, and `audience` claims.
-5. The OAuth2 proxy validates the token and forwards the request with the user context attached.
-6. The EduIDE service reads the `groups` claim to determine whether the user has admin privileges.
+1. A user navigates to the EduIDE landing page, which redirects to Keycloak with the public client.
+2. The user authenticates in Keycloak.
+3. Keycloak issues a token containing the user's `email`, `groups` and, if you set `keycloak.audience`, `aud` claims.
+4. The landing page calls the REST service with the access token. The service takes the user's identity from the `email` claim. A token without it counts as anonymous.
+5. A session's `oauth2-proxy` sidecar runs its own login against the same client before it lets the user reach the IDE.
+6. The service reads the `groups` claim to determine whether the user has admin privileges.
 
-The service property `theia.cloud.auth.admin.group` (default: `theia-cloud/admin`) defines which Keycloak group grants admin access.
+The chart value `keycloak.adminGroup` (default: `theia-cloud/admin`, passed as `KEYCLOAK_ADMIN_GROUP`) defines which Keycloak group grants admin access. The service compares it exactly with the entries of the `groups` claim.
 
 ## Keycloak client setup
 
-Each environment (production, staging, test) requires its own Keycloak client. The steps below apply to each.
+Clients can be shared. The TUM installations use one client, `eduide`, for several hostnames, so add every installation's redirect URIs to it. A separate client per installation is possible too. All Keycloak settings (`keycloak.authUrl`, `realm`, `clientId`, `adminGroup`, `audience`) live in the installation's `values.yaml`. The deploy workflow reads only `KUBECONFIG`, `THEIA_KEYCLOAK_COOKIE_SECRET` and `THEIA_ADMIN_API_TOKEN` from GitHub secrets.
 
 ### Create the client
 
@@ -31,7 +31,7 @@ Each environment (production, staging, test) requires its own Keycloak client. T
 3. Navigate to **Clients → Create client**.
 4. Set the basic configuration:
    ```
-   Client ID:   theia-cloud          (or theia-cloud-staging, theia-cloud-test1, etc.)
+   Client ID:   eduide               (the value of keycloak.clientId)
    Name:        EduIDE
    ```
 5. Click **Next**.
@@ -113,14 +113,18 @@ EduIDE requires three custom token claims. These are added as mappers on a dedic
 1. Go to **Clients → [your-client] → Client scopes**.
 2. Click **Add client scope → Create client scope**:
    ```
-   Name:                      theia-cloud-dedicated
+   Name:                      eduide-dedicated
    Protocol:                  openid-connect
    Display on consent screen: OFF
    Include in token scope:    ON
    ```
 3. Open the new scope and go to the **Mappers** tab.
 
-### Username mapper
+### Email claim
+
+The service identifies a user by the `email` claim, so the client must put it into the access token (Keycloak's default `email` scope does). The service rejects an email with unusual characters with a 403.
+
+### Username mapper (optional)
 
 ```
 Name:             username
@@ -153,23 +157,23 @@ The service checks the audience only when `keycloak.audience` is set in the `edu
 Name:             groups
 Mapper type:      Group Membership
 Token claim name: groups
-Full group path:  OFF
+Full group path:  ON
 Add to ID token:       ON
 Add to access token:   ON
 Add to userinfo:       ON
 ```
 
-The `groups` claim is what the `AdminOnlyFilter` reads to check for admin group membership.
+The `groups` claim is what the `AdminOnlyFilter` reads to check for admin group membership. The service compares `keycloak.adminGroup` exactly with the entries of this claim. With **Full group path** OFF the claim holds the bare name (`admin`), so then set `keycloak.adminGroup: admin`. With it ON the claim holds the full path, and the default `theia-cloud/admin` matches a group `admin` inside the group `theia-cloud`. Check what a token really carries before you rely on it.
 
 ### Assign the scope to the client
 
 1. Go back to **Clients → [your-client] → Client scopes**.
 2. Click **Add client scope**.
-3. Select `theia-cloud-dedicated`.
+3. Select `eduide-dedicated`.
 4. Set scope type to **Default**.
 5. Click **Add**.
 
-Verify that `theia-cloud-dedicated` appears under **Assigned client scopes** as a default scope.
+Verify that `eduide-dedicated` appears under **Assigned client scopes** as a default scope.
 
 ## Identity provider certificate
 
@@ -203,13 +207,10 @@ The service reads group membership from the JWT at request time. Access changes 
 
 ## GitHub environment secrets
 
-The OAuth2 proxy and service require several secrets to be present before deployment. These are stored as GitHub environment secrets and injected during the deployment workflow.
+The deploy workflow reads the cookie secret (and the admin API token) from GitHub secrets. The Keycloak URL, realm and client ID are chart values in the installation's `values.yaml`, not secrets.
 
 | Secret | Required value |
 |---|---|
-| `THEIA_KEYCLOAK_AUTH_URL` | Keycloak base URL, e.g. `https://keycloak.ase.in.tum.de/` |
-| `THEIA_KEYCLOAK_REALM` | Realm name, e.g. `tum` |
-| `THEIA_KEYCLOAK_CLIENT_ID` | Client ID configured above |
 | `THEIA_KEYCLOAK_COOKIE_SECRET` | Base64-encoded 32-byte key for cookie encryption |
 
 ## OAuth2 proxy cookie secret
@@ -235,8 +236,8 @@ where the browser would otherwise drop the cookie and login never completes.
 The browser redirects continuously between the application and Keycloak.
 
 Causes and fixes:
-- **Incorrect redirect URI** — verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
-- **Cookie secret mismatch** — confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
+- **Incorrect redirect URI** - verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
+- **Cookie secret mismatch** - confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
 - **HTTP/HTTPS mismatch** - the redirect URIs and the environment URL must use the scheme the installation is served on, which is HTTPS for every normal installation. An installation served over plain HTTP uses `http://` throughout and also needs `oauth2Proxy.cookieSecure: false`
 
 ### "Invalid redirect uri" when logging out
@@ -253,8 +254,8 @@ landing page image; the client configuration needs no change. The query string
 Keycloak rejects the login attempt with "Invalid client".
 
 Causes and fixes:
-- `THEIA_KEYCLOAK_CLIENT_ID` does not match the client ID in Keycloak
-- The client is disabled — verify it is enabled in the Keycloak admin console
+- `keycloak.clientId` does not match the client ID in Keycloak
+- The client is disabled - verify it is enabled in the Keycloak admin console
 - Wrong realm is configured
 
 ### "Access denied" after successful login

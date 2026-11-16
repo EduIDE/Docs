@@ -51,7 +51,7 @@ const cards: OssCard[] = [
     icon: <IconHeart />,
     title: "Built by students, for students",
     description:
-      "EduIDE is developed as part of thesis projects at TUM's AET Research Group — by students who understand the learning experience firsthand.",
+      "EduIDE is developed as part of thesis projects at TUM's AET Research Group - by students who understand the learning experience firsthand.",
   },
   {
     iconColor: "teal",
@@ -63,7 +63,6 @@ const cards: OssCard[] = [
 ];
 
 const contributions: Contribution[] = [
-  { color: "#4E9F9C", text: "AI terminal assistant extension" },
   { color: "#4E9F9C", text: "OSC Escape Sequence Support in the Terminal" },
   { color: "#4E9F9C", text: "Git Action button support" },
   { color: "#4E9F9C", text: "And more" },

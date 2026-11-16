@@ -19,11 +19,10 @@ Everything below is written to container stdout. EduIDE ships no log shipper, no
 
 ### EduIDE Cloud service
 
-The service logs all inbound requests including:
-- Request method, path, and response status
-- The authenticated user identity (from the JWT `username` claim) where applicable
-- Admin endpoint access, including whether the `X-Admin-Api-Token` was accepted or rejected, and whether a token was configured at all
-- Workspace and session lifecycle events (create, delete, stop)
+The service has no HTTP access log. It logs events it decides to log:
+- Workspace and session lifecycle events (create, delete, stop), with the user identity taken from the `email` claim of the token
+- Rejected admin API requests. A successful admin token request is not logged, so the service log is no proof of who scaled what
+- Errors
 
 ```bash
 kubectl logs -n <namespace> -l app=service --tail=200
@@ -43,10 +42,14 @@ kubectl logs -n <namespace> -l app=operator --tail=200
 
 The operator is your primary audit trail for session and workspace lifecycle, because it is the component that actually creates and destroys them.
 
+Before EduIDE-Cloud 3.0.1 the operator's default log level (TRACE for the operator) wrote rendered session resources, including environment values such as git URLs with tokens and Artemis tokens, to its log. Check how long operator logs are kept, and see [Upgrades](../maintenance/upgrades.md) for the rotation advice.
+
+The cluster chart also ships alert rules, see [Alerts](../operations/monitoring-basics.md#alerts).
+
 ### oauth2-proxy
 
 oauth2-proxy logs every authentication event it handles:
-- Successful logins with the authenticated username
+- Successful logins with the authenticated user
 - Failed authentication attempts with the failure reason
 - Token validation results
 - Logout events
@@ -59,9 +62,9 @@ The consequences for auditing are significant, and worth being explicit about:
 - Reading these logs means naming a pod and a container:
 
   ```bash
-  # Find session pods: everything that is not a platform component
+  # Find session pods
   kubectl get pods -n <namespace> \
-    -l 'app notin (operator,service,landing-page,image-preloading)'
+    -l app.kubernetes.io/component=session
 
   kubectl logs <session-pod> -n <namespace> -c oauth2-proxy --tail=200
   ```
@@ -107,7 +110,7 @@ helm history eduide -n <namespace>
 helm get values eduide -n <namespace> --revision <n>
 ```
 
-Note that `helm get values` will show secret material if you provisioned the admin API token through the values file. Treat its output accordingly.
+Note that `helm get values` will show secret material, such as `keycloak.cookieSecret` and the admin API token if you provisioned it through the values file. Treat its output accordingly.
 
 ## Sensitive operations inventory
 
@@ -250,7 +253,7 @@ Remove the installation from your cluster-level configuration:
 
 - Drop its listeners from `gateway.listeners`. There are typically four per installation (landing, service, instances, webview), plus any ACME challenge listeners.
 - Drop its hostnames from the relevant entry in `managedCertificates.certificates`, so the certificate is re-issued with a smaller SAN list.
-- Drop its namespace from `monitoring.targetNamespaces` and `monitoring.sessionNamespaces`.
+- Drop its namespace from `monitoring.targetNamespaces`.
 
 Then upgrade the cluster chart:
 
@@ -293,7 +296,7 @@ kubectl api-resources --verbs=list --namespaced -o name \
 
 **Step 6: Reclaim the storage**
 
-With a `Retain` reclaim policy, the PersistentVolumes survive the namespace and still occupy capacity on your storage backend. They show up in the `Released` phase - a **PersistentVolume** phase, not a PVC phase, and cluster-scoped, so no namespace flag applies:
+With a `Retain` reclaim policy, the PersistentVolumes survive the namespace and still occupy capacity on your storage system. They show up in the `Released` phase - a **PersistentVolume** phase, not a PVC phase, and cluster-scoped, so no namespace flag applies:
 
 ```bash
 kubectl get pv -o json \

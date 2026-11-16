@@ -34,7 +34,7 @@ base                    Theia, Scorpio, data bridge, session monitor
 
 - `base-standalone` and `base-artemis` are thin Dockerfiles `FROM base`. They are separate files only because the shared build workflow has no `target` input. The Artemis extension is the only difference between the editions. Scorpio and the data bridge are in both.
 - Each language has one edition-agnostic `images/<lang>/ToolDockerfile`. It takes the edition image as `BASE_IMAGE` and is built twice, on Ubuntu 26.04. The 14 images are `java-17`, `java-25`, `python`, `javascript`, `c`, `rust` and `go`, each with the suffix `-standalone` and `-artemis`, published as `ghcr.io/eduide/eduide/<lang>-<edition>`.
-- Standalone sessions have no Artemis token to hand out, so students type their git credentials once and the cache forgets them after three hours.
+- Standalone sessions have no Artemis token to hand out, so students type their git credentials once and the cache forgets them after three hours. The editions also differ in `GRADLE_PREWARM_AUTO_CONFIRM`: the Artemis edition sets it to `true`.
 - `scripts/check-required-plugins.sh` runs in every `ToolDockerfile` after the `package.json` merge and again on the finished `plugins/` folder. It fails the build if a language patch removed `theia-cloud-monitor`, `scorpio` or `data-bridge`.
 - Toolchains that do not come from apt are pinned with an `ARG <NAME>_VERSION` and a `# renovate:` comment, so Renovate bumps them with a one-line pull request. The Go tarball is verified against `GO_SHA256_AMD64` and `GO_SHA256_ARM64`; update the checksums with the version.
 
@@ -54,12 +54,14 @@ A template is a starter project that Scorpio copies into an empty workspace. Tem
 
 | Image | Template ids |
 | --- | --- |
-| `java-17`, `java-25` | `maven`, `gradle` |
-| `c` | `make`, `bazel` |
-| `python` | `python` |
-| `javascript` | `node`, `web` |
-| `rust` | `cargo` |
-| `go` | `go` |
+| `java-17-*`, `java-25-*` | `maven`, `gradle` |
+| `c-*` | `make`, `bazel` |
+| `python-*` | `python` |
+| `javascript-*` | `node`, `web` |
+| `rust-*` | `cargo` |
+| `go-*` | `go` |
+
+`*` is the edition, `standalone` or `artemis`. A template without a Test task runs its default build task in the smoke test.
 
 How a template reaches a session:
 
@@ -69,11 +71,11 @@ How a template reaches a session:
 
 Every template has a `.vscode/tasks.json` with Run (the default build task, called Start in the web template), Build where the language has one, and Test (`"group": "test"`) where the template has tests (the C templates have none), so the experience levels can show tasks by level. A task without a group, such as Lint or Clippy, sets `"eduide": { "minLevel": "advanced" }`.
 
-To add a template, add the folder with its `template.json`, offer it in the app's `buildSystems` in the EduIDE-Helm catalog (`{ id, label }`), and extend the template table in the docs. CI publishes each image's template list as the build artifact `templates-<image>.json`, and the Helm release check reads the `template.json` files from the published images with `crane` to compare them with the catalog.
+To add a template, add the folder with its `template.json`, offer it in the app's `buildSystems` in the EduIDE-Helm catalog (`{ id, label }`), and extend the template table in the docs. CI publishes each image's template list as the build artifact `templates-<lang>-<edition>.json`, and the Helm release check reads the `template.json` files from the published images with `crane` to compare them with the catalog.
 
 ## CI Checks
 
-- `build.yml` builds `base`, both edition bases, then the 14 language images. The EduIDE-Helm release train reads the image names from the matrix `jobs.images.strategy.matrix.include[]["image-name"]`, so keep that job name and the flat entries.
+- `build.yml` builds `base`, both edition bases, then the 14 language images. The EduIDE-Helm release check reads the image names from the matrix `jobs.images.strategy.matrix.include[]["image-name"]`, so keep that job name and the flat entries.
 - The `smoke` job pulls each built image and runs `scripts/smoke-test-image.sh <image> <edition>`. It checks that the IDE answers on port 3000, that the required extensions are present (the Artemis extension only in the artemis edition), that the credential cache is set only in standalone, that the toolchain runs, and that the Test task of every template passes with `--network none` (templates marked `needsNetwork` run with network). The real Artemis flow is not covered.
 - The `Extension tests` workflow runs the unit tests of `theia-extensions/*` on pull requests.
 
@@ -85,7 +87,7 @@ Live Preview does not work in the cloud, because it serves on `127.0.0.1` inside
 THEIA_MINI_BROWSER_HOST_PATTERN="{{uuid}}.webview.{{hostname}}"
 ```
 
-The default pattern `{{uuid}}.mini-browser.{{hostname}}` has no gateway route. The webview host family is already routed and certified (`hosts.allWildcardInstances: ["*.webview."]` in the chart). The final stage of a `ToolDockerfile` starts from `ubuntu:24.04` and only copies files from the base IDE image, so it does not inherit its `ENV` and every `ToolDockerfile` repeats it. The product extension silences Theia's "host pattern changed" warning for this one pattern. Students open a preview with "Open Preview to the Side" or right-click, Open With, Preview. Locally, open the IDE through `http://localhost:3000`, not `127.0.0.1`, so the browser resolves `<uuid>.webview.localhost`.
+The default pattern `{{uuid}}.mini-browser.{{hostname}}` has no gateway route. The webview host family is already routed and certified (`hosts.allWildcardInstances: ["*.webview."]` in the chart). The final stage of a `ToolDockerfile` starts from `ubuntu:26.04` and only copies files from the base IDE image, so it does not inherit its `ENV` and every `ToolDockerfile` repeats it. The product extension silences Theia's "host pattern changed" warning for this one pattern. Students open a preview with "Open Preview to the Side" or right-click, Open With, Preview. Locally, open the IDE through `http://localhost:3000`, not `127.0.0.1`, so the browser resolves `<uuid>.webview.localhost`.
 
 ## Workspace Mode
 
@@ -117,7 +119,7 @@ EduIDE 2.0.0 bundles:
 | Extension | Version |
 |---|---|
 | EduIDE Data Bridge | 2.0.0 (per-instance token required, known keys only) |
-| Scorpio | 3.1.0 (`TEMPLATE` bootstrap, never clears a non-empty workspace, progress notification, Gradle prompt) |
+| Scorpio | 3.0.0 (`TEMPLATE` bootstrap, never clears a non-empty workspace, Gradle prompt). Scorpio 3.1.0 adds the progress notification and reaches the images with the next EduIDE release ([#233](https://github.com/EduIDE/EduIDE/pull/233)) |
 | Theia Cloud session monitor | 3.0.0 (needed for the idle timeout of open tabs, [#224](https://github.com/EduIDE/EduIDE/pull/224)) |
 
 The Artemis extension lives in `base-artemis` only. The Artemis edition images set `GRADLE_PREWARM_AUTO_CONFIRM=true` (Java images and the base), so Scorpio starts the Gradle prewarm without a prompt; standalone editions keep the prompt. The data bridge 2.0.0 images work only with EduIDE-Cloud 3.x and chart 3.x, see [Prewarming Architecture](/developer/platform/session-prewarming#data-bridge-token).

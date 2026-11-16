@@ -73,7 +73,7 @@ Students can switch level at any time from the status bar or the **Experience Le
 
 The tasks offered by the **Run** button in the toolbar follow the level:
 
-- **Beginner** offers Run, and Test where the template has tests (the C templates have none).
+- **Beginner** offers Run, and Test where the template has tests (the C templates have none, and the Web template offers Start and Build instead of Run and Test).
 - **Advanced** adds Build, and for some languages Lint, Vet, Clippy and Valgrind.
 - **Expert** offers the full task list.
 
@@ -89,7 +89,7 @@ Beyond the three levels, the **Customize** panel (**Experience Levels**, then **
 
 The file sets the starting level only. Once a student picks a level themselves, their choice wins over the file. The choice is stored in the session, so a new session without a persistent home directory starts from the file again. The file cannot lock students to a level.
 
-Without the file, students start at **Expert** from EduIDE 1.5.0. EduIDE 1.4.0 itself starts them at **Beginner**. Older versions have no experience levels at all. Ask the platform team which version your installation runs.
+Without the file, students start at **Expert** from EduIDE 1.5.0, and so in release 3.0 (EduIDE 2.0.0). The level is a setting inside the session, so it resets to the starting level in every new session, also with a persistent workspace. EduIDE 1.4.0 itself starts them at **Beginner**. Older versions have no experience levels at all. Ask the platform team which version your installation runs.
 
 ### Starter Templates
 

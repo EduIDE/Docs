@@ -20,7 +20,7 @@ The **EduIDE Deployment** repository is the central hub for the infrastructure-a
   `ghcr.io/eduide/charts`. There are two: `eduide-cluster` once per cluster, and
   `eduide` once per installation. The five charts this repository used to carry
   were consolidated into those two at 2.0.0.
-- **GitOps Workflow**: Deployments are managed through Git with approval gates and automated rollouts to staging.
+- **GitOps Workflow**: Deployments are managed through Git with approval gates. Only `e2e` follows `main` automatically; staging and every other environment are deployed by hand with the `Deploy environment` workflow.
 - **Authentication Integration**: Detailed configuration for Keycloak to manage user access and session security.
 
 ## Technical Details

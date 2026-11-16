@@ -5,9 +5,9 @@ description: Moving an installation to a new EduIDE version.
 
 # Upgrades
 
-An upgrade is a version change and a `helm upgrade`. There is no multi-chart
-ordering to remember any more — there are two charts, and only one of them is
-usually involved.
+An upgrade is a version change and a `helm upgrade`. There are two charts, and
+only one of them is usually involved. When both change, upgrade `eduide-cluster`
+first.
 
 ## What you are upgrading
 
@@ -36,7 +36,7 @@ helm upgrade eduide oci://ghcr.io/eduide/charts/eduide \
 ```
 
 Keep the same release name and the same values files. Changing the release name
-is not an upgrade — Helm treats it as a new install and will refuse to adopt the
+is not an upgrade - Helm treats it as a new install and will refuse to adopt the
 existing resources.
 
 :::tip Preview it first
@@ -70,12 +70,12 @@ helm upgrade eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
 ```
 
 CRDs are ordinary templates in this chart rather than files in `crds/`, which
-means `helm upgrade` genuinely updates them — unlike many charts, where CRD
+means `helm upgrade` genuinely updates them - unlike many charts, where CRD
 changes need a manual `kubectl apply`.
 
 That cuts both ways: a CRD change lands the moment you upgrade, for every
 installation on the cluster at once. **A release that changes a stored CRD
-version cannot be undone by rolling back the tenant chart** — see
+version cannot be undone by rolling back the tenant chart** - see
 [Rollback](rollback.md).
 
 ## What visitors see during an upgrade
@@ -489,6 +489,13 @@ one. The old workspaces stay until the
 [garbage collector](../operations/garbage-collection.md) removes them, and work
 in them that was never pushed is gone for the student.
 
+### EduIDE-deployment at TUM
+
+The `environments/_base.yaml` of EduIDE-deployment still names
+`java-17-templates-latest` as `landingPage.appDefinition`, and chart 3.0.0
+refuses to render with it. EduIDE-deployment#169 fixes it as part of the
+rollout, so move TUM environments to chart 3.0.0 only with that change.
+
 ### Steps, in order
 
 1. **Pick a maintenance window** outside lecture hours and exercises. Tell
@@ -503,7 +510,7 @@ in them that was never pushed is gone for the student.
    chart's `appVersion` is 2.0.0; check your values only if they override
    `versions.*`, `operator.image`, `service.image` or `landingPage.image`, and
    check `appDefinitions.apps` for an `image` override: an old tagged override
-   keeps the old image, for example one without the monitor v1.4.0 or with a
+   keeps the old image, for example one without the monitor v3.0.0 or with a
    data bridge that does not match the operator.
 3. **Update your values files.**
    - In `appDefinitions.enabled`, rename the three `*-templates` names, and add
@@ -528,17 +535,19 @@ in them that was never pushed is gone for the student.
    (see [`--wait` and image preloading](#--wait-and-image-preloading)).
 6. **Move `minInstances` to the new apps.** The chart reads the live
    `minInstances` back, so a new AppDefinition starts with the catalog value
-   (`0`, and `3` for `java-17`) and your setting on the old app is gone. Patch the
-   new ones through the admin API, see
-   [Adjusting scaling at runtime](../platform/app-definitions.md#adjusting-scaling-at-runtime):
+   (`0`, and `3` for `java-17`) and your setting on the old app is gone. Pre-warming
+   only works with `operator.eagerStart: true` (chart default `false`) and for
+   ephemeral apps. Patch the new apps with `kubectl`, which needs no admin API:
 
    ```bash
-   curl -X PATCH \
-     -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
-     -H "Content-Type: application/json" \
-     -d '{"minInstances": 10}' \
-     https://service.<landing-host>/service/admin/appdefinition/java-25-standalone
+   kubectl -n <namespace> patch appdefinition java-25-standalone \
+     --type merge -p '{"spec":{"minInstances":10}}'
    ```
+
+   Where you enabled the admin API (`service.adminApiEnabled: true`, EduIDE-Cloud
+   3.0.1 or later), the PATCH call in
+   [Adjusting scaling at runtime](../platform/app-definitions.md#adjusting-scaling-at-runtime)
+   does the same.
 
 7. **Restart the operator, then delete orphaned sessions and rotate secrets**
    as described above.
@@ -562,14 +571,15 @@ in them that was never pushed is gone for the student.
      in `theiaImage` need a data migration.
 
 Rolling back from 3.0.0 to 2.x deletes the new AppDefinitions and recreates the
-old ones, which ends running sessions a second time. Plan the window so that you
+old ones, which ends running sessions a second time (a rollback only spares
+sessions when no app was renamed or removed). Plan the window so that you
 do not need it, see [Rollback](rollback.md).
 
 ### Idle sessions end now
 
 Since chart 2.8.1 the limits are `notifyAfter: 50` and `timeoutAfter: 60`, but
 an open idle tab only times out with IDE images that carry `theia-cloud-monitor`
-v1.4.0 (the pin in EduIDE 2.0.0), and a closed tab only ends its session with an
+3.0.0 (the pin in EduIDE 2.0.0), and a closed tab only ends its session with an
 operator from EduIDE-Cloud 1.4.0 or later. Before, sessions
 effectively ran until the 24 hour lifetime. Expect more "my session closed"
 questions in the first weeks, especially from students who listen to a lecture
@@ -577,7 +587,7 @@ with the IDE open but untouched. Raise `timeoutAfter` and `notifyAfter` per
 installation if 60 and 50 are too short, and keep the gap between them larger
 than `monitor.activityTracker.interval`.
 
-Two details to know: a monitor older than v1.4.0 never times out an open idle
+Two details to know: a monitor older than v1.4.0 (the IDE images of EduIDE 1.5.0) never times out an open idle
 tab, and after the operator restart that every `helm upgrade` causes, sessions
 whose tab was already closed run until their lifetime limit once.
 
@@ -589,9 +599,9 @@ that ended for inactivity and for lifetime, see
 
 **`minInstances` and `maxInstances` stop taking effect after the first install.**
 The chart deliberately reads the live values back so that Helm does not reset
-scaling that the admin API has changed. The consequence is that changing them in
-your values file on an upgrade does nothing. Change them through the admin API
-instead — see [App Definitions](../platform/app-definitions.md).
+scaling that was changed at runtime. The consequence is that changing them in
+your values file on an upgrade does nothing. Change them with `kubectl patch
+appdefinition` or the admin API, see [App Definitions](../platform/app-definitions.md).
 
 **`hosts.allWildcardInstances` does not update cleanly on upgrade.** If you
 change it, reinstall rather than upgrade. This is called out in the chart's own
@@ -600,6 +610,6 @@ values file.
 ## Coordinating with your identity provider
 
 An EduIDE upgrade does not change your Keycloak configuration. But if an upgrade
-adds a hostname — a new installation, or a renamed one — the client's redirect
+adds a hostname - a new installation, or a renamed one - the client's redirect
 URIs need updating in the same change window, or login breaks for that host
 only. See [Access Control](../platform/access-control.md).

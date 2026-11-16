@@ -157,9 +157,16 @@ The `minInstances` and `maxInstances` values can be changed without redeploying 
 PATCH /service/admin/appdefinition/{appDefinitionName}
 ```
 
-The scaling endpoints are off by default and answer with 404 until `service.adminApiEnabled` is `true`. See [Admin API Tokens](/admins/security/admin-api-tokens).
+The scaling endpoints are off by default and answer with 404 until `service.adminApiEnabled` is `true`. The toggle ships with EduIDE-Cloud 3.0.1; before that, they work whenever an admin API token is configured. See [Admin API Tokens](/admins/security/admin-api-tokens).
 
-This is the recommended approach for live capacity adjustments before a scheduled lecture or exercise session.
+You do not need the admin API to scale a warm pool. The chart reads the live value back, so a `kubectl` patch is just as good and survives `helm upgrade`:
+
+```bash
+kubectl -n <namespace> patch appdefinition <name> --type merge \
+  -p '{"spec":{"minInstances":10,"maxInstances":500}}'
+```
+
+Use either for live capacity adjustments before a scheduled lecture or exercise session.
 
 ### View current scaling
 
@@ -173,7 +180,7 @@ curl -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
   https://service.<landing-host>/service/admin/appdefinition/java-17
 ```
 
-Response shape:
+The `GET` calls return this scaling shape:
 ```json
 {
   "appDefinitionName": "java-17",
@@ -195,19 +202,19 @@ curl -X PATCH \
 Validation rules enforced by the service:
 - At least one of `minInstances` or `maxInstances` must be provided.
 - Both values must be `>= 0`.
-- If both are provided, `minInstances` must be `<= maxInstances`.
-- Sending `null` for `maxInstances` removes the upper bound entirely.
+- `minInstances` must be `<= maxInstances`, checked against the resulting values including the ones already stored, so raising `minInstances` above a stored `maxInstances` is refused.
+- Sending `null` for a field changes nothing, it does not remove the bound.
 
-The operator reconciles the change immediately. Pre-warmed sessions will be created or terminated to match the new `minInstances` value.
+The `PATCH` returns the full updated AppDefinition. The operator reconciles the change immediately. Pre-warmed sessions will be created or terminated to match the new `minInstances` value.
 
 ## Pre-warming strategy
 
-Pre-warming (`minInstances > 0`) ensures that sessions are available before users request them. This is important in educational settings where many users start sessions within the same short window.
+Pre-warming (`minInstances > 0`) needs `operator.eagerStart: true` (chart default `false`) and works for ephemeral apps only. It ensures that sessions are available before users request them. This is important in educational settings where many users start sessions within the same short window.
 
 Guidelines:
 
 - Set `minInstances` to the expected concurrent launch count for the next exercise before it goes live.
-- For a large cohort exercise (e.g., 300 students starting within 10 minutes), raise `minInstances` to at least 30–50 to absorb the burst without startup latency.
+- For a large cohort exercise (e.g., 300 students starting within 10 minutes), raise `minInstances` to at least 30 - 50 to absorb the burst without startup latency.
 - Return `minInstances` to a lower baseline after the burst window to reclaim cluster resources.
 - `maxInstances` sets a safety ceiling. Set it generously unless you need hard capacity limits.
 
@@ -228,6 +235,8 @@ options:
   dataBridgeEnabled: "true"
   dataBridgePort: "16281"
 ```
+
+An app's `options` replaces `appDefinitions.defaults.options` as a whole, there is no merge. An app that sets any option must repeat the others it needs.
 
 ### Data bridge token
 

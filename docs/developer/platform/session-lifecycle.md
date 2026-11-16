@@ -7,7 +7,7 @@ description: How the operator decides that a session is over, how it records why
 
 This page describes how a session ends and what the platform records about it. It covers the activity rules in the monitor extension and the IDE, the operator's timeout logic, the end reason on the workspace, the `/session-ended` page of the landing page, and the operator's metrics endpoint. For how a session starts, see [Architecture](./architecture) and [External Session Launch](./external-integration).
 
-Release status: the operator flags `--sessionNodeSelector` ships since EduIDE-Cloud 1.3.0, the end reason and the closed-tab rule since 1.4.0, and `--metricsPort` with EduIDE-Cloud 2.0.0. EduIDE-Cloud 3.0.0 removes the unauthenticated keep-alive endpoint `PATCH /service/session`: the operator polls the monitor, and nothing in the IDE needs to call the service to stay alive. The IDE images need `theia-cloud-monitor` v1.4.0 (EduIDE [#224](https://github.com/EduIDE/EduIDE/pull/224)) to time out an open idle tab.
+Release status: the operator flags `--sessionNodeSelector` ships since EduIDE-Cloud 1.3.0, the end reason and the closed-tab rule since 1.4.0, and `--metricsPort` with EduIDE-Cloud 2.0.0. EduIDE-Cloud 3.0.0 removes the unauthenticated keep-alive endpoint `PATCH /service/session`: the operator polls the monitor, and nothing in the IDE needs to call the service to stay alive. The IDE images need `theia-cloud-monitor` v1.4.0 or later (EduIDE [#224](https://github.com/EduIDE/EduIDE/pull/224)) to time out an open idle tab. The monitor extension carries the version of the EduIDE-Cloud release it was built with; EduIDE 2.0.0 pins v3.0.0.
 
 ## Who ends a session
 
@@ -56,7 +56,7 @@ Before it stops a session for inactivity or lifetime, the operator annotates the
 
 ## The `/session-ended` page
 
-A request for an instance path of a session that no longer exists reaches a catch-all rule of the instances HTTPRoute, which answers `302` to `https://<landing host>/session-ended` and keeps the query string. A live session's longer path wins over the catch-all. The rule is part of the `eduide` chart (`gateway.routes.sessionEndedRedirect`, default on, only `302` is accepted because eager sessions reuse instance paths and a cached `301` would break them).
+A request for an instance path of a session that no longer exists reaches a catch-all rule of the instances HTTPRoute, which answers `302` to `https://<landing host>/session-ended` and keeps the query string. A live session's longer path wins over the catch-all. The rule is part of the `eduide` chart (`gateway.routes.sessionEndedRedirect.enabled`, default on, with `path` (default `/session-ended`) and `statusCode`; only `302` is accepted because eager sessions reuse instance paths and a cached `301` would break them).
 
 The landing page serves the page (`EduIDE-Landing-Page`):
 

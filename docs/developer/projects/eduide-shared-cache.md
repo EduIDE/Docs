@@ -7,7 +7,7 @@ sidebar_label: EduIDE Shared Cache
 
 ## Overview
 
-The **EduIDE Shared Cache** repository provides a high-performance, Kubernetes-native HTTP build cache server for both **Gradle** and **Bazel** builds. It implements the Gradle HTTP Build Cache API and the Bazel HTTP remote cache protocol (action cache + content-addressable store), allowing student sessions and CI/CD pipelines to share build artifacts through a single backend. This significantly reduces build times and resource consumption across the EduIDE ecosystem.
+The **EduIDE Shared Cache** repository provides a high-performance, Kubernetes-native HTTP build cache server for both **Gradle** and **Bazel** builds. It implements the Gradle HTTP Build Cache API and the Bazel HTTP remote cache protocol (action cache + content-addressable store), allowing student sessions and CI/CD pipelines to share build artifacts through a single server. This significantly reduces build times and resource consumption across the EduIDE ecosystem.
 
 ## Key Features
 
@@ -26,7 +26,7 @@ The **EduIDE Shared Cache** repository provides a high-performance, Kubernetes-n
 
 - **Language**: Go (Golang)
 - **Web Framework**: [Gin](https://github.com/gin-gonic/gin)
-- **Storage Backend**: [Redis](https://redis.io/) 7
+- **Storage**: [Redis](https://redis.io/) 7
 - **Deployment**: Docker, Kubernetes, Helm
 - **Key Dependencies**:
   - `github.com/gin-gonic/gin`: HTTP web framework.

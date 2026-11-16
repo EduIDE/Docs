@@ -19,14 +19,14 @@ It is published as `ghcr.io/eduide/eduide-image-mannheim/java-25`.
 
 ## Versioning
 
-The image tag is the EduIDE version it builds on (`2.0.0`). A change that only concerns this repository on the same EduIDE version gets a suffix (`2.0.0-1`). Tags come from GitHub releases; pushes to `main` publish `latest`, pull requests publish `pr-<N>`. Renovate opens a pull request for each new numbered EduIDE release. Do not use `latest` in a cluster.
+The repository has its own semver releases, cut with `release.yml` like every other EduIDE repository, and the image tag is that release version. The EduIDE version it builds on is the `EDUIDE_VERSION` build argument of the `Dockerfile`, which Renovate bumps; until EduIDE 2.0.0 is the base, it points at the pull request build `pr-221`. Pushes to `main` publish `latest` and `latest-<sha7>`, pull requests publish `pr-<N>`. Do not use `latest` in a cluster.
 
 ## Using the Image in an Installation
 
 Reference the image with its full path and a tag in the installation's Helm values. The EduIDE chart prefixes `ghcr.io/eduide` to every image without a tag, so a path alone would be rewritten:
 
 ```yaml
-image: ghcr.io/eduide/eduide-image-mannheim/java-25:2.0.0
+image: ghcr.io/eduide/eduide-image-mannheim/java-25:<release version>
 ```
 
 Keep the app name of an installation that has persistent workspaces and change only the image; see [Upgrades](/admins/maintenance/upgrades).

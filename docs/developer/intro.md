@@ -1,6 +1,6 @@
 ---
 title: Developer Overview
-description: Mock developer-facing documentation landing page.
+description: Project catalog, platform internals, API references and developer guides for EduIDE.
 ---
 
 # Developer Overview

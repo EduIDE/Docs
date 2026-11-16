@@ -23,7 +23,7 @@ The high-level flow for an eagerly served session is:
 3. The session handler reserves one free pool instance and annotates the session with `theia-cloud.io/session-start-strategy=eager` and `theia-cloud.io/instance-id`. The instance is marked as claimed with the label `theia-cloud.io/claimed` in the same edit that adds the session as owner, and it is free again only after the pool reset it. Instances claimed by a session that no longer exists are reset when the pool is reconciled (EduIDE-Cloud 3.0.0).
 4. The pool attaches ownership, labels, deployment metadata, services, optional Keycloak config maps, persistent volume resources, and sidecars to the concrete session.
 5. The operator schedules data bridge injection for the session-specific environment values, authenticated with the instance's token (see [Data bridge token](#data-bridge-token)).
-6. The operator adds the session route to the shared `HTTPRoute`, updates the session URL asynchronously, and marks the session handled.
+6. The operator creates a session-owned `HTTPRoute`, updates the session URL asynchronously, and marks the session handled.
 
 If no warm instance is free, the same operator falls back to the lazy handler. That fallback is deliberate: prewarming is an optimization layer, not a separate correctness mode.
 
@@ -36,7 +36,7 @@ A prewarmed pool instance is not just a pod. For each warm slot, the operator ma
 - optional Keycloak proxy and email `ConfigMap` objects
 - optional workspace `PersistentVolumeClaim`
 - optional sidecar `Deployment` and `Service` resources
-- shared `HTTPRoute` rules when a concrete session is assigned
+- a session-owned `HTTPRoute` when a concrete session is assigned
 
 Sidecar resources are created before Theia deployments so service DNS names exist when the IDE starts. When a prewarmed session is deleted, sidecar pods are restarted and the pool instance is reconciled instead of blindly deleting the whole sidecar setup.
 
@@ -51,7 +51,7 @@ metadata:
   name: java-17
 spec:
   name: java-17
-  image: ghcr.io/eduide/eduide/java-17:latest
+  image: ghcr.io/eduide/eduide/java-17-artemis:<tag>
   ingressname: theia-cloud-demo-ws-route
   port: 3000
   minInstances: 3
@@ -146,7 +146,7 @@ Rollout order matters, see [Releases and Dependencies](/developer/guides/release
 
 Each browser connection gets its own plugin host, and with it its own data bridge. Only the first one binds the bridge port and receives the `POST`. `dataBridge.getEnv` reads the shared secret storage again when a key is missing, so a second window gets the injected values too.
 
-That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory; a lock older than 10 minutes counts as abandoned, so a clone that runs longer can be started a second time), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. EduIDE 2.0.0 bundles data bridge 2.0.0 and Scorpio 3.1.0.
+That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory; a lock older than 10 minutes counts as abandoned, so a clone that runs longer can be started a second time), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. EduIDE 2.0.0 bundles data bridge 2.0.0 and Scorpio 3.0.0.
 
 ## Adjusting Injected Values
 
@@ -191,7 +191,7 @@ The command returns only keys that are present. Consumers should handle missing 
 - `DataBridgeStrategy` activates `tum-aet.data-bridge`, polls `dataBridge.getEnv` for up to 10 seconds, and falls back to process env on timeout.
 - `createTheiaEnvStrategy` chooses the data bridge strategy when `SCORPIO_THEIA_ENV_STRATEGY=data-bridge`.
 
-The Theia Cloud deployment template sets `SCORPIO_THEIA_ENV_STRATEGY=data-bridge` for generic eager deployments. Scorpio then waits for the required values, configures Git with `GIT_USER` and `GIT_MAIL`, and clones `GIT_URI` into the existing workspace without restarting the container. If the workspace already holds a repository whose `origin` matches `GIT_URI`, Scorpio skips the clone. Scorpio never clears a workspace that has content (Scorpio 3.0.0). It clones only into an empty workspace. If the checkout does not match `GIT_URI` (renamed remote, changed origin, a git error), the student gets a warning instead of losing files, and no Gradle prewarm runs. A checkout is matched by host and path, and its `origin` URL is refreshed from `GIT_URI`. Credentials in `GIT_URI` go through a credential helper, not the `git clone` command line. The token still stays in the `origin` URL in `.git/config` on the workspace volume, because the Artemis extension pushes with plain `git push`; a credential store outside the workspace needs a change in that extension. A failed clone is shown to the student; Scorpio still sets the git identity and keeps running. Scorpio 3.1.0 shows a "Preparing your workspace" notification with the steps (waiting for the exercise details, cloning, applying a template), and never puts credentials in it.
+The Theia Cloud deployment template sets `SCORPIO_THEIA_ENV_STRATEGY=data-bridge` for generic eager deployments. Scorpio then waits for the required values, configures Git with `GIT_USER` and `GIT_MAIL`, and clones `GIT_URI` into the existing workspace without restarting the container. If the workspace already holds a repository whose `origin` matches `GIT_URI`, Scorpio skips the clone. Scorpio never clears a workspace that has content (Scorpio 3.0.0). It clones only into an empty workspace. If the checkout does not match `GIT_URI` (renamed remote, changed origin, a git error), the student gets a warning instead of losing files, and no Gradle prewarm runs. A checkout is matched by host and path, and its `origin` URL is refreshed from `GIT_URI`. Credentials in `GIT_URI` go through a credential helper, not the `git clone` command line. The token still stays in the `origin` URL in `.git/config` on the workspace volume, because the Artemis extension pushes with plain `git push`; a credential store outside the workspace needs a change in that extension. A failed clone is shown to the student; Scorpio still sets the git identity and keeps running. Scorpio 3.1.0 (in the images from the next EduIDE release) shows a "Preparing your workspace" notification with the steps (waiting for the exercise details, cloning, applying a template), and never puts credentials in it.
 
 After the clone, Scorpio prewarms Gradle by running the repository's Gradle wrapper (`GRADLE_PREWARM`: `off`, `daemon` by default, `deps` or `full`). That runs code from the exercise repository as soon as the session starts. Since Scorpio 3.0.0 `GRADLE_PREWARM_AUTO_CONFIRM` defaults to `false`: Scorpio asks the student first and treats a dismissed prompt as no. It reads the value only from the pod or image environment; a value delivered through the data bridge is ignored. The Artemis edition images of EduIDE set it to `true`, so Artemis sessions prewarm without a prompt, and standalone editions keep the prompt. A template copy is still prewarmed without asking. Other deployments that want the old behaviour set `GRADLE_PREWARM_AUTO_CONFIRM=true` in the image environment. `GRADLE_PREWARM` itself is still read from the bridge.
 

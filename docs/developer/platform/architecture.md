@@ -5,9 +5,9 @@ description: High-level view of how EduIDE orchestrates browser IDE sessions on 
 
 # Architecture
 
-EduIDE runs **browser-based IDE sessions** for many users at once. Each session is an isolated workload in Kubernetes—not a shared long-lived server. The platform’s job is to **start the right IDE for the right user**, expose it at a URL, attach durable storage where needed, and **tear sessions down** when they are no longer wanted.
+EduIDE runs **browser-based IDE sessions** for many users at once. Each session is an isolated workload in Kubernetes - not a shared long-lived server. The platform’s job is to **start the right IDE for the right user**, expose it at a URL, attach durable storage where needed, and **tear sessions down** when they are no longer wanted.
 
-At the center is **EduIDE Cloud** (Theia Cloud–based): a small **control plane** inside the cluster that turns API calls into running pods, routes, and volumes.
+At the center is **EduIDE Cloud** (Theia Cloud - based): a small **control plane** inside the cluster that turns API calls into running pods, routes, and volumes.
 
 ## End-to-end picture
 
@@ -28,19 +28,31 @@ Three ideas cover most of the model:
 | **Workspace** | The **durable** side of a user’s work: identity and storage relationship so files survive session restarts. |
 | **Session** | The **live** IDE instance bound to a user; compute here is meant to be **replaceable** while the workspace keeps continuity. |
 
-That split—durable workspace vs disposable session—is what lets the platform restart or swap runtime without treating the learner’s whole context as ephemeral.
+That split - durable workspace vs disposable session - is what lets the platform restart or swap runtime without treating the learner’s whole context as ephemeral.
 
 ## Kubernetes as the runtime
 
-The cluster provides **scheduling, isolation, networking, volume attachment, and restarts**. EduIDE relies on that to run **many short-lived, user-specific workloads** safely and to scale with bursts (typical in teaching). Operational concerns—cleanup, observability, capacity—follow from that model rather than from a single monolithic app.
+The cluster provides **scheduling, isolation, networking, volume attachment, and restarts**. EduIDE relies on that to run **many short-lived, user-specific workloads** safely and to scale with bursts (typical in teaching). Operational concerns - cleanup, observability, capacity - follow from that model rather than from a single monolithic app.
 
 ## Routing and access
 
 Each session needs a **reachable URL** that only the right user should use. The operator updates **dynamic routing** (alongside Gateway / ingress setup used in deployments) as sessions appear and disappear. **Authentication** is part of this story: it is wired into **who may open which session**, not only into the launch API.
 
+## Security model (3.0)
+
+A session is isolated in layers, and 3.0 tightened each of them:
+
+- **Login in front of a loopback-only IDE.** Theia listens on `127.0.0.1` only. The `oauth2-proxy` sidecar in the same pod is the only way in, and it forces the Keycloak login. Its skip-auth route is limited to `^/health$`.
+- **NetworkPolicies per session.** A default deny covers every session pod. Only the gateway (ports 3000 and 5000) and the operator (data bridge and monitor ports) get in. The operator creates one more policy per session, or per warm pool instance, that connects the IDE pod to its own sidecars only.
+- **Authenticated data bridge.** The operator injects the session's environment with a per-instance token that the data bridge checks, see [Prewarming Architecture](./session-prewarming#data-bridge-token).
+- **A hardened service.** The REST service needs a service auth token, allows browser calls only from the landing page origin and `service.corsOrigins`, verifies the identity provider's certificate, optionally checks an audience, limits sessions per user, and serves metrics and OpenAPI only on the management port 9000, which the gateway does not route. The scaling API behind the admin token is off by default.
+- **Non-root images** (uid 10001) for the operator, the service and the conversion webhook.
+
+For the admin side, see [Session Hardening](/admins/security/session-hardening).
+
 ## Variants you may see in deployments
 
-Installations can tune **how** sessions appear: for example **on-demand** creation when a user launches, or **prewarmed** pools that keep generic IDE instances ready and **personalize** them at runtime to cut perceived startup time. The same architectural split—**API → custom resources → operator → cluster**—applies; only reconciliation strategies and timing differ.
+Installations can tune **how** sessions appear: for example **on-demand** creation when a user launches, or **prewarmed** pools that keep generic IDE instances ready and **personalize** them at runtime to cut perceived startup time. The same architectural split - **API → custom resources → operator → cluster** - applies; only reconciliation strategies and timing differ.
 
 ## Ending sessions
 

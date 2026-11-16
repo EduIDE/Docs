@@ -29,7 +29,7 @@ This can happen on the first login.
 
 Usually the IDE starts on its own. Some installations first show a page that
 names where your exercise comes from, for example "This link opens a repository
-from artemis.example.edu", with a **Launch** button below.
+from artemis.example.edu", with a button below, labelled **Launch** and the name of the app.
 
 Check that the name is a server your course uses, usually your university's
 Artemis, then click **Launch**. If you do not recognise the name, do not click,
@@ -40,10 +40,10 @@ first. Check that it is yours before you continue.
 
 ## 5) Wait for the clone
 
-A **Preparing your workspace** notification shows the steps, such as cloning your repository.
-If your workspace already has files, EduIDE keeps them and shows a warning instead of cloning.
+EduIDE clones your repository into the empty workspace. In newer versions a **Preparing your workspace** notification shows the steps.
+If your workspace already has files, EduIDE keeps them and shows the warning "The exercise was not cloned because this workspace already contains files". Empty the workspace or start a new one to get the exercise.
 In Java exercises with Gradle, Artemis sessions prepare Gradle in the background by themselves.
-Sessions you start yourself from the launcher ask before they run the Gradle wrapper of the repository, so answer the prompt: allowing it speeds up the first build, declining it skips the preparation.
+Sessions you start yourself from the launcher ask before they run the Gradle wrapper of the repository. Click **Pre-build now** to speed up the first build, or ignore the message to skip it. A starter template is prepared without asking.
 
 ## 6) Use one browser tab
 

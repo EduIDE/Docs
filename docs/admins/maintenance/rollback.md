@@ -12,13 +12,15 @@ healthy, and the release is wrong.
 ## Rolling back
 
 ```
-Actions -> Rollback -> environment: <name>
+Actions -> Rollback -> environment: <name>, revision: <number or blank>
 ```
+
+The `revision` input is the Helm revision to go back to. Blank goes back one revision.
 
 or directly:
 
 ```bash
-helm rollback eduide -n <namespace> --wait
+helm rollback eduide -n <namespace> --wait --timeout 15m
 ```
 
 Helm restores the previous revision. `helm history eduide -n <namespace>` shows
@@ -26,10 +28,12 @@ what you are going back to.
 
 ## What a rollback does not touch
 
-**Sessions, workspaces and their volumes survive.** They are custom resources and
+**Sessions, workspaces and their volumes survive**, as long as no app was renamed or removed. They are custom resources and
 PersistentVolumeClaims that the release does not own the lifecycle of, so a
 rollback does not disturb anyone's work. A student in a session will usually not
 notice.
+
+An app rename is the exception: AppDefinitions are part of the release, and Helm deletes the ones that the target revision does not have. Rolling back 3.0.0 to 2.x deletes the `*-standalone` apps and ends their sessions, see [Upgrades](upgrades.md).
 
 **CRDs are not rolled back.** They belong to `eduide-cluster`, not to the tenant
 release. A rollback of the tenant chart cannot undo a CRD change.
@@ -51,5 +55,5 @@ version bump and a written runbook, not a rollback.**
 ## Afterwards
 
 A rollback is a statement that the deployed version was wrong. Say so somewhere
-durable — an issue on the release — or the same version gets deployed again next
+durable - an issue on the release - or the same version gets deployed again next
 week.

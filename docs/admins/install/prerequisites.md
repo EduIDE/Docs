@@ -6,7 +6,7 @@ description: Everything that must exist on the cluster before EduIDE is installe
 # Cluster Prerequisites
 
 EduIDE does not install its own platform layer. Work through this page first;
-`helm install` will otherwise fail, or — worse — succeed and not work.
+`helm install` will otherwise fail, or - worse - succeed and not work.
 
 Everything here is installed **once per cluster**, not once per installation.
 
@@ -16,8 +16,8 @@ Everything here is installed **once per cluster**, not once per installation.
 |---|---|
 | **Kubernetes** | 1.26 or later. Gateway API `v1` and the CRD conversion webhooks both need it |
 | **Cluster-admin** | You will install CRDs, ClusterRoles and ClusterIssuers |
-| **A LoadBalancer** | Something must give the Gateway an external address — a cloud provider's controller, MetalLB, or equivalent |
-| **DNS you can change** | Four records per installation, **one of them a wildcard**. See [Certificates and DNS](certificates.md) — check early that your DNS team permits wildcards |
+| **A LoadBalancer** | Something must give the Gateway an external address - a cloud provider's controller, MetalLB, or equivalent |
+| **DNS you can change** | Four records per installation, **one of them a wildcard**. See [Certificates and DNS](certificates.md) - check early that your DNS team permits wildcards |
 | **An OIDC provider** | Keycloak is what EduIDE is tested against |
 | **A CNI that enforces NetworkPolicies** | The chart isolates session pods with NetworkPolicies. A CNI without policy support accepts them and enforces nothing |
 
@@ -30,7 +30,7 @@ Kubernetes and must be installed separately.
 kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 ```
 
-Pin the version deliberately rather than tracking latest — a Gateway API major
+Pin the version deliberately rather than tracking latest - a Gateway API major
 version bump is a breaking change.
 
 ```bash
@@ -55,7 +55,23 @@ use another, expect to adjust `gateway.className` in the cluster chart.
 kubectl get gatewayclass    # you should see one, and it should be Accepted
 ```
 
-## 3. cert-manager — with Gateway API support turned on
+The versions on this page are examples. Use a current release of each
+component that your cluster supports.
+
+:::warning The data plane may sit on another address
+Envoy Gateway can **merge gateways**: every `Gateway` of one GatewayClass shares
+one Envoy deployment and one external address. If your cluster already runs such
+a GatewayClass, for example for another application, a Gateway created with that
+class comes up `Programmed=True` on the **other** load balancer IP, and your DNS
+names point somewhere else. Nothing reports an error, and every hostname is
+unreachable. Check which address the Gateway really gets
+(`kubectl get gateway -A`) before you create DNS records. Either point DNS at
+the merged gateway's address, or give EduIDE its own GatewayClass and
+`EnvoyProxy` through the cluster chart (`gatewayClass.create: true`,
+`envoyProxy.*`) and set `gateway.className` to match.
+:::
+
+## 3. cert-manager - with Gateway API support turned on
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io && helm repo update
@@ -96,7 +112,7 @@ kubectl get storageclass
 Requirements:
 
 - **ReadWriteOnce** is sufficient; sessions do not share volumes.
-- **Dynamic provisioning** is required — volumes are created on demand as
+- **Dynamic provisioning** is required - volumes are created on demand as
   students start sessions.
 - Volume expansion is not required but is useful.
 
@@ -152,9 +168,9 @@ may share the nodes. Empty, the default, schedules anywhere.
   where they are. Delete them once so they are recreated on the pool.
 - The shared cache does not read it, and is off in every installation.
 
-## 6. Prometheus Operator — only if you want metrics
+## 6. Prometheus Operator - only if you want metrics
 
-EduIDE ships PodMonitors and Grafana dashboards, and they are **off by default**
+EduIDE ships PodMonitors, Grafana dashboards, a `PrometheusRule` with 16 alerts, an optional `AlertmanagerConfig` (`monitoring.alerting.*`) and an optional cert-manager `ServiceMonitor` (`monitoring.certManager`). They are **off by default**
 because they are not portable: they need the Prometheus Operator CRDs, and the
 namespaces they target differ per monitoring stack.
 
@@ -170,7 +186,7 @@ without it.
 EduIDE authenticates through OIDC, tested against Keycloak. You need:
 
 - A realm your students can authenticate to.
-- A **public** client — EduIDE's landing page is a browser application and holds
+- A **public** client - EduIDE's landing page is a browser application and holds
   no secret.
 - Redirect URIs for the landing page and instance hosts, post-logout redirect
   URIs for the landing host, and web origins for both. Four hostnames need DNS
@@ -194,7 +210,7 @@ Before installing EduIDE:
 - [ ] A CNI that enforces NetworkPolicies
 - [ ] Image space per node: about 20 GB for eight images, more for the 14 of the default set
 - [ ] DNS you can change, **wildcards permitted**
-- [ ] A certificate plan — read [Certificates and DNS](certificates.md) before
+- [ ] A certificate plan - read [Certificates and DNS](certificates.md) before
       going further, because the wildcard requirement surprises people
 - [ ] An OIDC realm and public client, or a deliberate decision to defer
 

@@ -24,7 +24,8 @@ Read [When Your Session Ends](./session-timeout.md) before you start real work i
 ## 2) Pick a language and a starter template
 
 Click the tile for your language, for example **Python** or **Rust**.
-Some languages then ask you to choose a starter template, for example **Maven** or **Gradle** for Java.
+Only languages with more than one starter template ask you to choose one: **Maven** or **Gradle** for Java, **Make** or **Bazel** for C, **Node** or **Web** for JavaScript.
+Python, Rust and Go start directly.
 
 ![Choose your build system](/img/student/getting-started/first-start-02-build-system-picker.png)
 
@@ -37,21 +38,21 @@ The launch screen repeats the badge while your IDE starts.
 ![Launch screen with the Temporary badge](/img/student/getting-started/first-start-03-launch-screen.png)
 
 The IDE then opens in a new session URL.
-A **Preparing your workspace** notification shows what happens next: waiting for your exercise details, cloning your repository or applying a starter template.
+In newer versions a **Preparing your workspace** notification shows what happens next: waiting for your exercise details, cloning your repository or applying a starter template.
 Cloning can take a while, so wait until the notification closes.
 The notification never shows passwords or tokens.
 
 EduIDE only fills an **empty** workspace.
 If your workspace already has files, EduIDE never deletes them.
-When the files do not match the repository you started, you see a warning instead, and nothing is cloned.
-Copy your files elsewhere or ask your tutor before you start again.
+Instead you see the warning "The exercise was not cloned because this workspace already contains files", and nothing is cloned.
+Empty the workspace or start a new one to get the exercise.
 The status bar at the bottom shows **Temporary workspace** or **Saved workspace**.
 
 ![Workspace opened with the status bar](/img/student/getting-started/workspace-tour-01-welcome-screen.png)
 
 ## 4) Quick success check
 
-Open a terminal and print the version of your language, for example:
+Open a terminal (**Terminal -> New Terminal**) and print the version of your language, for example. At the Beginner level the terminal is hidden: switch to Advanced or use the **Run** button instead.
 
 ```bash
 java -version

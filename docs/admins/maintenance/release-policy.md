@@ -9,10 +9,10 @@ description: What a version number means here, and how a release is cut.
 
 | Thing | Form | Example |
 |---|---|---|
-| git tag | `vX.Y.Z` | `v2.0.0` |
-| chart `version` | `X.Y.Z` | `2.0.0` |
-| image tag | `X.Y.Z` | `1.2.0` |
-| chart `appVersion` | the EduIDE IDE image version | `1.2.0` |
+| git tag | `vX.Y.Z` | `v3.0.0` |
+| chart `version` | `X.Y.Z` | `3.0.0` |
+| image tag | `X.Y.Z` | `2.0.0` |
+| chart `appVersion` | the EduIDE IDE image version | `2.0.0` |
 
 The chart version is the **platform** version and is what an installation pins.
 `appVersion` is the tag of the IDE images, so a chart states exactly which IDEs
@@ -54,7 +54,7 @@ order:
 | Step | Repository | Result |
 |---|---|---|
 | 1 | EduIDE, EduIDE-Cloud or EduIDE-Landing-Page | A `vX.Y.Z` release; its build publishes the images |
-| 2 | EduIDE-Helm | A pull request moving `appVersion`, `versions.cloud` or `versions.landingPage`, and both chart versions |
+| 2 | EduIDE-Helm | A release pull request moving `appVersion`, `versions.cloud` or `versions.landingPage`, and both chart versions, then a dispatch of `release.yml` |
 | 3 | EduIDE-deployment | A pull request moving `chartVersion`; merging it is the deploy |
 
 Every step is a manual release: the repository's release skill
@@ -64,7 +64,7 @@ tagged, once every artifact is built and verified, so a failed build leaves no
 tag. See [Releases and Dependencies](/developer/guides/releases-and-dependencies)
 for the whole flow and the release order.
 
-For EduIDE-Helm, `release.yml`:
+For EduIDE-Helm, `release.yml` is a manual `workflow_dispatch` with the input `version` (`X.Y.Z` or `X.Y.Z-rc.N`). Merging the chart pull request releases nothing, and there is no release train. It:
 
 1. **Verifies the pinned images exist**, for both architectures. The IDE image
    list is read from EduIDE's build matrix at run time, not kept by hand. It is
@@ -72,26 +72,27 @@ For EduIDE-Helm, `release.yml`:
    matrix (such as `rust-latest` on chart 2.6.2, which EduIDE 1.5.0 no longer publishes) passes
    this check and fails at pull time. Check the app definitions yourself when a
    release removes an image.
-2. **Publishes both chart versions**, and refuses a version that is already published.
-3. **Adds what the chart version pins** to the release notes.
-4. **Publishes the GitHub release**, which creates the tag `vX.Y.Z`.
+2. **Checks the `buildSystems` ids** of the catalog against the `template.json` files in the published images, and the conversion-webhook image.
+3. **Publishes both chart versions**, and refuses a version that is already published.
+4. **Adds what the chart version pins** to the release notes.
+5. **Publishes the GitHub release**, which creates the tag `vX.Y.Z`.
 
 CI also checks that both charts carry the same version.
 
 ## Channels
 
-An installation is `release` or `main`.
+An installation is `release`, `main` or `pinned`.
 
 - `release` pins whatever its values file says. Nothing that happens on `main`
   can move a production image.
-- `main` resolves an immutable `latest-<sha>` tag. Never a floating tag: with a
-  floating tag the pod template does not change between upgrades, so Helm sees
-  no difference, reports success without pulling, and `--atomic` has nothing to
-  roll back.
+- `main` keeps the chart's pins and restarts the operator, the service and the landing page after the upgrade, so a floating tag is pulled again. The deploys that follow component branches (`e2e` and `staging`) pass immutable `latest-<sha>` tags instead. A floating tag alone would leave the pod template unchanged, so Helm would see no difference and report success without pulling.
+- `pinned` uses the image tag named in `spec.imageTag` of the environment.
 
 ## Upgrading an installation
 
 Change `chartVersion` in that environment's `env.yaml` and open a pull request.
 CI renders the change; the diff shows what will happen before anyone approves
-it. Production environments require a reviewer on the GitHub Environment, so the
-approval is recorded on the run.
+it. Merging does not deploy, except for `e2e` (`deploy-e2e.yml`). Every other
+environment is deployed with the `Deploy environment` workflow, where production
+and staging require a reviewer on the GitHub Environment, so the approval is
+recorded on the run.

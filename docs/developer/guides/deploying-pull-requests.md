@@ -18,7 +18,7 @@ EduIDE Deployment is the only place where preview artifacts from several reposit
 Pull request artifacts are never published as `latest`.
 
 - **Images** (EduIDE Cloud, EduIDE, the landing page) get the tag `pr-<number>`. The shared build workflow in `EduIDE/.github` computes it for every pull request. That tag moves with each commit, and the IDE app definitions default to `imagePullPolicy: IfNotPresent`, so a node that already has the tag can run a stale image. For a test deployment use the immutable tag `pr-<number>-<sha7>`, with the short hash of the pull request merge commit (for example `pr-223-2aac0e3`).
-- **Charts** (EduIDE Helm) get a preview version on every push, published by the `release-pr-preview` job of `release.yml` for both charts, `eduide-cluster` and `eduide`. The job only runs for pull requests from a branch of the EduIDE Helm repository itself, so a fork gets no preview: push the branch to the repository instead. The version is the chart's version with a PR suffix and the short commit hash: `3.0.0-pr.79.<sha7>` for chart 3.0.0 and pull request 79. If the chart version already is a prerelease, the suffix is appended with a dot instead (`<version>.pr.<number>.<sha7>`). For a release version, the preview sorts below the release (`3.0.0-pr.79.<sha7>` is below `3.0.0`). For a prerelease base, the preview sorts above that prerelease (`3.0.0-rc.1.pr.79.<sha7>` is above `3.0.0-rc.1`), so pin `chart_version` explicitly in that case.
+- **Charts** (EduIDE Helm) get a preview version on every push, published by the `preview` job of `chart-preview.yml` (the Helm `release.yml` is a manual dispatch only) for both charts, `eduide-cluster` and `eduide`. The job only runs for pull requests from a branch of the EduIDE Helm repository itself, so a fork gets no preview: push the branch to the repository instead. The version is the chart's version with a PR suffix and the short commit hash (a hash of only digits gets a `g` prefix, so the version stays a valid prerelease): `3.0.0-pr.79.<sha7>` for chart 3.0.0 and pull request 79. If the chart version already is a prerelease, the suffix is appended with a dot instead (`<version>.pr.<number>.<sha7>`). For a release version, the preview sorts below the release (`3.0.0-pr.79.<sha7>` is below `3.0.0`). For a prerelease base, the preview sorts above that prerelease (`3.0.0-rc.1.pr.79.<sha7>` is above `3.0.0-rc.1`), so pin `chart_version` explicitly in that case.
 
 Several pull requests coexist because each has its own tag or version.
 
@@ -39,6 +39,15 @@ Open the EduIDE Deployment repository, go to Actions, and run **Deploy environme
 The workflow turns the three tag inputs into one override per source repository and passes them to the shared deploy as `--set versions.cloud=...`, `--set versions.ide=...` and `--set versions.landingPage=...`. Leave an input blank to keep the chart's own version for that repository. Never use one tag for everything: a pull request builds only the images of its own repository, and a tag that does not exist puts the other pods into `ImagePullBackOff`.
 
 Only one deploy runs per environment at a time, and a running deploy is never cancelled.
+
+The test environments pin chart 2.7.3 in their `env.yaml`. An `ide_tag` without a `chart_version` therefore runs the new images on the old chart, which does not know the new apps. Pass the chart version with it.
+
+Other workflows in the repository:
+
+- `Deploy e2e and test` redeploys `e2e` on every push to the deployment `main` (and on `component-main-updated` from a component repository) and runs the functional tests.
+- `Deploy staging` is manual (or `staging-deploy-request` from a component repository). Staging does not follow `main`.
+- `Deploy from comment` handles `/deploy <env>` comments dispatched by a component repository after a check that the commenter has write access. It refuses production.
+- `Rollback` takes an environment and an optional Helm `revision`, see [Rollback](/admins/maintenance/rollback).
 
 Use `dry_run` first when you combine several previews. It renders the chart and shows the diff against the live release.
 

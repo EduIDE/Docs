@@ -231,6 +231,8 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 
 ## Rotating the token
 
+At TUM, `THEIA_ADMIN_API_TOKEN` is a single repository secret that every environment inherits. Only Bonn overrides it with its own. Rotate it once after the upgrade to EduIDE-Cloud 3.0.0, because earlier versions wrote it to the startup log.
+
 Rotation requires a service restart, because the token is read at startup from the mounted Secret.
 
 **If the chart owns the Secret (path A):**

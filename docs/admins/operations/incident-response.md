@@ -124,7 +124,7 @@ kubectl -n <namespace> delete sessions.theia.cloud <session-name>
 The user then launches again normally. Their workspace volume is untouched.
 
 :::note Fixed in the operator from 2026-08-28
-`eagerStart: true` is the default, so any deploy landing while a user holds a session on a warm instance could cause this. EduIDE-Cloud issue 135 fixed it: the operator now writes the claiming session's user back into the instance's ConfigMap during the same reconcile that recreates it.
+`operator.eagerStart` defaults to `false`; where it is on (warm pools), any deploy landing while a user holds a session on a warm instance could cause this. EduIDE-Cloud issue 135 fixed it: the operator now writes the claiming session's user back into the instance's ConfigMap during the same reconcile that recreates it.
 
 Verified on a test environment against a real reproduction: an installation broken by the old operator was **healed within about twenty seconds** of the fixed one starting, with no manual intervention. If you are running an operator from before that date, this runbook still applies and upgrading is the fix.
 :::
@@ -147,7 +147,7 @@ You must pick a session pod and name the container:
 ```bash
 # Find a session pod: everything that is not a platform component
 kubectl get pods -n <namespace> \
-  -l 'app notin (operator,service,landing-page,image-preloading)'
+  -l app.kubernetes.io/component=session
 
 # Read that pod's oauth2-proxy sidecar
 kubectl logs <session-pod> -n <namespace> -c oauth2-proxy --tail=100
@@ -241,11 +241,11 @@ Also check `attachedRoutes` per listener in the same status block. A listener wi
 
 The `eduide` chart creates three HTTPRoutes in the installation namespace:
 
-| Route | Serves | Backend |
+| Route | Serves | Target |
 |---|---|---|
 | `landing-route` | the landing page host | `landing-page-service` |
 | `service-route` | the REST service host, path prefix `/service` | `service-service` |
-| the instances route (default name `theia-cloud-demo-ws-route`) | session instance hosts | patched by the operator, one rule per live session |
+| the instances route (default name `theia-cloud-demo-ws-route`) | catch-all for ended sessions and the template for session routes | the operator does not patch it; it creates one HTTPRoute per live session |
 
 ```bash
 kubectl get httproute -n <namespace>
@@ -263,7 +263,7 @@ The conditions to read:
 - **`Accepted=False`, reason `NoMatchingListenerHostname`** - the most common routing fault in this system. The route declares a hostname that does not intersect the hostname of the listener it names. Gateway API requires the two to overlap; if they do not, the route is silently dropped. This happens when an installation's hostnames are changed in the tenant values without re-running the cluster bootstrap that generates the matching listeners, so the listener still carries the old hostname.
 - `Accepted=False`, reason `NoMatchingParent` - the `sectionName` names a listener that does not exist on that Gateway. Same root cause: listener names are generated per installation, and the tenant values must reference them exactly.
 - `Accepted=False`, reason `NotAllowedByListeners` - the listener's `allowedRoutes` does not permit routes from this namespace.
-- `ResolvedRefs=False`, reason `BackendNotFound` - the backend Service does not exist. Check `kubectl get svc -n <namespace>` for `service-service` and `landing-page-service`.
+- `ResolvedRefs=False`, reason `BackendNotFound` - the target Service does not exist. Check `kubectl get svc -n <namespace>` for `service-service` and `landing-page-service`.
 
 Compare the two hostnames directly when you suspect a mismatch:
 
@@ -275,13 +275,14 @@ kubectl get gateway theia-shared-gateway -n eduide-system \
 
 **Step 4: If only session URLs are broken**
 
-The instances route ships with an empty rule list; the **operator** patches one rule into it per live session. If the landing page and the service work but session URLs 404, check that the operator is running and reconciling (see the operator runbook below), then inspect the route's rules:
+The **operator** creates one HTTPRoute per live session, owned by the session. If the landing page and the service work but session URLs 404, check that the operator is running and reconciling (see the operator runbook below), then list the routes:
 
 ```bash
-kubectl get httproute theia-cloud-demo-ws-route -n <namespace> -o yaml
+kubectl get httproute -n <namespace>
+kubectl get httproute <session-route> -n <namespace> -o yaml
 ```
 
-An empty `rules` list with sessions running means the operator is not patching. An operator restart is the usual fix.
+A running session without its own route means the operator did not reconcile it. An operator restart is the usual fix.
 
 **Mitigation:** Re-run the cluster-level `helm upgrade` for `eduide-cluster` with listener definitions that match the installation's current hostnames, then re-check the route conditions. Fixing the tenant side alone does not help if the listener is what is stale.
 
@@ -445,7 +446,7 @@ The PVC is released according to the storage class reclaim policy. See [Storage 
 
 **Step 5: Look for orphaned PersistentVolumes**
 
-With a `Retain` reclaim policy, deleting a workspace leaves the underlying PV behind in the `Released` phase, still counting against your storage backend.
+With a `Retain` reclaim policy, deleting a workspace leaves the underlying PV behind in the `Released` phase, still counting against your storage system.
 
 `Released` is a **PersistentVolume** phase, not a PersistentVolumeClaim phase. PVCs are only ever `Pending`, `Bound` or `Lost`, so a field selector for `Released` PVCs matches nothing and will mislead you into concluding there is nothing to clean up. PVs are also cluster-scoped, so no `-n` applies:
 
@@ -515,7 +516,7 @@ If the pressure is sustained and expected (a large cohort exercise, for instance
 
 ## Runbook: Operator not reconciling
 
-**Symptoms:** App Definitions are updated but no new pre-warmed sessions appear. Sessions that should be cleaned up remain running. Session URLs stop being added to the instances HTTPRoute.
+**Symptoms:** App Definitions are updated but no new pre-warmed sessions appear. Sessions that should be cleaned up remain running. New sessions get no HTTPRoute of their own.
 
 **Step 1: Check operator pod status**
 
@@ -579,3 +580,34 @@ After every incident affecting a production installation:
 5. **Update runbooks** - If this incident class was not covered, add it here.
 
 Keep incident records even for minor events. Patterns across small incidents often predict larger ones.
+
+## Alert runbooks
+
+The `PrometheusRule` of the cluster chart links every alert to this section, see [Alerts](monitoring-basics.md#alerts). Each entry names the first thing to check. Placeholders are as above.
+
+| Alert | Meaning | First checks |
+|---|---|---|
+| `EduIDEComponentDown` | The operator, service or landing page Deployment has no ready pod for 5 minutes | `kubectl get pods -n <namespace>`, then `kubectl describe pod` and the logs of the failing component |
+| `EduIDEConversionWebhookDown` | The conversion webhook in `eduide-system` is down, for every installation | `kubectl get pods -n eduide-system`; custom resources cannot be read at other versions until it is back |
+| `EduIDEComponentCrashLooping` | A platform container restarted more than 3 times in 15 minutes | `kubectl logs --previous` of the container. After an upgrade, check the chart notes and the operator flags |
+| `EduIDEServiceScrapeDown` | Prometheus cannot scrape the service for 10 minutes | The service scrape uses the `management` port 9000 from chart 3.0.0, check the `PodMonitor` and the pod label `eduide.io/metrics-port` |
+| `EduIDEWarmPoolEmpty` | An app has a warm pool and no available instance | `kubectl get deploy -n <namespace> \| grep instance-`; check image pulls, quota and node capacity. Raise `minInstances` if demand grew |
+| `EduIDESessionOOMKillSpike` | Sessions are killed for memory | Raise `limitsMemory` of the app, see [Storage and Quotas](../platform/storage-and-quotas.md#per-session-resource-configuration) |
+| `EduIDESessionCrashSpike` | Session containers crash repeatedly | `kubectl logs` of a failing session pod, container by name; compare with a recent image change |
+| `EduIDESessionStartupSlow` | p95 session startup is above 90 seconds for 15 minutes | Image preloading, node pressure, pending pods, see [Monitoring](monitoring-basics.md#session-launch-latency) |
+| `EduIDESessionPodPending` | A session pod cannot be scheduled | `kubectl describe pod`: resources, `global.nodeSelector` or taints |
+| `EduIDESessionImagePullFailing` | An image cannot be pulled | The event names the image. Check the tag, the registry and `ImagePullBackOff` on the preloading DaemonSet |
+| `EduIDESessionEvicted` | Pods are evicted | Node disk or memory pressure, see [Node disk](../install/prerequisites.md#5-node-disk-for-preloaded-images) |
+| `EduIDEWorkspaceVolumeFilling` | A workspace volume is above the threshold | Find the PVC, ask the student to clean up or enlarge `requestedStorage` for new workspaces |
+| `EduIDEWorkspaceInodesFilling` | A workspace volume runs out of inodes | Usually `node_modules` or build output; same remedy as above |
+| `EduIDEPVCPending` | A workspace volume will not provision | `kubectl describe pvc`: storage class name, provisioner, capacity |
+| `EduIDECertificateExpiringSoon` | A certificate expires within 21 days | Renew it, see [Certificates](../install/certificates.md); a hand-renewed wildcard is the usual one |
+| `EduIDECertificateNotReady` | cert-manager cannot issue a certificate | `kubectl describe certificate`, then the `Order` and `Challenge`; check the issuer name |
+
+## Runbook: Rollback
+
+If a deploy succeeded and behaves badly, run the `Rollback` workflow with the environment and an optional `revision` (blank goes back one revision). It runs `helm rollback --wait --timeout 15m`. See [Rollback](../maintenance/rollback.md) for what it does not undo.
+
+## Runbook: Students cannot start a second session
+
+`operator.sessionsPerUser` (default 1) and `service.sessionsPerUser` limit the active sessions per user. A student who starts another language or exercise before the first session ended gets the answer 553, shown as "Your previous session is still shutting down", and has to wait or let the old session end. Check the user's sessions with `kubectl get sessions.theia.cloud -n <namespace>`, delete a stuck one, or raise the limit (0 means no limit).

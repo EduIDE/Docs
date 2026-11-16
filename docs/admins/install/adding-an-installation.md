@@ -7,11 +7,11 @@ description: Standing up a new EduIDE installation for a course, department or u
 
 An installation is one namespace on one cluster, with its own hostnames,
 branding and identity provider. Adding one is a file, a GitHub Environment and
-an approval — not a bespoke deployment.
+an approval - not a bespoke deployment.
 
 ## 1. Describe it
 
-Two files under `environments/<name>/` in the deployment repository. They are
+Two files under `environments/<name>/` in the deployment repository. The directory is named after the landing hostname (for example `bonn.eduide.aet.cit.tum.de`). They are
 split by who reads them: `env.yaml` configures the **deploy** and Helm never
 sees it; `values.yaml` configures the **chart** and the workflow never
 interprets it.
@@ -22,7 +22,7 @@ interprets it.
 apiVersion: eduide.dev/v1
 kind: Environment
 metadata:
-  name: bonn
+  name: bonn.eduide.aet.cit.tum.de
   displayName: EduIDE Bonn
   tier: production          # test | staging | production
 spec:
@@ -30,7 +30,7 @@ spec:
   namespace: eduide-bonn    # every namespace carries the eduide- prefix
   platform:
     chartVersion: 3.0.0
-    channel: release        # release | main
+    channel: release        # release | main | pinned
 ```
 
 `values.yaml` is a plain Helm values file: hosts, Gateway `parentRefs`, Keycloak,
@@ -45,7 +45,7 @@ and the storage class are derived or come from the cluster.
 
 ## 2. Create the GitHub Environment
 
-Named exactly as the directory, holding:
+Named exactly as the directory (the landing hostname), holding:
 
 | Secret | What |
 |---|---|
@@ -55,18 +55,20 @@ Named exactly as the directory, holding:
 The admin API token is a repository secret and is inherited.
 
 Add required reviewers for anything `tier: production` or `staging`. **Do not**
-add them to an environment that deploys automatically — the approval gate blocks
+add them to an environment that deploys automatically - the approval gate blocks
 the automation outright and the run waits forever.
 
 ## 3. Bootstrap the cluster
 
 ```
-Actions -> Bootstrap cluster -> cluster: <name>, dry_run: true
+Actions -> Bootstrap cluster -> cluster: <name>, chart_version: <version>, dry_run: true
 ```
+
+`chart_version` is required: it is the version of the `eduide-cluster` chart to apply.
 
 This derives the Gateway's listeners, the certificate's hostnames and the
 monitored namespaces from every environment that claims the cluster. Adding an
-installation therefore needs no second file edited — and cannot end up with a
+installation therefore needs no second file edited - and cannot end up with a
 certificate that omits it, which is exactly how one environment ran for six
 months on a certificate covering only its neighbours.
 
@@ -85,8 +87,10 @@ Read the diff, then run it again with `dry_run: false`.
 ## 5. Deploy
 
 ```
-Actions -> Deploy (dispatch) -> environment: <name>
+Actions -> Deploy environment -> environment: <name>
 ```
+
+The environment lists in `deploy-dispatch.yml` and `rollback.yml` are hard coded. Add the new installation to the `options` of both. A new cluster also needs `clusters/<name>.yaml`, an entry in the `options` of `bootstrap-cluster.yml`, and a `cluster-<name>` GitHub Environment with `KUBECONFIG` and the wildcard certificate secrets.
 
 The deploy asserts which cluster it reached before touching anything, shows a
 `helm diff` before applying, runs `--wait --atomic`, and prints a summary read
@@ -99,7 +103,7 @@ with `keycloak.allowUnauthenticated: true`. The chart otherwise refuses to
 render.
 
 That flag exists because the oauth2-proxy configuration is emitted regardless of
-whether Keycloak is enabled — the operator mounts it into every session pod by
+whether Keycloak is enabled - the operator mounts it into every session pod by
 literal name, so it cannot be conditional. Left at the chart's defaults it points
 the proxy at a host that does not exist, and sessions fail at the proxy rather
 than running unauthenticated. That is the worst of both outcomes, so the chart

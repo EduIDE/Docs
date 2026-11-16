@@ -7,7 +7,7 @@ sidebar_label: EduIDE LSP Extension
 
 ## Overview
 
-The Theia LSP Extension is a specialized connector for Visual Studio Code and Eclipse Theia designed to interface with external, network-accessible Language Servers. Instead of following the traditional model of spawning and managing a local language server process within the workspace, this extension establishes a TCP connection to a pre-configured backend server.
+The Theia LSP Extension is a specialized connector for Visual Studio Code and Eclipse Theia designed to interface with external, network-accessible Language Servers. Instead of following the traditional model of spawning and managing a local language server process within the workspace, this extension establishes a TCP connection to a pre-configured server.
 
 This approach is particularly beneficial in cloud-based educational environments like EduIDE, where offloading resource-intensive language analysis (especially for Java) to dedicated infrastructure can improve the responsiveness of student workspaces.
 

@@ -9,6 +9,18 @@ The developer section includes the project catalog that previously lived in the 
 
 ## Project catalog
 
+Platform:
+
+- [EduIDE-Cloud](https://github.com/EduIDE/EduIDE-Cloud): Operator, REST service, conversion webhook and session monitor.
+- [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm): The `eduide` and `eduide-cluster` charts.
+- [EduIDE-Landing-Page](https://github.com/EduIDE/EduIDE-Landing-Page): The page where users pick a language and start a session.
+- [scorpio](https://github.com/EduIDE/scorpio): The extension that prepares a workspace (clone, templates, Gradle prewarm).
+- [EduIDE-pool-scaler](https://github.com/EduIDE/EduIDE-pool-scaler): Warm pool scaler, not part of 3.0.
+- [eduide-keycloak-theme](https://github.com/EduIDE/eduide-keycloak-theme): The Keycloak login theme.
+- [.github](https://github.com/EduIDE/.github): Reusable workflows and the Renovate preset for the organization.
+
+Details:
+
 - [EduIDE Deployment](/developer/projects/eduide-deployment): Infrastructure-as-code and deployment workflows for EduIDE environments.
 - [Theia Scale Tests](/developer/projects/theia-scale-tests): End-to-end and scalability validation for classroom-scale IDE usage.
 - [EduIDE Shared Cache](/developer/projects/eduide-shared-cache): Shared Gradle and Bazel build cache service for faster builds.

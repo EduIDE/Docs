@@ -70,8 +70,8 @@ findings, the Maven view and the workspace mode.
 
 - A workspace that has files is never wiped. If it does not match the repository
   that a student starts, the student gets a warning instead of a fresh clone.
-- A progress notification shows what happens while the workspace is prepared.
-  The clone of a large repository takes a while.
+- Newer images show a progress notification while the workspace is prepared
+  (Scorpio 3.1.0). The clone of a large repository takes a while.
 - Java standalone sessions ask before they run the Gradle wrapper of the
   repository. Artemis sessions run it automatically. Experience levels are
   unchanged.
@@ -89,6 +89,7 @@ findings, the Maven view and the workspace mode.
 ## Where to report problems
 
 Instructors use the same channels as students: the GitHub issues of
-`EduIDE/EduIDE` (**Report a bug** and **Request a feature** in the launcher
-footer, **Help**, **Report Issue** in the IDE) and GitHub Discussions for
+`EduIDE/EduIDE` (**Help**, **Report Issue** in the IDE; the launcher footer
+links **Report a bug** and **Request a feature** open the EduIDE-Cloud tracker
+unless your installation sets its own) and GitHub Discussions for
 questions. Issues are public, so leave out personal data and Artemis links.

@@ -39,7 +39,7 @@ Local testing is still useful for focused tasks where only one part of the stack
 Typical examples include:
 
 - testing a Theia or VS Code extension inside a local Theia application
-- iterating on frontend behavior for a landing page or dashboard
+- iterating on the user interface of the landing page or a dashboard
 - validating isolated service logic or request handling
 - running repository-local unit tests, linters, and build steps
 - checking generated output such as charts, docs, or API clients
@@ -89,6 +89,20 @@ Use the test environments when:
 - the change depends on routing or authentication
 - the change affects session lifecycle behavior
 - the change needs a realistic end-to-end deployment
+
+## Commands per repository
+
+These are the commands that work today. Each repository's `AGENTS.md` is the reference when they change.
+
+| Repository | What to run |
+|---|---|
+| EduIDE | Build and run an image: `docker compose -f docker-compose.images.yml up --build java-17-standalone`. Each service publishes its own port on `127.0.0.1` (`3103` for `java-17-standalone`). Check a built image: `scripts/smoke-test-image.sh <image> <standalone\|artemis>`, which also runs every template's Test task without network access. |
+| EduIDE-Cloud, Java | There is no aggregator POM. Install the modules by hand in order (`java/common/maven-conf`, `org.eclipse.theia.cloud.common`, `org.eclipse.theia.cloud.operator`, then `defaultoperator`), each with `mvn clean install -Drevision=<version>-SNAPSHOT`. Run the service tests with `cd java/service/org.eclipse.theia.cloud.service && mvn verify`. Use JDK 21. The tests start containers; on OrbStack set `DOCKER_API_VERSION=1.44`, and if port 8081 is taken pass `-Dquarkus.http.test-port=18081`. |
+| EduIDE-Cloud, monitor | `cd node/monitor && npm test` (runs under `node:test`, no VS Code needed). |
+| EduIDE-data-bridge | pnpm 10 only. `vscode-test` needs a real VS Code; locally, run the compiled tests with mocha and a stub for the `vscode` module. |
+| EduIDE-Helm | `helm lint` and `helm template` on both charts. A pull request preview chart is published for every push, see [Deploying Pull Requests](/developer/guides/deploying-pull-requests). |
+
+Docs: `npm ci`, `npm run build` and `bash scripts/check-docs.sh`.
 
 ## Summary
 

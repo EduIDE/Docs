@@ -24,7 +24,7 @@ The **EduIDE Data Bridge** repository is a VS Code extension designed to facilit
 - **Replace, not merge.** An injection replaces the stored environment and becomes visible all at once, so repeating it changes nothing and a reader never sees a partial set (1.0.0).
 - **Errors.** A schema error returns `400`, a body over 64 KiB `413`, and a failure a generic `500` without the internal message.
 - **Where it runs.** In eager (warm pool) sessions, and from EduIDE-Cloud 3.0.1 in lazy sessions too, with a per-session token Secret. See [Prewarming Architecture](/developer/platform/session-prewarming#data-bridge-token).
-- **Releases.** 2.0.0 is the first release with the token check, so it only works with EduIDE-Cloud 3.x and chart 3.x: deploy those first, then the IDE images that contain it. EduIDE 2.0.0 pins it. Locally, set `DATA_BRIDGE_TOKEN` and send the bearer token, or every `POST /data` returns `401`. The tests need a real VS Code (`vscode-test`); pnpm 10 only.
+- **Releases.** The releases are 1.0.0 (atomic injection) and 2.0.0. 2.0.0 is the first release with the token check, so it only works with EduIDE-Cloud 3.x and chart 3.x: deploy those first, then the IDE images that contain it. EduIDE 2.0.0 pins it. Locally, set `DATA_BRIDGE_TOKEN` and send the bearer token, or every `POST /data` returns `401`. The tests need a real VS Code (`vscode-test`); pnpm 10 only.
 
 ## Tech Stack
 

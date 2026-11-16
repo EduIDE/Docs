@@ -135,7 +135,7 @@ kubectl top pods -n <namespace> --sort-by=memory | head -20
 kubectl get pods -n <namespace> | grep 'Running' | grep '0/'
 ```
 
-Session pods are labelled `app: <sessionName>-<sessionUID>`, so there is no single label that selects all of them. To list session pods and nothing else, exclude the platform components instead:
+Lazy session pods are labelled `app: <sessionName>-<sessionUID>`, so that label cannot select all of them. Every session pod carries `app.kubernetes.io/component=session`, which does:
 
 ```bash
 kubectl get pods -n <namespace> \
@@ -148,6 +148,8 @@ A session whose App Definition no longer exists is never timed out by the operat
 kubectl get appdefinitions.theia.cloud -n <namespace> -o name
 kubectl get sessions.theia.cloud -n <namespace> -o custom-columns=NAME:.metadata.name,APP:.spec.appDefinition
 ```
+
+The activity monitor in the IDE images is `theia-cloud-monitor` 3.0.0 from EduIDE 2.0.0. Pre-warming needs `operator.eagerStart: true`.
 
 Ephemeral sessions are named `eph-<app>-<user>-<hash>-session` from EduIDE-Cloud 3.0. A workspace name that starts with `eph-` is rejected. `service.sessionsPerUser` (default: `operator.sessionsPerUser`, 0 means no limit) caps the active sessions per user on every launch path.
 

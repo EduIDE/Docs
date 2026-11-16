@@ -33,7 +33,7 @@ The cluster must already have:
 ## Cluster half
 
 These two commands are the manual path. Day to day, `bootstrap-cluster.yml` and
-`deploy.yml` run them for you — see
+`deploy.yml` run them for you - see
 [Provisioning](../platform/provisioning.md).
 
 ```bash
@@ -43,7 +43,7 @@ helm install eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
 ```
 
 `cluster-values.yaml` supplies the Gateway's listeners and the certificate
-names. In the TUM installations this file is not written by hand — the
+names. In the TUM installations this file is not written by hand - the
 `Bootstrap cluster` workflow derives it from the environment manifests, so
 adding an environment does not mean remembering to edit a second file.
 
@@ -64,8 +64,8 @@ A bare install with no overrides pins every image. Nothing floats.
 
 | Value | Source repository | Default |
 |---|---|---|
-| `versions.ide` | EduIDE — the IDE images | empty, meaning the chart's `appVersion` |
-| `versions.cloud` | EduIDE-Cloud — operator and REST service | set by the release |
+| `versions.ide` | EduIDE - the IDE images | empty, meaning the chart's `appVersion` |
+| `versions.cloud` | EduIDE-Cloud - operator and REST service | set by the release |
 | `versions.landingPage` | EduIDE-Landing-Page | set by the release |
 
 They are separate because the three repositories release on different cadences,
@@ -81,11 +81,13 @@ the namespace into `ImagePullBackOff`.
 ```yaml
 hosts:
   configuration:
-    baseHost: eduide.example.edu
+    baseHost: example.edu
     landing: eduide
     service: service.eduide
     instance: instance.eduide
   allWildcardInstances: ["*.webview."]
+  # The chart builds <landing>.<baseHost>: eduide.example.edu, service.eduide.example.edu,
+  # instance.eduide.example.edu.
 
 keycloak:
   enable: true
@@ -113,14 +115,28 @@ to every session. See [Session Hardening](../security/session-hardening.md).
 
 Secrets go in a second values file, never on the command line: the Keycloak
 cookie secret (`keycloak.cookieSecret`, required, unique per installation) and
-the admin API token. `--set` puts them in the process list
+the admin API token (`service.adminApiToken`, base64-encoded, with
+`service.adminApiTokenSecret.create: true`). `--set` puts them in the process list
 and in Actions debug logs.
+
+```yaml
+# secrets.yaml
+keycloak:
+  cookieSecret: <openssl rand -base64 32 | tr -- '+/' '-_'>
+service:
+  adminApiTokenSecret:
+    create: true
+  adminApiToken: <base64 of the token>
+```
+
+From EduIDE-Cloud 3.0.1 the scaling API behind the token is off unless
+`service.adminApiEnabled: true`, see [Admin API Tokens](../security/admin-api-tokens.md).
 
 **In normal operation you do not write that file.** The deploy workflow
 generates it on the runner from the environment's GitHub Environment secrets and
 it never reaches the repository. The commands on this page are for a first
 install on a new cluster, or for manual intervention when the pipeline is
-unavailable — in which case write `secrets.yaml` yourself, keep it out of git,
+unavailable - in which case write `secrets.yaml` yourself, keep it out of git,
 and delete it afterwards. Everything non-secret belongs in `values.yaml`.
 
 ## Four hostnames, not one
@@ -136,12 +152,12 @@ instance.<landing>               session ingress
 
 All four need DNS and all four need to be on a certificate. The webview host is
 two labels below the instance host, so a wildcard covering the others does not
-cover it — it needs its own certificate, and because it is a wildcard,
+cover it - it needs its own certificate, and because it is a wildcard,
 cert-manager cannot issue it over HTTP-01.
 
 **A certificate that omits a hostname fails silently.** The Gateway reports the
-listener healthy — Gateway API never compares a certificate's names against a
-listener's hostname — so the first symptom is a browser warning, and the second
+listener healthy - Gateway API never compares a certificate's names against a
+listener's hostname - so the first symptom is a browser warning, and the second
 is the landing page being unable to call its own REST service, because the
 browser blocks that cross-origin request over an invalid certificate.
 
@@ -180,7 +196,7 @@ issues are public, so students should not include personal data, Artemis links
 ## Verifying
 
 ```bash
-kubectl -n <namespace> get deploy          # operator, service, landing-page, garbage-collector
+kubectl -n <namespace> get deploy          # operator-deployment, service-deployment, landing-page-deployment, garbage-collector
 kubectl -n <namespace> get appdefinitions.theia.cloud
 kubectl -n <namespace> get httproute -o wide
 curl -sI https://<landing>/                # 200, and TLS must validate without -k

@@ -52,6 +52,8 @@ The garbage collector runs as a loop inside the cluster. On each tick:
 
 The garbage collector operates on **creation time, not last-use time**. A workspace created 14 days ago will be deleted regardless of whether a session was active in it five minutes ago. This is a known limitation of the current implementation and the single most important thing to understand before choosing a TTL: the TTL is a hard lifespan for the workspace, not an idle timeout.
 
+The garbage collector runs on a ticker and does not run at startup, so a restart delays the next run by one interval. A value without a unit counts as seconds. Operators before EduIDE-Cloud 2.0.1 exited on every workspace deletion, so the garbage collector's cleanup could crash-loop them; use 2.0.1 or later.
+
 At startup, the garbage collector prints its configuration:
 
 ```
@@ -214,7 +216,7 @@ Once you are certain the data is not needed:
 kubectl delete pv <pv-name>
 ```
 
-Deleting a `Released` PV with a `Retain` policy removes the Kubernetes object. Whether it removes the data depends on your storage backend - some drivers leave the underlying volume behind for a separate cleanup. Confirm with whoever operates your storage before assuming the capacity has come back.
+Deleting a `Released` PV with a `Retain` policy removes the Kubernetes object. Whether it removes the data depends on your storage system - some drivers leave the underlying volume behind for a separate cleanup. Confirm with whoever operates your storage before assuming the capacity has come back.
 
 ## Temporary TTL reduction
 

@@ -75,7 +75,7 @@ cluster; that is the trade for not having 200 local setups to debug.
 - Tell students to commit and push before they leave. That is what Artemis
   grades and what survives everything.
 - If something went wrong, report it even if it resolved itself. Use the GitHub
-  issues of `EduIDE/EduIDE` (the **Report a bug** link in the launcher footer),
+  issues of `EduIDE/EduIDE` (**Help**, **Report Issue** in the IDE; the **Report a bug** link in the launcher footer opens the EduIDE-Cloud tracker unless your installation changed it),
   and GitHub Discussions for questions. Issues are public, so leave out
   personal data and Artemis links. A transient failure nobody reports is one
   nobody fixes.

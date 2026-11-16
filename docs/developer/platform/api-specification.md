@@ -5,9 +5,9 @@ description: Service API overview based on the EduIDE Cloud OpenAPI specificatio
 
 # API Specification
 
-This page summarizes the current EduIDE Cloud service API from the OpenAPI specification in `theia-cloud/documentation/openapi.json`.
+This page summarizes the current EduIDE Cloud service API from the OpenAPI specification in `EduIDE-Cloud/documentation/openapi.json`. The running service also serves its spec on the management port 9000, which the gateway does not route.
 
-The API is centered on lifecycle management for app definitions, workspaces, and sessions. The service is not a generic backend for all platform functionality. Its primary job is to expose the control-plane operations that create and manage the resources the operator later reconciles inside Kubernetes.
+The API is centered on lifecycle management for app definitions, workspaces, and sessions. The service is not a generic service for all platform functionality. Its primary job is to expose the control-plane operations that create and manage the resources the operator later reconciles inside Kubernetes.
 
 ## API Scope
 
@@ -27,8 +27,10 @@ The currently exposed paths in the spec are:
 | --- | --- | --- |
 | `GET` | `/service/{appId}` | Ping the service |
 | `POST` | `/service` | Launch a session and create a workspace if needed |
-| `GET` | `/service/appdefinition/{appId}` | List available app definitions |
-| `PATCH` | `/service/admin/appdefinition/{appDefinitionName}` | Update app definition scaling properties |
+| `GET` | `/service/appdefinition/{appId}` | List the names of the available app definitions (`AppDefinitionSummary`) |
+| `GET` | `/service/admin/appdefinition` | List app definition scaling (admin token, off by default) |
+| `GET` | `/service/admin/appdefinition/{appDefinitionName}` | Get one app definition's scaling (admin token, off by default) |
+| `PATCH` | `/service/admin/appdefinition/{appDefinitionName}` | Update app definition scaling properties (admin token, off by default) |
 | `GET` | `/service/admin/{appId}` | Admin ping |
 | `GET` | `/service/workspace/{appId}/{user}` | List workspaces of a user |
 | `POST` | `/service/workspace` | Create a workspace |
@@ -110,24 +112,21 @@ Important request types include:
   - `appId`
   - `user`
   - `sessionName`
-- `SessionActivityRequest`
-  - `appId`
-  - `sessionName`
 
 This separation between workspace APIs and session APIs reflects the platform architecture described in the previous page: workspaces are durable context, sessions are live runtimes.
 
 ### App definition management
 
-Two endpoints expose app definition functionality:
+These endpoints expose app definition functionality:
 
-- `GET /service/appdefinition/{appId}`
+- `GET /service/appdefinition/{appId}`, which returns only the names
+- `GET /service/admin/appdefinition` and `GET /service/admin/appdefinition/{appDefinitionName}`
 - `PATCH /service/admin/appdefinition/{appDefinitionName}`
 
-The scaling endpoints under `/service/admin/appdefinition` are off by default and answer with 404 until `THEIA_CLOUD_ADMIN_API_ENABLED=true`. The Keycloak-protected ping `GET /service/admin/{appId}` is not affected.
+The admin endpoints need the `X-Admin-Api-Token` header. They are off by default and answer with 404 until `THEIA_CLOUD_ADMIN_API_ENABLED=true` (EduIDE-Cloud 3.0.1), and with 403 when the service has no token configured. The Keycloak-protected ping `GET /service/admin/{appId}` is not affected.
 
 The admin update operation uses `AppDefinitionUpdateRequest`, which currently exposes:
 
-- `appId`
 - optional `minInstances`
 - optional `maxInstances`
 
@@ -139,7 +138,7 @@ The OpenAPI spec also contains:
 
 - `POST /service/session/{session}/config`
 
-This endpoint sets a config value inside a running session if the required config-store extension is present in the Theia application. The spec documents it as a session-level runtime configuration endpoint rather than a general-purpose storage API.
+This endpoint returns no body. It sets a config value inside a running session if the required config-store extension is present in the Theia application. The spec documents it as a session-level runtime configuration endpoint rather than a general-purpose storage API.
 
 This is one of the clearest examples of the service exposing a control-plane operation that affects a live runtime rather than only creating or deleting top-level resources.
 
@@ -163,13 +162,16 @@ If you are integrating against the service, the main distinction to keep in mind
 - use `/service/session` when you are managing live runtime instances
 - use `/service/appdefinition` when you need launchable session types or scaling-related control
 
-In other words, the API is modeled around platform lifecycle stages rather than around frontend pages.
+In other words, the API is modeled around platform lifecycle stages rather than around pages of a user interface.
+
+## Error codes
+
+Besides the usual HTTP codes the service answers with its own codes between 470 and 580 (`TheiaCloudError`): for example 470 for an invalid app id, 475 when a workspace belongs to another app definition, and 553 when the per-user session limit is reached or the previous session is still shutting down. Session and workspace names that start with `eph-` are reserved for ephemeral sessions and rejected.
 
 ## Source of Truth
 
 The current docs page is derived from the generated service spec and related generated API markdown in the Theia Cloud codebase:
 
-- `theia-cloud/documentation/openapi.json`
-- `theia-cloud/documentation/api/README.md`
+- `EduIDE-Cloud/documentation/openapi.json`
 
 If you need endpoint-level detail beyond this overview, those generated artifacts are the most direct reference.

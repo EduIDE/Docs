@@ -25,14 +25,14 @@ All four need DNS pointing at your Gateway's external address. The fourth is a
 
 :::caution Check your DNS policy first
 Some institutions do not hand out wildcard records, or require a specific
-approval. Find out before you plan the rest of the install — there is no
+approval. Find out before you plan the rest of the install - there is no
 configuration that avoids the wildcard if you want webviews.
 :::
 
 ## Why the wildcard exists
 
-Inside the IDE, anything rendered in a panel — a Markdown preview, a notebook, a
-rendered PDF, embedded documentation — is served from its own origin so that it
+Inside the IDE, anything rendered in a panel - a Markdown preview, a notebook, a
+rendered PDF, embedded documentation - is served from its own origin so that it
 cannot script against the IDE itself. Those origins are
 `<something>.webview.instance.<your host>`.
 
@@ -52,12 +52,12 @@ exact hostname, and the CA fetches it.
 That cannot work for a wildcard. To prove control of `*.webview.instance.<host>`
 you would have to serve a token at every possible name under it, which is
 infinite. **The ACME specification therefore does not permit HTTP-01 for
-wildcards at all** — it is not a cert-manager limitation and no configuration
+wildcards at all** - it is not a cert-manager limitation and no configuration
 changes it.
 
 You have two options.
 
-## Option A — DNS-01 (recommended)
+## Option A - DNS-01 (recommended)
 
 With a **DNS-01** challenge, cert-manager proves control by writing a TXT record
 into your zone, which works for a wildcard because it proves control of the
@@ -96,11 +96,20 @@ gatewayAcmeIssuer:
               namespace: eduide-system
 ```
 
-Then simply list the wildcard alongside the other names:
+Then name that issuer in `managedCertificates` and list one certificate per
+listener Secret. The chart writes each certificate to exactly the Secret it
+names and copies it nowhere, so the webview wildcard gets its own entry with the
+Secret its listener uses (`eduide-webview-tls`):
 
 ```yaml
+gatewayAcmeIssuer:
+  enabled: true
+  name: letsencrypt-prod-gateway
 managedCertificates:
   enabled: true
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod-gateway   # the default issuer, letsencrypt-prod, is a disabled one
   certificates:
     - name: eduide-tls
       secretName: eduide-tls
@@ -108,13 +117,21 @@ managedCertificates:
         - eduide.example.edu
         - service.eduide.example.edu
         - instance.eduide.example.edu
+    - name: eduide-webview-tls
+      secretName: eduide-webview-tls
+      dnsNames:
         - "*.webview.instance.eduide.example.edu"
 ```
 
-## Option B — bring your own wildcard certificate
+An issuer name that does not match leaves every certificate pending forever
+while the Gateway still reports `Programmed=True`. The HTTP-01 solver also needs
+plain HTTP listeners on port 80 for each host. In the TUM setup the environment
+manifest turns them on with `spec.tls.acmeHttp`.
 
-If you cannot get a DNS-01 credential, obtain the wildcard some other way — a
-commercial CA, or your institution's certificate service — and hand it to the
+## Option B - bring your own wildcard certificate
+
+If you cannot get a DNS-01 credential, obtain the wildcard some other way - a
+commercial CA, or your institution's certificate service - and hand it to the
 cluster chart.
 
 ```bash
@@ -159,8 +176,8 @@ Programmed=True   Accepted=True   ResolvedRefs=True
 
 Everything looks healthy. The first symptom is a browser certificate warning.
 The second is subtler and much more confusing: the landing page loads (the user
-clicks through the warning), then its JavaScript calls `service.<host>` — a
-different origin — and the browser **silently blocks that request** because that
+clicks through the warning), then its JavaScript calls `service.<host>` - a
+different origin - and the browser **silently blocks that request** because that
 certificate is invalid too. The launch never reaches the server, so there is
 nothing in any log to find.
 
@@ -182,7 +199,7 @@ echo | openssl s_client -connect "$h:443" -servername "$h" 2>/dev/null \
   | openssl x509 -noout -checkhost "$h"
 ```
 
-And confirm a browser would accept it — `%{ssl_verify_result}` must be `0`:
+And confirm a browser would accept it - `%{ssl_verify_result}` must be `0`:
 
 ```bash
 curl -s -o /dev/null -w '%{http_code} %{ssl_verify_result}\n' https://eduide.example.edu
@@ -194,13 +211,13 @@ When you add a second installation to a cluster, its three non-wildcard names
 must be added to the certificate, and it needs its own webview wildcard.
 
 A certificate that covers your existing installations but not the new one will
-not fail anything visibly — see above. Re-check with the commands in this page
+not fail anything visibly - see above. Re-check with the commands in this page
 after every change.
 
 :::tip Only put names with a listener on a certificate
 cert-manager proves each name with its own challenge. A name on the certificate
 that has no matching Gateway listener will fail its HTTP-01 challenge with a
-404, and that one pending challenge **blocks the whole certificate** — including
+404, and that one pending challenge **blocks the whole certificate** - including
 every name that would otherwise have worked.
 :::
 

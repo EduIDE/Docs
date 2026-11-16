@@ -20,7 +20,7 @@ const IconClock = () => (
   </svg>
 );
 
-/* Codicon: list-ordered (16x16) — horizontal bars on the right side */
+/* Codicon: list-ordered (16x16) - horizontal bars on the right side */
 const IconListOrdered = () => (
   <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
     <path d="M1 2h1.5v4H1V2zm2.5 0h8v1h-8V2zm0 5h8v1h-8V7zm0 5h8v1h-8v-1zM1 7h1.5v4H1V7zm0 5h1.5v4H1v-4z"/>
@@ -40,7 +40,7 @@ const features: Feature[] = [
     icon: <IconClock />,
     title: "Zero setup",
     description:
-      "Open your browser. Your full dev environment is ready — no installs, no PATH issues, no Docker to configure.",
+      "Open your browser. Your full dev environment is ready - no installs, no PATH issues, no Docker to configure.",
   },
   {
     iconColor: "orange",
@@ -54,7 +54,7 @@ const features: Feature[] = [
     icon: <IconServer />,
     title: "Consistent environments",
     description:
-      "Every student runs identical toolchains. What works for you works for the grader — every single time.",
+      "Every student runs identical toolchains. What works for you works for the grader - every single time.",
   },
 ];
 

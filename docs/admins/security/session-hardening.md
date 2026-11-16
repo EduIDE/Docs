@@ -44,8 +44,8 @@ therefore bind it to `127.0.0.1:3000`. Only the oauth2-proxy sidecar in the same
 pod reaches it; the gateway reaches the proxy on port 5000, which forces the
 Keycloak login.
 
-One image is an exception: `thm-java-25` still starts Theia with
-`--hostname=0.0.0.0` in EduIDE 1.5.0. An installation offering it relies on the
+The retired `thm-java-25` image was the exception: it started Theia with
+`--hostname=0.0.0.0`. It gets no new tags, and every image published from EduIDE 2.0.0 binds to loopback. An installation that still runs it relies on the
 NetworkPolicies alone to keep other pods off port 3000.
 
 Loopback is shared by every container in the pod, so any sidecar you add to a
@@ -288,18 +288,32 @@ From EduIDE 1.5.0:
 
 - **No code leaves for scanoss.com.** The `@theia/scanoss` extension, which sent
   code snippet hashes there, is gone.
-- **Gradle prewarm can ask first.** Scorpio runs the exercise's Gradle wrapper
-  right after the clone to warm the build. With `GRADLE_PREWARM_AUTO_CONFIRM=false`
-  in the session environment it asks the student before running it; a dismissed
-  prompt counts as no. `GRADLE_PREWARM=off` turns prewarming off entirely. The
-  default stays automatic, because templates come from your own Artemis.
+- **Gradle prewarm asks first.** Scorpio runs the exercise's Gradle wrapper
+  right after the clone to warm the build. Since Scorpio 3.0.0
+  `GRADLE_PREWARM_AUTO_CONFIRM` defaults to `false`, so it asks the student
+  before running it; a dismissed prompt counts as no. It reads the value only
+  from the pod or image environment, never from the data bridge. The Artemis
+  edition images set it to `true`, because those exercises come from your own
+  Artemis. `GRADLE_PREWARM=off` turns prewarming off entirely.
+
+## Controls added in 3.0
+
+- **Admin scaling API off** by default (`service.adminApiEnabled`, EduIDE-Cloud 3.0.1).
+- **Anonymous mode needs an opt-in**: `keycloak.enable: false` is refused without `keycloak.allowUnauthenticated: true`.
+- **Browser origins**: CORS allows the landing page and `service.corsOrigins` only. TLS to Keycloak is verified, with `service.oidcTrustStore` for a private CA, and `keycloak.audience` adds an audience check.
+- **`service.sessionsPerUser`** limits active sessions per user.
+- **Management port 9000** carries metrics and OpenAPI and is not routed through the gateway.
+- **The session proxy's skip-auth route is anchored** to `^/health$`, so no other path bypasses the login.
+- **Non-root images** (uid 10001) for operator, service and conversion webhook.
+- **TUM extra egress ranges**: the TUM installations add `198.18.0.0/15` and `131.159.88.0/24` to `networkPolicies.privateEgressCidrs`.
 
 ## What this does not cover
 
-- **The data bridge does not authenticate `POST /data`.** Only
-  `session-allow-operator` keeps other pods from injecting values into a
-  session, and only if your CNI enforces it. Processes inside the session pod,
-  including the student's own code, can still reach the bridge on localhost.
+- **The data bridge token does not stop code inside the pod.** From data bridge
+  2.0.0 `POST /data` needs the per-instance token, and `session-allow-operator`
+  keeps other pods away, if your CNI enforces it. Processes inside the session
+  pod, including the student's own code, can read `DATA_BRIDGE_TOKEN` and
+  reach the bridge on localhost.
   Keep NetworkPolicies on and keep `dataBridgePort` out of
   `networkPolicies.sessionPorts`.
 - **A token inside `gitUri` ends up in the clone's `.git/config`**, because

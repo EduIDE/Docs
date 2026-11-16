@@ -44,12 +44,16 @@ day.
 
 ## Session limits
 
-Each student may hold a small number of concurrent sessions - the exact number
-is configured per environment. This exists to stop one person accumulating
+Each student may hold a small number of concurrent sessions. The default is 1
+(`operator.sessionsPerUser`, and `service.sessionsPerUser` for the other launch
+paths), and your environment may differ. This exists to stop one person accumulating
 sessions across devices and browser tabs and exhausting capacity for everyone.
 
-If a student cannot start a session and is told they have too many, the fix is
-to close the ones they have forgotten about, not to raise the limit.
+If a student cannot start a session, they see "Your previous session is still
+shutting down. Please try again in a few seconds." (error 553). Students cannot stop
+a session in the interface, so they wait until the old one ended, and with the
+default of 1 a second language or exercise is blocked until then. Ask your
+admin to end a forgotten session rather than to raise the limit.
 
 ## Sessions end, and so can workspaces
 

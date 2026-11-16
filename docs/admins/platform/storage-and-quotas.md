@@ -18,26 +18,27 @@ This model allows:
 
 ## Storage class
 
-The current production storage class is `csi-rbd-sc` (Ceph RBD via the CSI driver). This is configured in the operator Helm values:
+The storage class is the top-level `operator.storageClassName` of the `eduide` chart (chart default `default`). The old umbrella key `theia-cloud.operator` no longer exists. At TUM the class comes from `clusters/<name>.yaml` of EduIDE-deployment: `longhorn` on the production cluster, `csi-rbd-sc` (Ceph RBD) on the student cluster and `local-path` on the `eduide` cluster.
 
 ```yaml
-theia-cloud:
-  operator:
-    storageClassName: csi-rbd-sc
-    requestedStorage: 250Mi
+operator:
+  storageClassName: csi-rbd-sc
+  requestedStorage: 250Mi
 ```
+
+Ephemeral sessions and warm pool instances get no PVC. Only a workspace that is kept does.
 
 `requestedStorage` is the PVC size allocated per workspace. The default is `250Mi`. This is sufficient for typical student work (code files, build artifacts for small projects). Adjust it before deployment based on the expected workload:
 
 | Use case | Recommended size |
 |---|---|
 | Light coding exercises | 250Mi |
-| Medium projects with build output | 500Mi – 1Gi |
+| Medium projects with build output | 500Mi - 1Gi |
 | Projects with large dependencies or binaries | 2Gi+ |
 
 To change the default, update `requestedStorage` in the values file and redeploy the operator. Changes apply to newly created workspaces only. Existing PVCs are not resized automatically.
 
-## Ephemeral storage mode — and it is the default
+## Ephemeral storage mode - and it is the default
 
 :::danger Sessions do not persist unless you turn persistence on
 `landingPage.ephemeralStorage` defaults to **`true`**. A session started from the
@@ -62,7 +63,7 @@ effective setting of an app is its own `ephemeral` if set, else the global one.
 Also check `appDefinitions.apps.<name>.landingPage.ephemeral` in your values files.
 :::
 
-Ephemeral mode is the right default for evaluation and demos — nothing to clean
+Ephemeral mode is the right default for evaluation and demos - nothing to clean
 up, no storage cost. It is the wrong setting for a course.
 
 Note that sessions launched from Artemis carry their own workspace regardless,
@@ -82,7 +83,7 @@ Everything in it is gone then.
 
 ## Namespace resource quotas
 
-Kubernetes resource quotas limit the total compute and storage consumed within a namespace. For EduIDE, these are set at the namespace level to bound the blast radius of a runaway workload or misconfigured App Definition.
+Kubernetes resource quotas limit the total compute and storage consumed within a namespace. **EduIDE creates no ResourceQuota.** This section is a recommendation: set one at the namespace level to bound the blast radius of a runaway workload or misconfigured App Definition.
 
 Recommended quota structure for a production namespace:
 
@@ -177,7 +178,7 @@ kubectl delete pvc <pvc-name> -n <namespace>
 Confirm the storage class reclaim policy with:
 
 ```bash
-kubectl get storageclass csi-rbd-sc -o jsonpath='{.reclaimPolicy}'
+kubectl get storageclass <storage-class> -o jsonpath='{.reclaimPolicy}'
 ```
 
 If the policy is `Retain`, you will need to manually delete the underlying PersistentVolume as well after the PVC is removed.

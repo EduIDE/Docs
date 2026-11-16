@@ -56,7 +56,7 @@ To see an HTML page while you edit it:
    Alternatively, right-click the file in the Explorer and choose **Open With**, then **Preview**.
 
 The preview opens next to your code inside the IDE.
-The old **Live Preview** extension is no longer part of EduIDE.
+The old **Live Preview** extension is no longer part of EduIDE. The preview does not refresh itself: reload the preview after a change.
 
 ## Next step
 

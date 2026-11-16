@@ -27,8 +27,10 @@ Monitoring is configured under `monitoring.*` in the **`eduide-cluster`** chart 
 
 The chart creates:
 
-- Three `PodMonitor` resources (`monitoring.coreos.com/v1`) - **not** `ServiceMonitor`s.
-- Two Grafana dashboard `ConfigMap`s, labelled `grafana_dashboard: "1"`.
+- `PodMonitor` resources (`monitoring.coreos.com/v1`) for the REST service (on its `management` port, plus a `-legacy` monitor for the `http` port during the 3.0 transition) and for the operator. They are not `ServiceMonitor`s.
+- Four Grafana dashboard `ConfigMap`s, labelled `grafana_dashboard: "1"`.
+- A `PrometheusRule` with 16 alerts, and with `monitoring.alerting.enabled` an `AlertmanagerConfig`, see [Alerts](#alerts).
+- With `monitoring.certManager.enabled`, a `ServiceMonitor` for cert-manager's controller, so certificate expiry can be alerted on.
 
 ### Prerequisites
 
@@ -57,15 +59,14 @@ monitoring:
   # Namespace the Grafana dashboard ConfigMaps go in. Must already exist and
   # be watched by Grafana's dashboard sidecar.
   dashboardNamespace: <grafana-dashboard-namespace>
-  # Namespaces to scrape the REST service in.
+  # Namespaces to scrape. Bootstrap derives this from the environments
+  # on the cluster whose monitoring.enabled is true.
   targetNamespaces: []
-  # Namespaces to scrape session pods in.
-  sessionNamespaces: []
 ```
 
 The chart's defaults for these two namespaces are `cattle-monitoring-system` and `cattle-dashboards`. Those are **Rancher's** namespaces - they are defaults inherited from where EduIDE was first deployed, not requirements. On a vanilla `kube-prometheus-stack` install both are typically the namespace you installed the stack into (often `monitoring`), because that stack's Grafana sidecar watches all namespaces for the `grafana_dashboard` label by default.
 
-`targetNamespaces` and `sessionNamespaces` are flat lists of namespace names. They are derived per cluster: you list every EduIDE installation namespace on that cluster. If either list is empty, the corresponding `PodMonitor` is not rendered at all.
+`targetNamespaces` is a flat list of namespace names. It is derived per cluster: you list every EduIDE installation namespace on that cluster, and the dashboards offer it as their namespace picker. If it is empty, the `PodMonitor`s are not rendered at all.
 
 ```yaml
 monitoring:
@@ -73,9 +74,6 @@ monitoring:
   namespace: monitoring
   dashboardNamespace: monitoring
   targetNamespaces:
-    - eduide-staging
-    - eduide-cs101
-  sessionNamespaces:
     - eduide-staging
     - eduide-cs101
 ```
@@ -92,23 +90,24 @@ monitoring:
   enabled: false
 ```
 
-This value renders nothing on its own - no template in the `eduide` chart reads it. It is a declaration that whoever assembles the cluster-level `targetNamespaces` and `sessionNamespaces` lists is expected to honour by leaving that namespace out. If you assemble those lists by hand, you have to read this flag yourself.
+This value renders nothing on its own - no template in the `eduide` chart reads it. It is a declaration that whoever assembles the cluster-level `targetNamespaces` list is expected to honour by leaving that namespace out. If you assemble those lists by hand, you have to read this flag yourself.
 
 ### Verifying the wiring
 
 ```bash
 kubectl get podmonitor -n <prometheus-namespace>
-# expect: theia-cloud-service, theia-cloud-sessions, theia-cloud-operator
+# expect: theia-cloud-service, theia-cloud-service-legacy, theia-cloud-operator
 
 kubectl get configmap -n <grafana-dashboard-namespace> -l grafana_dashboard=1
-# expect: theia-cloud-dashboard-overview, theia-cloud-dashboard-session-startup
+# expect: theia-cloud-dashboard-overview, theia-cloud-dashboard-session-startup,
+#         eduide-dashboard-sessions, eduide-dashboard-session-detail
 ```
 
-Then confirm Prometheus picked them up: open the Prometheus UI under **Status → Targets** and look for the three job names, or port-forward and check the service discovery page. If the `PodMonitor`s exist but no targets appear, the cause is almost always the `podMonitorSelector` problem described above.
+Then confirm Prometheus picked them up: open the Prometheus UI under **Status → Targets** and look for the job names, or port-forward and check the service discovery page. If the `PodMonitor`s exist but no targets appear, the cause is almost always the `podMonitorSelector` problem described above.
 
 ## What is actually scraped
 
-Three scrape configurations, and it is worth knowing exactly what each one covers.
+The service and the operator are scraped, and it is worth knowing exactly what each one covers. Session pods are not scraped; their health comes from Kubernetes-level exporters (kube-state-metrics, cAdvisor, kubelet volume stats).
 
 ### `theia-cloud-service`
 
@@ -117,14 +116,6 @@ Selects pods labelled `app: service` in every namespace listed in `targetNamespa
 From EduIDE-Cloud 3.0 the service serves metrics and OpenAPI on the management port 9000, which the gateway does not route, and no longer on the public port. Chart 3.0.0 labels the service pod `eduide.io/metrics-port: management` and the cluster chart scrapes that port. During the transition it renders a second `PodMonitor`, `theia-cloud-service-legacy`, which keeps scraping the `http` port of service pods without that label. Remove the legacy monitor once every installation runs chart 3.x.
 
 The REST service is a Quarkus application using SmallRye Metrics. What you get is the MicroProfile base and vendor metric set: JVM heap and non-heap usage, thread counts, GC statistics, CPU, and generic REST request counters. This is genuinely useful for spotting a service that is leaking memory or wedged on GC.
-
-### `theia-cloud-sessions`
-
-Selects pods in `sessionNamespaces` whose `app` label is **not** one of `conversion-webhook`, `landing-page`, `operator`, `service` - in other words, everything left over, which in an installation namespace is the session pods. It scrapes the container port named `application` at the default path `/metrics` every 15s.
-
-Session pods are labelled `app: <sessionName>-<sessionUID>`, so there is no stable label value to select on positively. That is why the selector is a negative match.
-
-Whether anything answers on `/metrics` depends entirely on the IDE image you run. A stock Theia or Code image does not serve Prometheus metrics on its application port, in which case these targets appear in Prometheus as `DOWN`. That is expected, not a fault to chase.
 
 ### `theia-cloud-operator`
 
@@ -178,9 +169,7 @@ These assume `kube-state-metrics` and cAdvisor metrics are available, which is t
 
 ### Session launch latency
 
-The most user-visible signal, and the one with no metric behind it.
-
-Nothing in EduIDE times a session launch and exports it. The `theia-cloud-dashboard-session-startup` dashboard shipped by the chart approximates it from pod lifecycle timestamps. To measure it directly, run a synthetic check: launch a session through the API on a schedule and time it from request to a reachable session URL.
+The most user-visible signal. The service exports a startup timer, `application_application_theiacloud_session_startup_seconds_seconds` (a summary with quantiles), which the `theia-cloud-dashboard-session-startup` dashboard and the `EduIDESessionStartupSlow` alert use (p95 above 90 seconds for 15 minutes). The timer starts at the launch request and stops when the session has a URL, so it does not include the time until the IDE answers. A synthetic check from request to a reachable session URL still measures what a student sees.
 
 A launch that takes longer than roughly 10 seconds usually means one of:
 
@@ -297,7 +286,7 @@ kubectl rollout status deployment/operator-deployment -n <namespace>
 ```bash
 # Count running pods that are not platform components
 kubectl get pods -n <namespace> --field-selector=status.phase=Running \
-  -l 'app notin (operator,service,landing-page,image-preloading)' --no-headers | wc -l
+  -l app.kubernetes.io/component=session --no-headers | wc -l
 
 # Find stuck or crash-looping pods
 kubectl get pods -n <namespace> | grep -E 'CrashLoopBackOff|Error|Pending'
@@ -336,12 +325,20 @@ curl https://<cache-host>/ping
 
 Returns `200 OK` when healthy.
 
+## Alerts
+
+With `monitoring.enabled`, the cluster chart ships a `PrometheusRule` with 16 alerts. Each carries a `runbook_url` that points to [Incident Response](incident-response.md#alert-runbooks). They cover components down or crash looping, the warm pool, session crashes, OOM kills, evictions, slow startup (`EduIDESessionStartupSlow`, p95 above 90 seconds), pending pods and volumes, image pulls, volume space and inodes, and certificates.
+
+Routing is optional. With `monitoring.alerting.enabled: true` the chart also renders an `AlertmanagerConfig` that sends alerts at or above `monitoring.alerting.minSeverity` (default `warning`) to the `monitoring.alerting.channels` you list, with webhook URLs from a Secret (`monitoring.alerting.webhookSecret`). `monitoring.alerting.thresholds` tunes the limits (for example `startupSeconds: 90`, `volumePercent: 85`, `certExpiryDays: 21`). `monitoring.certManager.enabled: true` adds the certificate metrics that the two certificate alerts need.
+
 ## Grafana dashboards
 
-The chart installs two dashboards as `ConfigMap`s labelled `grafana_dashboard: "1"` into `monitoring.dashboardNamespace`:
+The chart installs four dashboards as `ConfigMap`s labelled `grafana_dashboard: "1"` into `monitoring.dashboardNamespace`:
 
 - `theia-cloud-dashboard-overview`
 - `theia-cloud-dashboard-session-startup`
+- `eduide-dashboard-sessions`
+- `eduide-dashboard-session-detail`
 
 That label is the convention the `kube-prometheus-stack` Grafana sidecar watches for, so on a standard install the dashboards appear automatically once the ConfigMaps land in a namespace the sidecar covers. On Rancher, the equivalent namespace is `cattle-dashboards` and the dashboards show up in the Rancher monitoring UI.
 
@@ -351,7 +348,7 @@ If the dashboards do not appear:
 2. Confirm your Grafana sidecar watches that namespace and looks for that label.
 3. Confirm the panels have data - a dashboard renders empty rather than disappearing when Prometheus has no matching series, which is what you will see if the `PodMonitor`s are not being selected.
 
-If dashboards render but a newly added installation is missing from them, the cause is the cluster-level namespace lists: re-run the `eduide-cluster` upgrade with the new namespace in `targetNamespaces` and `sessionNamespaces`.
+If dashboards render but a newly added installation is missing from them, the cause is the cluster-level namespace lists: re-run the `eduide-cluster` upgrade with the new namespace in `targetNamespaces`.
 
 ## Routine health check cadence
 
@@ -364,4 +361,4 @@ If dashboards render but a newly added installation is missing from them, the ca
 | PVC growth rate | Weekly | Compare PVC count to previous week |
 | Certificate expiry and coverage | Monthly | See [Incident Response](/admins/operations/incident-response) |
 | Alert rule review | Monthly | Confirm thresholds still suit the current cohort size |
-| Namespace list coverage | On installation addition | Verify the new namespace is in `targetNamespaces` and `sessionNamespaces` |
+| Namespace list coverage | On installation addition | Verify the new namespace is in `targetNamespaces` |
