@@ -19,7 +19,7 @@ The **EduIDE** repository manages the Docker builds for custom Eclipse Theia IDE
 ## Image Layering and Editions
 
 :::note Release 2.0.0
-Editions, templates, Rust and Go are planned for EduIDE 2.0.0 and live in the open pull requests [#220](https://github.com/EduIDE/EduIDE/pull/220), [#221](https://github.com/EduIDE/EduIDE/pull/221) and [#222](https://github.com/EduIDE/EduIDE/pull/222). Until they are released, 1.5.0 is the latest release; see [Published Images (1.5.0)](#published-images-150).
+Editions, templates, Rust and Go ship with EduIDE 2.0.0 ([#220](https://github.com/EduIDE/EduIDE/pull/220), [#221](https://github.com/EduIDE/EduIDE/pull/221) and [#222](https://github.com/EduIDE/EduIDE/pull/222)). Chart 3.0.0 pins it. The 1.5.0 images are described in [Published Images (1.5.0)](#published-images-150).
 :::
 
 From 2.0.0 the images stack in three layers, and every language ships in two **editions**:
@@ -112,7 +112,17 @@ The Java 25 images download Maven from Maven Central and still check the pinned 
 | Theia Cloud session monitor | v1.2.2 | EduIDE-Cloud GitHub release |
 | Artemis extension (`aet-tum.iris-thaumantias`) | 1.2.6 | Open VSX |
 
-In EduIDE 2.0.0 the Artemis extension moves into `base-artemis`, the session monitor is pinned to v1.4.0 ([#224](https://github.com/EduIDE/EduIDE/pull/224), needed for the idle timeout of open tabs), Scorpio 2.2.0 adds `TEMPLATE` support, and data bridge 0.0.18 sets all injected variables before the first save, so Scorpio never starts with only part of them.
+EduIDE 2.0.0 bundles:
+
+| Extension | Version |
+|---|---|
+| EduIDE Data Bridge | 2.0.0 (per-instance token required, known keys only) |
+| Scorpio | 3.1.0 (`TEMPLATE` bootstrap, never clears a non-empty workspace, progress notification, Gradle prompt) |
+| Theia Cloud session monitor | 3.0.0 (needed for the idle timeout of open tabs, [#224](https://github.com/EduIDE/EduIDE/pull/224)) |
+
+The Artemis extension lives in `base-artemis` only. The Artemis edition images set `GRADLE_PREWARM_AUTO_CONFIRM=true` (Java images and the base), so Scorpio starts the Gradle prewarm without a prompt; standalone editions keep the prompt. The data bridge 2.0.0 images work only with EduIDE-Cloud 3.x and chart 3.x, see [Prewarming Architecture](/developer/platform/session-prewarming#data-bridge-token).
+
+Security changes in 2.0.0: downloads of rustup, Bazelisk and the Artemis extension are checked against pinned SHA-256 sums, the compose file publishes its ports on `127.0.0.1` only, and a manual run of the image build refuses version tags, so only the release workflow publishes those. The retired `thm-java-25` image is the one that listened on all interfaces; every published image binds Theia to loopback.
 
 EduIDE 1.4.0 still bundles data bridge v0.0.14, Scorpio 2.0.0 and Artemis extension 1.2.0, and no session monitor.
 

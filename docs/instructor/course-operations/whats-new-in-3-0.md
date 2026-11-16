@@ -66,6 +66,16 @@ effect immediately. `.vscode/eduide.json` still sets the starting level. The
 **Customize** panel gained elements for the spell checker, Clippy, linter
 findings, the Maven view and the workspace mode.
 
+## Workspace preparation
+
+- A workspace that has files is never wiped. If it does not match the repository
+  that a student starts, the student gets a warning instead of a fresh clone.
+- A progress notification shows what happens while the workspace is prepared.
+  The clone of a large repository takes a while.
+- Java standalone sessions ask before they run the Gradle wrapper of the
+  repository. Artemis sessions run it automatically. Experience levels are
+  unchanged.
+
 ## Smaller changes
 
 - HTML files open in a preview through **Open Preview to the Side**. The old

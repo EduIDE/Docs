@@ -14,6 +14,7 @@ EduIDE has real advantages, but it also has real constraints. This section shoul
 - browser-based environments introduce platform and network dependencies
 - the runtime model is managed, so unrestricted machine access is not the default
 - sessions end after 60 minutes without input (the default, installations can change it), and temporary workspaces lose their files then
+- the experience level resets to Expert in every new session, also with a persistent workspace: it is a setting inside the session, not part of the workspace. `.vscode/eduide.json` sets the starting level, students who want another level pick it again
 - the platform is still in active development, so there may be bugs and limitations
 
 ## Teaching implications

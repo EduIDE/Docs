@@ -20,9 +20,9 @@ The high-level flow for an eagerly served session is:
 
 1. The operator reconciles the `AppDefinition` and keeps `minInstances` generic instances ready.
 2. A user creates a `Session` for that `AppDefinition`.
-3. The session handler reserves one free pool instance and annotates the session with `theia-cloud.io/session-start-strategy=eager` and `theia-cloud.io/instance-id`.
+3. The session handler reserves one free pool instance and annotates the session with `theia-cloud.io/session-start-strategy=eager` and `theia-cloud.io/instance-id`. The instance is marked as claimed with the label `theia-cloud.io/claimed` in the same edit that adds the session as owner, and it is free again only after the pool reset it. Instances claimed by a session that no longer exists are reset when the pool is reconciled (EduIDE-Cloud 3.0.0).
 4. The pool attaches ownership, labels, deployment metadata, services, optional Keycloak config maps, persistent volume resources, and sidecars to the concrete session.
-5. The operator schedules data bridge injection for the session-specific environment values.
+5. The operator schedules data bridge injection for the session-specific environment values, authenticated with the instance's token (see [Data bridge token](#data-bridge-token)).
 6. The operator adds the session route to the shared `HTTPRoute`, updates the session URL asynchronously, and marks the session handled.
 
 If no warm instance is free, the same operator falls back to the lazy handler. That fallback is deliberate: prewarming is an optimization layer, not a separate correctness mode.
@@ -107,10 +107,10 @@ Prewarmed instances must stay generic until a user claims them. That is why norm
 The [EduIDE Data Bridge](https://github.com/EduIDE/EduIDE-data-bridge) solves that late-binding problem. It is a VS Code extension inside the Theia image. When enabled, it starts an internal HTTP server on `0.0.0.0:${DATA_BRIDGE_PORT}` with:
 
 - `GET /health` for readiness checks
-- `POST /data` for injection payloads shaped as `{ "environment": { "KEY": "value" } }`
+- `POST /data` for injection payloads shaped as `{ "environment": { "KEY": "value" } }`, which needs the instance token (data bridge 2.0.0)
 - `dataBridge.getEnv` for other VS Code extensions to retrieve selected values
 
-The data bridge extension only activates when `DATA_BRIDGE_ENABLED` is `1` or `true`. The Theia Cloud deployment template sets this automatically for generic eager deployments when the app definition contains:
+The data bridge extension only activates when `DATA_BRIDGE_ENABLED` is `1` or `true`. The Theia Cloud deployment template sets this automatically for eager deployments, and from EduIDE-Cloud 3.0.1 for lazy ones too, when the app definition contains:
 
 ```yaml
 options:
@@ -120,13 +120,33 @@ options:
 
 The bridge runs in the Theia plugin host, which starts only when a browser connects to the session. The operator therefore polls `/health` every two seconds for up to 30 minutes, so a student who opens the claimed session late still gets the values. A session first opened after that gets none. Once the bridge answers, the operator sends the collected session environment through `POST /data`. It retries a failed POST up to five times and stops as soon as the session is deleted. The payload also carries `THEIACLOUD_SESSION_SECRET`, because a prewarmed pod starts before its session exists and the session monitor needs that secret to answer the operator's activity polls.
 
-The bridge stores the values in memory and in VS Code secret storage under its internal data bridge key.
+The bridge stores the values in memory and in VS Code secret storage under its internal data bridge key. An injection replaces the stored environment instead of merging into it, and it becomes visible all at once, so a reader never sees a partial set.
+
+### Data bridge token
+
+Since data bridge 2.0.0 and EduIDE-Cloud 3.0.0 only the operator may write to the bridge:
+
+1. The operator keeps one random 256-bit token per pool instance in a Secret named `instance-<n>-<appdef>-bridge-token`, owned by the AppDefinition. `DataBridgeTokenManager` (operator, package `databridge`) creates, rotates, reads and deletes it. Only app definitions with `dataBridgeEnabled: "true"` get one.
+2. The pool Deployment reads the Secret as the environment variable `DATA_BRIDGE_TOKEN` through a `secretKeyRef`. The operator adds this in code, so custom deployment templates get it too.
+3. The operator sends the token as `Authorization: Bearer <token>` on every `POST /data`. It reads the Secret on each injection, keeps no state in memory and survives restarts. The token never appears in logs.
+4. The bridge compares it in constant time. A missing or wrong token gives `401`. The bridge fails closed: with `DATA_BRIDGE_TOKEN` unset or empty, every write is rejected. `GET /health` stays public.
+5. The operator writes a new token whenever it creates an instance's Deployment, and before it deletes the pod when a session ends. Scale-down deletes the Secret. If writing the new token fails at session end, the operator logs it and the next pod starts with the old one. That is safe only while the session NetworkPolicies are on, because they let only the gateway and the operator reach a session pod.
+
+Lazy sessions (EduIDE-Cloud 3.0.1) work the same way with a Secret per session, owned by the Session, so it is removed with it. `DataBridgeTokenManager.readForSession` reads it when the session has no pool instance. Before 3.0.1, lazy sessions ran with `DATA_BRIDGE_ENABLED=0` and nothing was injected, so extensions that read the environment only through `dataBridge.getEnv`, such as the Artemis extension (`ARTEMIS_URL`, `ARTEMIS_TOKEN`), could not log in without a warm pool. The variables stay in the pod environment too. Scorpio waits up to 10 seconds for a complete injection and then falls back to the process environment, so a failed injection degrades to the old behaviour.
+
+The bridge accepts a fixed list of keys: `THEIA`, `TEMPLATE`, `GIT_URI`, `GIT_USER`, `GIT_MAIL`, `GIT_REF`, `GIT_SOURCE`, `ARTEMIS_URL`, `ARTEMIS_TOKEN`, `GRADLE_PREWARM`, `GRADLE_PREWARM_AUTO_CONFIRM` and `THEIACLOUD_SESSION_SECRET`. It ignores other keys and the response names them. A deployment that injects further keys lists them, comma separated, in `DATA_BRIDGE_EXTRA_KEYS`. A schema error returns `400`, a body over 64 KiB `413`, and any other failure a generic `500` without the internal message.
+
+`DataBridgeClient.injectData(..., String token, String correlationId)` takes the token as a parameter in both overloads. Callers outside the operator pass the token or `null`. Tests that build `K8sResourceFactory` or `PrewarmedResourcePool` by hand need a mock for the `dataBridgeTokens` field.
+
+For local development, set `DATA_BRIDGE_TOKEN` and send `Authorization: Bearer <value>`, otherwise every `POST /data` returns `401`. The bridge only listens once a user opens the session, so probing port 16281 needs an opened session.
+
+Rollout order matters, see [Releases and Dependencies](/developer/guides/releases-and-dependencies#release-order). A bridge with the check against an operator without the token, or without the chart's Secret Role, rejects every injection. One known race: when a single deploy moves both the operator and the IDE images, the old operator can rebuild the pool without tokens while it still runs during the rolling update, and the new operator then considers the pool up to date. Delete the unclaimed `instance-*` Deployments of that app and restart the operator, which rebuilds the pool at startup.
 
 ### A second browser window
 
-Each browser connection gets its own plugin host, and with it its own data bridge. Only the first one binds the bridge port and receives the `POST`. From data bridge v0.0.16, `dataBridge.getEnv` reads the shared secret storage again when a key is missing, so a second window gets the injected values too.
+Each browser connection gets its own plugin host, and with it its own data bridge. Only the first one binds the bridge port and receives the `POST`. `dataBridge.getEnv` reads the shared secret storage again when a key is missing, so a second window gets the injected values too.
 
-That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory; a lock older than 10 minutes counts as abandoned, so a clone that runs longer can be started a second time), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. Both fixes reach the sessions with EduIDE 1.5.0, which bundles data bridge v0.0.17 and Scorpio 2.1.1.
+That makes the second window start the same consumers with the same values. Scorpio 2.1.0 handles this: only one window clones at a time (an atomic lock in the temp directory; a lock older than 10 minutes counts as abandoned, so a clone that runs longer can be started a second time), a window that finds the repository already cloned skips the clone, and a window without `GIT_USER` no longer overwrites an existing git identity with the pod hostname. EduIDE 2.0.0 bundles data bridge 2.0.0 and Scorpio 3.1.0.
 
 ## Adjusting Injected Values
 
@@ -171,11 +191,9 @@ The command returns only keys that are present. Consumers should handle missing 
 - `DataBridgeStrategy` activates `tum-aet.data-bridge`, polls `dataBridge.getEnv` for up to 10 seconds, and falls back to process env on timeout.
 - `createTheiaEnvStrategy` chooses the data bridge strategy when `SCORPIO_THEIA_ENV_STRATEGY=data-bridge`.
 
-The Theia Cloud deployment template sets `SCORPIO_THEIA_ENV_STRATEGY=data-bridge` for generic eager deployments. Scorpio then waits for the required values, configures Git with `GIT_USER` and `GIT_MAIL`, and clones `GIT_URI` into the existing workspace without restarting the container. If the workspace already holds a repository whose `origin` matches `GIT_URI`, Scorpio skips the clone. Otherwise it clears the workspace first, keeping only `.vscode/settings.json`, `.theia`, `persisted` and `lost+found`, so files in a reused workspace with a missing or different `origin` are lost, even if the clone then fails. A failed clone is shown to the student; Scorpio still sets the git identity and keeps running.
+The Theia Cloud deployment template sets `SCORPIO_THEIA_ENV_STRATEGY=data-bridge` for generic eager deployments. Scorpio then waits for the required values, configures Git with `GIT_USER` and `GIT_MAIL`, and clones `GIT_URI` into the existing workspace without restarting the container. If the workspace already holds a repository whose `origin` matches `GIT_URI`, Scorpio skips the clone. Scorpio never clears a workspace that has content (Scorpio 3.0.0). It clones only into an empty workspace. If the checkout does not match `GIT_URI` (renamed remote, changed origin, a git error), the student gets a warning instead of losing files, and no Gradle prewarm runs. A checkout is matched by host and path, and its `origin` URL is refreshed from `GIT_URI`. Credentials in `GIT_URI` go through a credential helper, not the `git clone` command line. The token still stays in the `origin` URL in `.git/config` on the workspace volume, because the Artemis extension pushes with plain `git push`; a credential store outside the workspace needs a change in that extension. A failed clone is shown to the student; Scorpio still sets the git identity and keeps running. Scorpio 3.1.0 shows a "Preparing your workspace" notification with the steps (waiting for the exercise details, cloning, applying a template), and never puts credentials in it.
 
-After the clone, Scorpio prewarms Gradle by running the repository's Gradle wrapper (`GRADLE_PREWARM`: `off`, `daemon` by default, `deps` or `full`). That runs code from the exercise repository as soon as the session starts. With `GRADLE_PREWARM_AUTO_CONFIRM=false`, Scorpio asks the student first and treats a dismissed prompt as no. The default is `true`.
-
-With the data bridge strategy, Scorpio reads `GRADLE_PREWARM` and `GRADLE_PREWARM_AUTO_CONFIRM` from the bridge, not from the pod environment, so pass them in the launch request's `env.fromMap` together with `GIT_URI`. A value set only on the pod is ignored once the bridge delivers `ARTEMIS_URL` and `GIT_URI`. The bridge also stores an injection one key at a time, and Scorpio starts as soon as those two keys are present. A read in between can therefore miss `GRADLE_PREWARM_AUTO_CONFIRM=false` and fall back to `true`. Until Scorpio waits for the complete injection, do not rely on the prompt as a security boundary for untrusted exercise templates; use `GRADLE_PREWARM=off` there instead.
+After the clone, Scorpio prewarms Gradle by running the repository's Gradle wrapper (`GRADLE_PREWARM`: `off`, `daemon` by default, `deps` or `full`). That runs code from the exercise repository as soon as the session starts. Since Scorpio 3.0.0 `GRADLE_PREWARM_AUTO_CONFIRM` defaults to `false`: Scorpio asks the student first and treats a dismissed prompt as no. It reads the value only from the pod or image environment; a value delivered through the data bridge is ignored. The Artemis edition images of EduIDE set it to `true`, so Artemis sessions prewarm without a prompt, and standalone editions keep the prompt. A template copy is still prewarmed without asking. Other deployments that want the old behaviour set `GRADLE_PREWARM_AUTO_CONFIRM=true` in the image environment. `GRADLE_PREWARM` itself is still read from the bridge.
 
 For a new extension, follow the same pattern: keep a legacy source if local development or lazy sessions still need process env, add a bridge-backed strategy for prewarmed sessions, poll with a bounded timeout, and avoid reading personalized values only once from `process.env` during module initialization.
 
@@ -185,7 +203,7 @@ Prewarming trades latency for reserved cluster resources. A large `minInstances`
 
 Data injection is asynchronous. The session can be marked handled while bridge injection is still being attempted, so extensions that require injected values during activation must poll or otherwise wait for the bridge values. Scorpio waits 10 seconds after activation. If the values arrive later, it uses the process environment, which has no `GIT_URI` on a prewarmed pod, and does not clone.
 
-The data bridge listens on `0.0.0.0` and does not authenticate `POST /data`. With the chart's NetworkPolicies on (the default from chart 2.5.1) and a CNI that enforces them, only the operator may connect to the bridge port from outside the pod. Processes inside the session pod, including the student's own code, can still reach it on localhost. Keep them on, never expose the bridge through public routes, and do not log injected values.
+The data bridge listens on `0.0.0.0`. From data bridge 2.0.0 it authenticates `POST /data` with the per-instance token. With the chart's NetworkPolicies on (the default from chart 2.5.1) and a CNI that enforces them, only the operator may connect to the bridge port from outside the pod. Processes inside the session pod, including the student's own code, can read `DATA_BRIDGE_TOKEN` and still reach the bridge on localhost, so the token protects against other pods, not against the student's own code. Keep the policies on, never expose the bridge through public routes, and do not log injected values.
 
 The current bridge payload is environment-key oriented. It is suitable for small runtime configuration and credentials, not for large files or complex state synchronization.
 
@@ -200,6 +218,7 @@ When touching the prewarming path, verify:
 - `operator.eagerStart` is enabled in the target environment if prewarming or data bridge personalization is expected.
 - `minInstances` is set to the desired warm capacity, or `0` for no warm pool.
 - `maxInstances` is high enough for total eager plus lazy demand.
+- The operator may read and write Secrets in its namespace (chart Role `operator-bridge-token-secrets`), and the IDE image carries data bridge 2.0.0 only together with EduIDE-Cloud 3.x and chart 3.x.
 - The app definition has `options.dataBridgeEnabled: "true"` and a `dataBridgePort` equal to `networkPolicies.dataBridgePort`.
 - The Theia image contains the data bridge extension and any consumer extension, such as Scorpio.
 - Session creation supplies required values through `envVars`, `envVarsFromConfigMaps`, or `envVarsFromSecrets`, with no reserved names and with any Secret or ConfigMap on the operator allowlist.

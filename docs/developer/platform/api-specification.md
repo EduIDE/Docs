@@ -36,7 +36,6 @@ The currently exposed paths in the spec are:
 | `GET` | `/service/session/{appId}/{user}` | List sessions of a user |
 | `POST` | `/service/session` | Start a new session for an existing workspace |
 | `DELETE` | `/service/session` | Stop a session |
-| `PATCH` | `/service/session` | Report session activity |
 | `GET` | `/service/session/performance/{appId}/{sessionName}` | Get performance metrics for a session |
 | `POST` | `/service/session/{session}/config` | Set a runtime config value in a session |
 
@@ -96,7 +95,6 @@ Session APIs operate on the live runtime layer:
 - `GET /service/session/{appId}/{user}`
 - `POST /service/session`
 - `DELETE /service/session`
-- `PATCH /service/session`
 - `GET /service/session/performance/{appId}/{sessionName}`
 
 Important request types include:

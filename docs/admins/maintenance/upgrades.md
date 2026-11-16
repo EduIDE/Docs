@@ -309,18 +309,54 @@ page drops the Keycloak callback fragment from its redirect URI, which fixes
 ## Upgrading from 2.x to 3.0.0
 
 Chart 3.0.0 is a breaking release. It introduces two editions per language, a
-new app catalog and renames three apps, and it needs three matching releases:
+new app catalog and renames three apps. It also contains the fixes of an
+internal security audit, which add breaking changes to EduIDE-Cloud 3.0 and the
+data bridge. It needs these matching releases:
 
 | Component | Version |
 |---|---|
 | Helm charts `eduide` and `eduide-cluster` | 3.0.0 |
 | EduIDE IDE images (`appVersion`) | 2.0.0 |
-| EduIDE-Cloud (operator and REST service) | 2.0.0 |
-| EduIDE-Landing-Page | a release that reads the per-app `ephemeral` flag |
+| EduIDE-Cloud (operator, REST service, conversion webhook) | 3.0.0, and 3.0.1 once released (see [Admin API off by default](#admin-api-off-by-default)) |
+| EduIDE-Landing-Page | 1.4.1 |
+| EduIDE-data-bridge (inside the IDE images) | 2.0.0 |
+| Scorpio (inside the IDE images) | 3.x |
+| workspace-garbage-collector | 1.0.0 |
 
-The old image names are frozen at their last tag, so 3.0.0 only works with
-EduIDE 2.0.0. Go to 3.0.0 from 2.10.0; read the sections above if you are
+The chart pins all of them, so on chart defaults you only choose the chart
+version. The old image names are frozen at their last tag, so 3.0.0 only works
+with EduIDE 2.0.0. Go to 3.0.0 from 2.10.0; read the sections above if you are
 older.
+
+:::warning Security release
+Chart 3.0.0 and EduIDE-Cloud 3.0.0 contain security fixes. Do not stay on an
+earlier version once the upgrade is possible, and do the two admin tasks in
+[Rotate the secrets](#rotate-the-secrets) and
+[Delete orphaned sessions](#delete-orphaned-sessions) after it.
+:::
+
+### Order of the upgrade
+
+1. **`eduide-cluster` first.** The operator gets the right to create, get and
+   delete NetworkPolicies, which it needs for sessions with sidecars. The
+   cluster chart also adds a `PodMonitor` for the REST service on its
+   `management` port, plus a legacy `PodMonitor` that keeps scraping the old
+   port of pods that have not been upgraded yet, so you can move installations
+   one by one. Remove the legacy monitor (`theia-cloud-service-legacy`) when
+   every installation runs chart 3.x.
+2. **Then `eduide`.** It brings the Secret Role the operator needs for the data
+   bridge token, EduIDE-Cloud 3.0.0 and the 2.0.0 IDE images.
+3. **IDE images with data bridge 2.0.0 only after EduIDE-Cloud 3.x and chart 3.x.**
+   The new bridge rejects every injection that does not carry the per-instance
+   token. An old operator does not send it, and sessions then open without
+   their Artemis credentials: no auto-clone, no Artemis sign-in. The chart pins
+   a matching set, so this matters only if you pin `versions.*` or image tags
+   yourself, or run your own RBAC (grant the operator `get`, `create`, `update`,
+   `patch` and `delete` on `secrets` in its namespace, see
+   [Access Control](../platform/access-control.md#operator-and-secrets)).
+4. **Restart the operator** after the upgrade, so it reconciles the warm pool.
+   It replaces unclaimed instances that carry the old pod settings. Instances
+   that serve a session keep them until the session ends.
 
 ### What changes
 
@@ -359,6 +395,89 @@ older.
   `*-templates` images and `thm-java-25` get no new tags.** Only the
   `<lang>-artemis` and `<lang>-standalone` images are built from 2.0.0 on.
 
+### EduIDE-Cloud 3.0 breaking changes
+
+Check each against your setup before you upgrade:
+
+- **A service auth token is mandatory.** The service refuses to start without
+  one. The chart creates it; check it if you manage the Secret yourself. The
+  image has no default `APPID` any more and reads its secrets from environment
+  variables, not from command line arguments.
+- **`keycloak.enable: false` is refused** unless `keycloak.allowUnauthenticated:
+  true` is set too. Anonymous mode lets anyone act as any user, so use it only
+  in a throwaway environment.
+- **CORS is off by default.** The chart allows the landing page origin. Browser
+  clients on other origins need them in `service.corsOrigins`. The app
+  definition lookup `GET /service/appdefinition/{appId}` returns names only.
+- **TLS of the identity provider is always verified.** Before, the service
+  skipped the check. A Keycloak with a certificate from a private CA needs a
+  trust store in `service.oidcTrustStore`, or every login fails.
+- **Optional audience check.** Set `keycloak.audience` to require that value in
+  the `aud` claim of access tokens. Add the audience mapper to the Keycloak
+  client first, see
+  [Access Control](../platform/access-control.md#audience-mapper). Empty, the
+  default, keeps the old behaviour.
+- **Session limit per user.** `service.sessionsPerUser` limits active sessions
+  per user on every launch path. Empty means the value of
+  `operator.sessionsPerUser`, a number overrides it, 0 means no limit.
+- **Metrics and OpenAPI moved to the management port 9000**, which the gateway
+  does not route. Point a Prometheus scrape of `/q/metrics` at that port; the
+  cluster chart does this for you.
+- **Images run as a non-root user** (uid 10001): operator, service and
+  conversion webhook. Check volume permissions and security contexts of your
+  own that assume root.
+- **The session keep-alive endpoint is gone** (`PATCH /service/session`). The
+  operator polls the monitor in the session pod instead. Custom clients that
+  called it must stop.
+- **Ephemeral session names start with `eph-`**, for example
+  `eph-<app>-<user>-<hash>-session`. A workspace name that starts with `eph-` is
+  rejected. A user whose ephemeral session started under the old name keeps it
+  until it ends.
+- **Launch requests are checked.** Launching a session whose name exists for
+  another user is refused with 403, and an email claim with unusual characters
+  is rejected with a clear 403 instead of a failure later.
+- **Sidecars are isolated.** Sidecar pods carry the session labels, run with the
+  restrictions of the IDE container and get no service account token. The
+  operator creates one NetworkPolicy per session, or per warm pool instance,
+  that connects the IDE pod to its own sidecars only.
+- **The data bridge authenticates the operator.** See
+  [the data bridge token](../platform/app-definitions.md#data-bridge-token).
+
+### Admin API off by default
+
+The admin API token protected scaling endpoints are off by default, see
+[Admin API Tokens](../security/admin-api-tokens.md). The toggle
+`service.adminApiEnabled` ships with EduIDE-Cloud 3.0.1. Until the service runs
+3.0.1, leave `service.adminApiTokenSecret` unset where you do not need the
+scaling API. If you use it, set `service.adminApiEnabled: true` and expect
+`minInstances` changes in step 6 below to need it.
+
+### Rotate the secrets
+
+Versions before EduIDE-Cloud 3.0.0 wrote configuration values to the service
+startup log. In every environment that ran an earlier version, **rotate the
+admin API token** (see [Admin API Tokens](../security/admin-api-tokens.md)) and
+the OIDC client secret of the Keycloak client, and check how long those logs are
+kept.
+
+### Delete orphaned sessions
+
+A Session whose AppDefinition no longer exists never times out, and keeps the
+pod settings it was created with. Renaming apps in 3.0.0 leaves such sessions
+behind if they survived the upgrade, and they run with the old, weaker proxy
+arguments. After the upgrade, list sessions and delete every one whose
+`spec.appDefinition` is not in `kubectl get appdefinitions.theia.cloud`:
+
+```bash
+kubectl -n <namespace> get appdefinitions.theia.cloud -o name
+kubectl -n <namespace> get sessions.theia.cloud \
+  -o custom-columns=NAME:.metadata.name,APP:.spec.appDefinition,USER:.spec.user
+kubectl -n <namespace> delete sessions.theia.cloud <name>
+```
+
+Deleting the Session keeps the workspace and its files. A later release of the
+operator is meant to end such sessions by itself.
+
 ### What a running installation loses
 
 Removing or renaming an app deletes its AppDefinition, and with it the prewarmed
@@ -374,15 +493,18 @@ in them that was never pushed is gone for the student.
 
 1. **Pick a maintenance window** outside lecture hours and exercises. Tell
    students to push their work before it.
-2. **Check the version pins.** `versions.cloud` must be EduIDE-Cloud 2.0.0 or
-   later, `versions.landingPage` a landing page release that reads the per-app
-   `ephemeral` flag (older ones ignore it and use `landingPage.ephemeralStorage`
-   for every app), and the IDE images EduIDE 2.0.0. The chart's `appVersion` is
-   2.0.0; check your values only if they override `versions.*`, `operator.image`,
-   `service.image` or `landingPage.image`, and check `appDefinitions.apps` for
-   an `image` override: an old tagged override keeps the old image, for example
-   one without the monitor v1.4.0. Do not release or deploy 3.0.0 before
-   these exist.
+2. **Check the version pins.** `versions.cloud` must be EduIDE-Cloud 3.0.0 or
+   later, `versions.landingPage` EduIDE-Landing-Page 1.4.1 (1.4.0 and later read
+   the per-app `ephemeral` flag, older ones ignore it and use
+   `landingPage.ephemeralStorage` for every app), and the IDE images EduIDE
+   2.0.0. The garbage collector comes as chart 1.0.0, which pins its own image
+   instead of a commit SHA; remove an `image.tag` override under
+   `theia-workspace-garbage-collector` so the chart's version is used. The
+   chart's `appVersion` is 2.0.0; check your values only if they override
+   `versions.*`, `operator.image`, `service.image` or `landingPage.image`, and
+   check `appDefinitions.apps` for an `image` override: an old tagged override
+   keeps the old image, for example one without the monitor v1.4.0 or with a
+   data bridge that does not match the operator.
 3. **Update your values files.**
    - In `appDefinitions.enabled`, rename the three `*-templates` names, and add
      `python-standalone`, `javascript-standalone` and any of the new `rust-standalone`
@@ -396,9 +518,12 @@ in them that was never pushed is gone for the student.
      sessions persistent as the template ones were, set
      `landingPage.ephemeral: false` on the `-standalone` apps.
    - Review `timeoutAfter` and `notifyAfter` (see below).
+   - Set the new service values you need: `service.corsOrigins`,
+     `keycloak.audience`, `service.oidcTrustStore`, `service.sessionsPerUser`
+     and, where something calls the scaling API, `service.adminApiEnabled`.
 4. **Look at the diff.** `helm diff upgrade` shows which AppDefinitions are
    deleted and created, and which images join the preload list.
-5. **Upgrade the cluster chart**, then the installation, with a generous
+5. **Upgrade the cluster chart**, then the installation (order above), with a generous
    `--timeout` or without `--wait`, because every node preloads the new images
    (see [`--wait` and image preloading](#--wait-and-image-preloading)).
 6. **Move `minInstances` to the new apps.** The chart reads the live
@@ -415,7 +540,9 @@ in them that was never pushed is gone for the student.
      https://service.<landing-host>/service/admin/appdefinition/java-25-standalone
    ```
 
-7. **Check afterwards.**
+7. **Restart the operator, then delete orphaned sessions and rotate secrets**
+   as described above.
+8. **Check afterwards.**
    - `kubectl -n <namespace> get appdefinitions.theia.cloud` lists what you
      expect, and the landing page offers one tile per language with a
      "Temporary" or "Saved" badge.
@@ -424,6 +551,11 @@ in them that was never pushed is gone for the student.
    - Check the idle timeout. The operator log shows
      `Notifying session as timeout of N minutes was reached!` after an idle
      period, and a closed tab ends its session.
+   - `kubectl -n <namespace> get secrets | grep bridge-token` lists one Secret
+     per warm pool instance, and an Artemis session opens with its credentials
+     (auto-clone and Artemis sign-in work).
+   - A new ephemeral session is named `eph-...`, and its pod runs as a non-root
+     user.
    - The Artemis configuration still names the Artemis apps (`java-17`, `c`,
      `python`, ...), which keep their names. A configuration that names a
      `*-templates` app needs the new name, and existing exercises that carry one

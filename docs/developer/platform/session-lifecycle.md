@@ -7,7 +7,7 @@ description: How the operator decides that a session is over, how it records why
 
 This page describes how a session ends and what the platform records about it. It covers the activity rules in the monitor extension and the IDE, the operator's timeout logic, the end reason on the workspace, the `/session-ended` page of the landing page, and the operator's metrics endpoint. For how a session starts, see [Architecture](./architecture) and [External Session Launch](./external-integration).
 
-Release status: the operator flags `--sessionNodeSelector` ships since EduIDE-Cloud 1.3.0, the end reason and the closed-tab rule since 1.4.0, and `--metricsPort` with EduIDE-Cloud 2.0.0. The IDE images need `theia-cloud-monitor` v1.4.0 (EduIDE [#224](https://github.com/EduIDE/EduIDE/pull/224)) to time out an open idle tab.
+Release status: the operator flags `--sessionNodeSelector` ships since EduIDE-Cloud 1.3.0, the end reason and the closed-tab rule since 1.4.0, and `--metricsPort` with EduIDE-Cloud 2.0.0. EduIDE-Cloud 3.0.0 removes the unauthenticated keep-alive endpoint `PATCH /service/session`: the operator polls the monitor, and nothing in the IDE needs to call the service to stay alive. The IDE images need `theia-cloud-monitor` v1.4.0 (EduIDE [#224](https://github.com/EduIDE/EduIDE/pull/224)) to time out an open idle tab.
 
 ## Who ends a session
 

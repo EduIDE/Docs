@@ -142,6 +142,15 @@ kubectl get pods -n <namespace> \
   -l 'app notin (operator,service,landing-page,image-preloading)'
 ```
 
+A session whose App Definition no longer exists is never timed out by the operator and keeps the pod settings it was created with. This happens after apps are removed or renamed, as in the 3.0.0 upgrade. Find and delete them, see [Delete orphaned sessions](../maintenance/upgrades.md#delete-orphaned-sessions):
+
+```bash
+kubectl get appdefinitions.theia.cloud -n <namespace> -o name
+kubectl get sessions.theia.cloud -n <namespace> -o custom-columns=NAME:.metadata.name,APP:.spec.appDefinition
+```
+
+Ephemeral sessions are named `eph-<app>-<user>-<hash>-session` from EduIDE-Cloud 3.0. A workspace name that starts with `eph-` is rejected. `service.sessionsPerUser` (default: `operator.sessionsPerUser`, 0 means no limit) caps the active sessions per user on every launch path.
+
 Each session pod runs at least two containers: the IDE itself, named after the App Definition, and the `oauth2-proxy` sidecar. When reading logs from a session pod you must name the container:
 
 ```bash
@@ -150,21 +159,7 @@ kubectl logs <session-pod> -n <namespace> -c oauth2-proxy --tail=50
 
 ## Session activity reporting
 
-The service has an activity endpoint that session containers call to signal that a user is active:
-
-```
-PATCH /service/session
-```
-
-Request body:
-```json
-{
-  "appId": "<appId>",
-  "sessionName": "<session-name>"
-}
-```
-
-This endpoint is called by the IDE client to prevent inactivity shutdown. If you need to verify whether a session has been reporting activity, check the session resource's status in the operator logs.
+The operator, not the IDE, tracks activity. It asks each session's monitor extension for the last user activity (details below). The unauthenticated keep-alive endpoint `PATCH /service/session` that earlier versions offered is removed in EduIDE-Cloud 3.0; a client that still calls it gets an error. To see whether a session reports activity, check the operator logs.
 
 The operator side of this is controlled by `monitor.*` in the installation values, which is on by default:
 

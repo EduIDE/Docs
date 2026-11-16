@@ -33,19 +33,13 @@ The Kubernetes objects it creates in the installation namespace:
 
 The Deployment name and the pod label are different strings. Log selectors use the label; `rollout` commands use the Deployment name.
 
-### About the pinned image
+### About the image version
 
-The image is pinned to a **commit SHA** rather than a version tag:
+From workspace-garbage-collector 1.0.0 every release publishes the image `ghcr.io/eduide/garbage-collector:X.Y.Z`, and the chart's `image.tag` defaults to its `appVersion`. A chart version therefore pins its own image, and `eduide` chart 3.0.0 depends on chart 1.0.0. Earlier chart versions pinned a commit SHA by hand. Remove an `image.tag` override from your values so that the chart's version is used.
 
-```yaml
-theia-workspace-garbage-collector:
-  image:
-    tag: "599557839e5c5893eb0c20785dac671ae70f7e8a"
-```
+Version 1.0.0 also fixes the start with unset variables: without `CHECK_INTERVAL` or `WORKSPACE_TTL` it now uses the documented defaults (30 minutes and 2 weeks) instead of crashing or failing every run. A value without a unit counts as seconds, and a zero, negative or malformed value stops the start with a clear error.
 
-The garbage collector's own repository has never cut a release, so its registry holds only `latest`, `main` and per-commit SHAs. Its own chart defaults to `latest`, which would mean two installs of the same EduIDE version could get different garbage collector builds, and `helm upgrade` would see no diff when the image changed underneath it. The pin exists to make an install reproducible.
-
-If you fork or rebuild the garbage collector, override the tag in your installation values rather than editing the chart. Expect this pin to be replaced by a semver tag once that repository publishes releases.
+If you fork or rebuild the garbage collector, override the tag in your installation values rather than editing the chart.
 
 ## How it works
 

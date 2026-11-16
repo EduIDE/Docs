@@ -42,6 +42,20 @@ flowchart LR
 
 All repositories also use the org `.github` repository through moving refs (`@v1`, `@main`). These edges are omitted.
 
+## Versions of the 3.0 release
+
+| Repository | Version |
+|---|---|
+| EduIDE-Helm (`eduide`, `eduide-cluster`) | 3.0.0 |
+| EduIDE (IDE images) | 2.0.0 |
+| EduIDE-Cloud | 3.0.0, 3.0.1 for the admin API toggle, no environment values in operator logs and the data bridge in lazy sessions |
+| EduIDE-data-bridge | 2.0.0 |
+| scorpio | 3.0.0, 3.1.0 for the progress notification |
+| workspace-garbage-collector | 1.0.0 |
+| EduIDE-Landing-Page | 1.4.1 |
+
+The security fixes of the audit made several of these major releases: EduIDE-Cloud 3.0.0, data bridge 2.0.0, scorpio 3.0.0 and the first stable garbage collector 1.0.0. Use strict semver: a breaking change is a major release.
+
 ## What each repository publishes and pins
 
 | Repository | Publishes | Tag format | Pins from other EduIDE repositories (where) |
@@ -70,6 +84,13 @@ A repository releases after everything it pins.
 
 Skip every step that has no unreleased changes.
 
+Two orders are not obvious:
+
+- **Data bridge token.** EduIDE-Cloud 3.x and the chart with the Secret Role go out before an EduIDE release whose IDE image contains data bridge 2.0.0. A bridge that requires the token rejects every injection from an operator that does not send it. Cloud's own order has no constraint: a new operator works with an old bridge.
+- **Cluster chart first when deploying.** `eduide-cluster` carries the operator RBAC (NetworkPolicies, PodMonitors) that the `eduide` chart's operator needs, so a rollout moves it first. See [Upgrades](/admins/maintenance/upgrades#order-of-the-upgrade).
+
+A major release of a leaf (EduIDE-Cloud, data bridge, scorpio) usually needs a new release of EduIDE, EduIDE-Helm and then a deployment pull request, because each pins the one before it.
+
 ## How a release runs
 
 Each released repository has a release skill at `.claude/skills/release/SKILL.md`. Run it from Claude Code in that repository.
@@ -92,3 +113,10 @@ A failed run therefore leaves a draft and no tag. Fix the cause and use "Re-run 
 Release candidates (`-rc.N`) publish GitHub release assets and images only, never to Open VSX.
 
 A tag or Release created with `GITHUB_TOKEN` does not trigger other workflows. This is why the publish jobs run from `release.yml` and not from `on: release`.
+
+## CI checks every repository shares
+
+- **Java tests in EduIDE-Cloud.** `tests.yml` runs the operator and service unit tests on every pull request that touches `java/`. The service tests start Docker containers (Testcontainers); on OrbStack set `DOCKER_API_VERSION=1.44` and use JDK 21.
+- **Secret scanning.** A reusable gitleaks workflow in the org `.github` repository scans for committed secrets; repositories call it instead of copying it.
+- **Actions pinned by digest.** Third-party actions are pinned to a commit digest. The shared Renovate preset of the org `.github` repository proposes the updates, including new EduIDE-Cloud and EduIDE-Landing-Page releases for the chart pins (`# renovate:` comments).
+- **Release inputs through `env:`.** Release workflows pass `inputs.version` to scripts through an environment variable, not by string interpolation into the shell.

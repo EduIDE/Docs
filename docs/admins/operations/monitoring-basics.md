@@ -112,7 +112,9 @@ Three scrape configurations, and it is worth knowing exactly what each one cover
 
 ### `theia-cloud-service`
 
-Selects pods labelled `app: service` in every namespace listed in `targetNamespaces`, scrapes the container port named `http` at path `/q/metrics` every 15s.
+Selects pods labelled `app: service` in every namespace listed in `targetNamespaces`, scrapes the container port named `management` at path `/q/metrics` every 15s.
+
+From EduIDE-Cloud 3.0 the service serves metrics and OpenAPI on the management port 9000, which the gateway does not route, and no longer on the public port. Chart 3.0.0 labels the service pod `eduide.io/metrics-port: management` and the cluster chart scrapes that port. During the transition it renders a second `PodMonitor`, `theia-cloud-service-legacy`, which keeps scraping the `http` port of service pods without that label. Remove the legacy monitor once every installation runs chart 3.x.
 
 The REST service is a Quarkus application using SmallRye Metrics. What you get is the MicroProfile base and vendor metric set: JVM heap and non-heap usage, thread counts, GC statistics, CPU, and generic REST request counters. This is genuinely useful for spotting a service that is leaking memory or wedged on GC.
 

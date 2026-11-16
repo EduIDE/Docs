@@ -38,18 +38,25 @@ and ask your tutor.
 Some installations without a university login ask you to confirm a user name
 first. Check that it is yours before you continue.
 
-## 5) Use one browser tab
+## 5) Wait for the clone
+
+A **Preparing your workspace** notification shows the steps, such as cloning your repository.
+If your workspace already has files, EduIDE keeps them and shows a warning instead of cloning.
+In Java exercises with Gradle, Artemis sessions prepare Gradle in the background by themselves.
+Sessions you start yourself from the launcher ask before they run the Gradle wrapper of the repository, so answer the prompt: allowing it speeds up the first build, declining it skips the preparation.
+
+## 6) Use one browser tab
 
 Keep the IDE open in one tab. If you open the same session in a second tab, it
 shows the same files and does not download your exercise again.
 
-## 6) Come back after a break
+## 7) Come back after a break
 
 If your session ends with a **Saved workspace**, start the exercise from Artemis again, or use **Resume my session** on the session ended page.
 Both reopen the same workspace.
 With a **Temporary workspace**, starting from Artemis again gives you a new session with only the work you pushed before.
 See [When Your Session Ends](./session-timeout.md).
 
-## 7) Continue in EduIDE
+## 8) Continue in EduIDE
 
 When the IDE opens, continue with the [Workspace Tour](./workspace-tour.md).

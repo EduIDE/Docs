@@ -26,6 +26,15 @@ each control, the value that turns it, and what to check after a change.
 | Secrets out of ConfigMaps | `service-config-secret` | always | chart 2.5.1 |
 | Unique cookie secret, HTTPS-only cookie | `keycloak.cookieSecret`, `oauth2Proxy.cookieSecure` | required, `true` | chart 2.5.1 |
 | Landing page hardening | `landingPage.*` | on | chart 2.5.1, landing page 1.3.0 |
+| Per-session sidecar NetworkPolicy, sidecar pods without service account token | operator | on | chart 3.0.0, EduIDE-Cloud 3.0.0 |
+| Per-instance data bridge token | operator, data bridge | on | chart 3.0.0, EduIDE-Cloud 3.0.0, data bridge 2.0.0 |
+| Authentication kept on the monitor route of the session proxy | operator, chart | on | chart 3.0.0, EduIDE-Cloud 3.0.0 |
+| Non-root operator, service and webhook images (uid 10001) | images | on | EduIDE-Cloud 3.0.0 |
+| CORS off by default, OIDC TLS verification, optional audience check | `service.corsOrigins`, `service.oidcTrustStore`, `keycloak.audience` | on, on, off | chart 3.0.0, EduIDE-Cloud 3.0.0 |
+| Admin scaling API off | `service.adminApiEnabled` | `false` | EduIDE-Cloud 3.0.1 |
+| Workspace content never wiped by the clone | Scorpio | on | Scorpio 3.0.0 |
+| Gradle wrapper asks first outside Artemis | `GRADLE_PREWARM_AUTO_CONFIRM` | `false` | Scorpio 3.0.0 |
+| No environment values in operator logs | operator | on | EduIDE-Cloud 3.0.1 |
 
 ## The IDE only listens on loopback
 
@@ -55,7 +64,7 @@ reaches Theia without the login. Run nothing but the gateway in that namespace.
 
 ## NetworkPolicies
 
-`networkPolicies.enabled` (default `true`) renders six policies that select
+`networkPolicies.enabled` (default `true`) renders five policies that select
 session pods by their `app.kubernetes.io/component=session` label. They do
 nothing unless your CNI enforces NetworkPolicies, so check that first.
 
@@ -70,11 +79,19 @@ chart cannot take that away. Review every policy that selects session pods.
 | `session-allow-gateway-ingress` | Ingress on `networkPolicies.sessionPorts` (3000, 5000) from `networkPolicies.gatewayNamespace`, the namespace of the gateway's proxy pods (default `envoy-gateway-system`). This is not necessarily the namespace of the Gateway resource |
 | `session-allow-operator` | Ingress from the operator on the data bridge port (`networkPolicies.dataBridgePort`, 16281) and the monitor port (`networkPolicies.monitorPort`, 8081) |
 | `session-allow-external-egress` | Egress to the internet, except the metadata endpoint (`networkPolicies.metadataCidr`, `169.254.169.254/32`) and `networkPolicies.privateEgressCidrs` |
-| `session-allow-sidecars` | Egress to language server sidecars in the namespace |
 
-The last two exist only while `networkPolicies.allowExternalEgress` is `true`
+The last one exists only while `networkPolicies.allowExternalEgress` is `true`
 (the default). Setting it to `false` leaves sessions with DNS only: no git clone
-from outside, no package downloads, and no language server sidecars either.
+from outside and no package downloads.
+
+Language server sidecars are covered by the operator, not by the chart. From
+EduIDE-Cloud 3.0 and chart 3.0.0 the chart no longer renders
+`session-allow-sidecars`, which let every session pod reach every sidecar. The
+operator creates one NetworkPolicy per session, or per warm pool instance, that
+connects the IDE pod to its own sidecars on the sidecar ports only. The sidecar
+pods carry the session labels, so the default deny covers them, and they mount
+no service account token. This needs the `networkpolicies` permission of the
+`eduide-cluster` chart, see [Upgrades](../maintenance/upgrades.md#order-of-the-upgrade).
 
 ### Private ranges
 

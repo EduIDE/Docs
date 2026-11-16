@@ -229,6 +229,18 @@ options:
   dataBridgePort: "16281"
 ```
 
+### Data bridge token
+
+The data bridge only accepts values from the operator. From EduIDE-Cloud 3.0 and data bridge 2.0.0 the operator creates a random token per warm pool instance, in a Secret named `instance-<n>-<appdef>-bridge-token`, owned by the AppDefinition. The pod reads it as `DATA_BRIDGE_TOKEN`, and the operator sends it as a bearer token with every injection. Scaling down deletes the Secret, and deleting the AppDefinition deletes all of them. From EduIDE-Cloud 3.0.1 sessions that start without a warm pool (lazy sessions) get the data bridge too, with a Secret per session that is removed with the session.
+
+You create nothing by hand, but:
+
+- The operator needs the Secret Role of the chart, see [Access Control](access-control.md#operator-and-secrets).
+- Keep `networkPolicies.enabled: true`. The NetworkPolicies are what keep other pods from reaching a session pod while it holds an older token.
+- After an upgrade, `kubectl -n <namespace> get secrets | grep bridge-token` shows one Secret per warm pool instance. If one is missing, delete the unclaimed `instance-*` Deployments of that app and restart the operator, which rebuilds the pool.
+- The bridge accepts a fixed list of keys only. A deployment that injects further keys lists them in `DATA_BRIDGE_EXTRA_KEYS` in the IDE image environment.
+- A bridge that rejects an injection with 401 shows up as a 401 in the operator's injection log. Sessions then open without Artemis credentials.
+
 ## Temporary or saved sessions per app
 
 `landingPage.ephemeralStorage` (default `true`) decides whether sessions started

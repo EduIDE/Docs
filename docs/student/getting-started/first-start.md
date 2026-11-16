@@ -37,6 +37,14 @@ The launch screen repeats the badge while your IDE starts.
 ![Launch screen with the Temporary badge](/img/student/getting-started/first-start-03-launch-screen.png)
 
 The IDE then opens in a new session URL.
+A **Preparing your workspace** notification shows what happens next: waiting for your exercise details, cloning your repository or applying a starter template.
+Cloning can take a while, so wait until the notification closes.
+The notification never shows passwords or tokens.
+
+EduIDE only fills an **empty** workspace.
+If your workspace already has files, EduIDE never deletes them.
+When the files do not match the repository you started, you see a warning instead, and nothing is cloned.
+Copy your files elsewhere or ask your tutor before you start again.
 The status bar at the bottom shows **Temporary workspace** or **Saved workspace**.
 
 ![Workspace opened with the status bar](/img/student/getting-started/workspace-tour-01-welcome-screen.png)

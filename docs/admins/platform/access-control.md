@@ -145,7 +145,7 @@ Add to ID token:            ON
 Add to access token:        ON
 ```
 
-Without the audience claim, the service will reject tokens because the expected audience will not be present.
+The service checks the audience only when `keycloak.audience` is set in the `eduide` chart (EduIDE-Cloud 3.0). It then requires that value in the `aud` claim of every access token and rejects tokens without it. Add this mapper to the client before you set `keycloak.audience`, or logins fail. Empty, the default, skips the check.
 
 ### Groups mapper
 
@@ -170,6 +170,16 @@ The `groups` claim is what the `AdminOnlyFilter` reads to check for admin group 
 5. Click **Add**.
 
 Verify that `theia-cloud-dedicated` appears under **Assigned client scopes** as a default scope.
+
+## Identity provider certificate
+
+From EduIDE-Cloud 3.0 the service always verifies the TLS certificate of Keycloak. Before, it skipped the check. A Keycloak whose certificate comes from a private CA needs the CA in a trust store, passed to the chart as `service.oidcTrustStore`. Without it the service cannot validate tokens and every login fails.
+
+## Operator and secrets
+
+The `eduide` chart gives the operator a namespaced Role, `operator-bridge-token-secrets`, with `get`, `create`, `update`, `patch` and `delete` on `secrets` in the installation namespace (no `list`, no `watch`). The operator keeps the data bridge tokens of the sessions there, see [Data bridge token](app-definitions.md#data-bridge-token). An installation with its own RBAC instead of the chart's must grant the same verbs.
+
+The `eduide-cluster` chart gives the operator `create`, `get` and `delete` on `networkpolicies`, for the per-session NetworkPolicy of sidecars. Upgrade the cluster chart first, see [Upgrades](../maintenance/upgrades.md#order-of-the-upgrade).
 
 ## Admin group assignment
 
