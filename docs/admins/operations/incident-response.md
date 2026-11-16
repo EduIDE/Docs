@@ -493,7 +493,7 @@ curl -X PATCH \
 
 Repeat for each affected App Definition. This frees scheduling space for active user sessions.
 
-This endpoint needs the admin API token, which is not configured by default. See [Admin API Tokens](/admins/security/admin-api-tokens). If you have not set one up, edit the App Definition resource directly instead:
+This endpoint is off by default (`service.adminApiEnabled`) and needs the admin API token. See [Admin API Tokens](/admins/security/admin-api-tokens). If you have not set one up, edit the App Definition resource directly instead:
 
 ```bash
 kubectl patch appdefinitions.theia.cloud <app-definition-name> -n <namespace> \
