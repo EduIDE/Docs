@@ -111,6 +111,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          href: 'https://eduide.github.io/dashboard/',
+          label: 'Dashboard',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/EduIDE/Docs',
           label: 'GitHub',
           position: 'right',
