@@ -123,7 +123,7 @@ Two endpoints expose app definition functionality:
 - `GET /service/appdefinition/{appId}`
 - `PATCH /service/admin/appdefinition/{appDefinitionName}`
 
-The admin endpoints are off by default and answer with 404 until `THEIA_CLOUD_ADMIN_API_ENABLED=true`.
+The scaling endpoints under `/service/admin/appdefinition` are off by default and answer with 404 until `THEIA_CLOUD_ADMIN_API_ENABLED=true`. The Keycloak-protected ping `GET /service/admin/{appId}` is not affected.
 
 The admin update operation uses `AppDefinitionUpdateRequest`, which currently exposes:
 

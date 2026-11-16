@@ -43,6 +43,8 @@ service:
   adminApiEnabled: false
 ```
 
+The toggle needs an EduIDE-Cloud service newer than 3.0.0. Service 3.0.0 ignores it and accepts scaling requests whenever a token is configured, so on 3.0.0 leave the token unset to keep the API closed.
+
 Turn it on only where something actually calls the scaling API. The pool scaler does not; it edits the App Definitions through the Kubernetes API.
 
 The token itself comes from these values in the `eduide` chart:
