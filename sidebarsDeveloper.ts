@@ -33,7 +33,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Guides',
-      items: ['guides/local-development', 'guides/deploying-pull-requests'],
+      items: ['guides/local-development', 'guides/deploying-pull-requests', 'guides/releases-and-dependencies'],
     },
   ],
 };

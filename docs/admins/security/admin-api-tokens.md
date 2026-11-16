@@ -35,7 +35,19 @@ The Keycloak-protected admin ping endpoint (`GET /service/admin/{appId}`) is a *
 
 By default it is not, and this is a deliberate choice rather than an oversight.
 
-The relevant values in the `eduide` chart:
+The scaling endpoints sit behind a feature toggle. Unless it is on, the service answers them with `404 Not Found`, even when a token is configured:
+
+```yaml
+service:
+  # Feature toggle for /service/admin/appdefinition. Sets THEIA_CLOUD_ADMIN_API_ENABLED.
+  adminApiEnabled: false
+```
+
+The toggle needs an EduIDE-Cloud service newer than 3.0.0. Service 3.0.0 ignores it and accepts scaling requests whenever a token is configured, so on 3.0.0 leave the token unset to keep the API closed.
+
+Turn it on only where something actually calls the scaling API. The pool scaler does not; it edits the App Definitions through the Kubernetes API.
+
+The token itself comes from these values in the `eduide` chart:
 
 ```yaml
 service:
@@ -52,7 +64,7 @@ service:
 
 With both `create` and `external` left at `false`, the service is deployed **without** the `ADMIN_API_TOKEN` environment variable at all, and the scaling endpoints are effectively closed. That is a valid way to run an installation: if you never call the scaling API, not issuing a token is the safest configuration.
 
-You must therefore choose one of the two provisioning paths below before the admin API works.
+You must therefore set `service.adminApiEnabled: true` and choose one of the two provisioning paths below before the admin API works.
 
 ## Provisioning: path A, let the chart create the Secret
 

@@ -157,6 +157,8 @@ The `minInstances` and `maxInstances` values can be changed without redeploying 
 PATCH /service/admin/appdefinition/{appDefinitionName}
 ```
 
+The scaling endpoints are off by default and answer with 404 until `service.adminApiEnabled` is `true`. See [Admin API Tokens](/admins/security/admin-api-tokens).
+
 This is the recommended approach for live capacity adjustments before a scheduled lecture or exercise session.
 
 ### View current scaling

@@ -87,6 +87,8 @@ GET   /service/admin/appdefinition/{appDefinitionName}
 PATCH /service/admin/appdefinition/{appDefinitionName}
 ```
 
+These endpoints are off by default and answer with 404 until the service runs with `THEIA_CLOUD_ADMIN_API_ENABLED=true` (chart: `service.adminApiEnabled`).
+
 The `PATCH` body accepts `minInstances` and `maxInstances`:
 
 ```json

@@ -111,6 +111,11 @@ const config: Config = {
           position: 'left',
         },
         {
+          href: 'https://eduide.github.io/dashboard/',
+          label: 'Dashboard',
+          position: 'right',
+        },
+        {
           href: 'https://github.com/EduIDE/Docs',
           label: 'GitHub',
           position: 'right',
@@ -151,6 +156,10 @@ const config: Config = {
             {
               label: 'GitHub Organization',
               href: 'https://github.com/EduIDE',
+            },
+            {
+              label: 'Dashboard',
+              href: 'https://eduide.github.io/dashboard/',
             },
             {
               label: 'Documentation Repository',

@@ -23,10 +23,13 @@ The operator, REST service and landing page carry their own versions in
 cadence. A one-line landing-page fix should not rebuild fifteen multi-gigabyte
 IDE images.
 
-Three spellings of a git tag existed historically — `1.1.0`, `v1.1.0` and
-`v.1.1.1` — which is why nothing could reliably answer "which release produced
-this image". A shared CI check now rejects anything that is not `vX.Y.Z`. Old
-tags are not retagged.
+Three spellings of a git tag existed historically (`1.1.0`, `v1.1.0` and
+`v.1.1.1`), which is why nothing could reliably answer "which release produced
+this image". The chart repositories workspace-garbage-collector and
+EduIDE-shared-cache used their own prefixed tags (`theia-workspace-garbage-collector-X.Y.Z`,
+`eduide-shared-cache-X.Y.Z`) until 0.2.0 and 0.5.3. Every repository now tags
+`vX.Y.Z` (`vX.Y.Z-rc.N` for a release candidate), and a shared CI check rejects
+anything else. Old tags are not retagged.
 
 :::warning A caller can defeat the `v` stripping
 The shared build workflow derives the image tag with `${RELEASE_TAG#v}`, but an
@@ -37,7 +40,7 @@ and merely fails the tag-format check.
 
 That combination hides the fault: the spelling that passes CI is the one that
 breaks the images. If a release publishes `v`-prefixed images, this is why.
-Callers should not pass `image-tag` on a release event at all.
+A manual `release.yml` therefore passes the version without the `v` (`X.Y.Z`) as `image-tag`.
 :::
 
 ## Cutting a release
@@ -54,8 +57,14 @@ order:
 | 2 | EduIDE-Helm | A pull request moving `appVersion`, `versions.cloud` or `versions.landingPage`, and both chart versions |
 | 3 | EduIDE-deployment | A pull request moving `chartVersion`; merging it is the deploy |
 
-A GitHub release does not prove its images exist: the image build runs after
-the tag and can fail. Merging the chart pull request runs `release.yml`, which:
+Every step is a manual release: the repository's release skill
+(`.claude/skills/release/SKILL.md`) opens the release pull request and then
+dispatches `release.yml`. A release starts as a draft and is only published, and
+tagged, once every artifact is built and verified, so a failed build leaves no
+tag. See [Releases and Dependencies](/developer/guides/releases-and-dependencies)
+for the whole flow and the release order.
+
+For EduIDE-Helm, `release.yml`:
 
 1. **Verifies the pinned images exist**, for both architectures. The IDE image
    list is read from EduIDE's build matrix at run time, not kept by hand. It is
@@ -63,15 +72,11 @@ the tag and can fail. Merging the chart pull request runs `release.yml`, which:
    matrix (such as `rust-latest` on chart 2.6.2, which EduIDE 1.5.0 no longer publishes) passes
    this check and fails at pull time. Check the app definitions yourself when a
    release removes an image.
-2. **Publishes each chart version** that is not published yet.
-3. **Tags the repository** `vX.Y.Z`.
-4. **Creates a GitHub release** that names what the chart version pins.
+2. **Publishes both chart versions**, and refuses a version that is already published.
+3. **Adds what the chart version pins** to the release notes.
+4. **Publishes the GitHub release**, which creates the tag `vX.Y.Z`.
 
 CI also checks that both charts carry the same version.
-
-The release train in EduIDE-Helm still exists for a **lockstep** release that
-moves all repositories to one number. It is not the ordinary path, and on a
-normal `main` its pre-check fails by design.
 
 ## Channels
 
