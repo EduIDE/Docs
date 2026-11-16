@@ -158,6 +158,10 @@ const config: Config = {
               href: 'https://github.com/EduIDE',
             },
             {
+              label: 'Dashboard',
+              href: 'https://eduide.github.io/dashboard/',
+            },
+            {
               label: 'Documentation Repository',
               href: 'https://github.com/EduIDE/Docs',
             },
