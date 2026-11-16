@@ -85,7 +85,7 @@ Live Preview does not work in the cloud, because it serves on `127.0.0.1` inside
 THEIA_MINI_BROWSER_HOST_PATTERN="{{uuid}}.webview.{{hostname}}"
 ```
 
-The default pattern `{{uuid}}.mini-browser.{{hostname}}` has no gateway route. The webview host family is already routed and certified (`hosts.allWildcardInstances: ["*.webview."]` in the chart). `ENV` is not inherited from the base image, so every `ToolDockerfile` repeats it. The product extension silences Theia's "host pattern changed" warning for this one pattern. Students open a preview with "Open Preview to the Side" or right-click, Open With, Preview. Locally, open the IDE through `http://localhost:3000`, not `127.0.0.1`, so the browser resolves `<uuid>.webview.localhost`.
+The default pattern `{{uuid}}.mini-browser.{{hostname}}` has no gateway route. The webview host family is already routed and certified (`hosts.allWildcardInstances: ["*.webview."]` in the chart). The final stage of a `ToolDockerfile` starts from `ubuntu:24.04` and only copies files from the base IDE image, so it does not inherit its `ENV` and every `ToolDockerfile` repeats it. The product extension silences Theia's "host pattern changed" warning for this one pattern. Students open a preview with "Open Preview to the Side" or right-click, Open With, Preview. Locally, open the IDE through `http://localhost:3000`, not `127.0.0.1`, so the browser resolves `<uuid>.webview.localhost`.
 
 ## Workspace Mode
 

@@ -75,8 +75,8 @@ From chart 3.0.0 each app can override the setting with its own
 The standalone apps that replace the old `*-templates` apps follow it, where the
 template apps were always persistent.
 
-A temporary session also ends 60 minutes after the last input, not only at the
-24 hour lifetime, see
+A temporary session also ends after the inactivity timeout (`timeoutAfter`, 60
+minutes after the last input by default), not only at the lifetime limit, see
 [Session Management](../operations/session-management.md#when-a-session-ends-for-inactivity).
 Everything in it is gone then.
 
@@ -121,8 +121,7 @@ appDefinitions:
 | `requestsMemory` | Guaranteed memory. The scheduler only places the pod where this is available |
 | `requestsCpu` | Guaranteed CPU. Expressed in millicores |
 | `limitsMemory` | Hard cap. The pod is OOMKilled if it exceeds this value |
-
-There is no `limitsCpu` field in the current schema — CPU is best-effort beyond the request. To enforce CPU limits, this would need to be added at the operator level.
+| `limitsCpu` | CPU limit of the pod (chart default `"2"`). Kubernetes throttles the pod above it |
 
 ## Storage capacity planning
 

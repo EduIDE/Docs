@@ -13,7 +13,9 @@ Use these channels when the problem is about EduIDE itself.
 - On the launcher page, click **Report a bug** or **Request a feature** in the footer.
 - In the IDE, open the **Help** menu and click **Report Issue**.
 
-Both open the issue tracker on GitHub: `https://github.com/EduIDE/EduIDE/issues`.
+**Report Issue** in the IDE opens the issue tracker on GitHub: `https://github.com/EduIDE/EduIDE/issues`.
+The footer links on the launcher page open the tracker your installation sets, which can differ.
+If your installation sets none, they open `https://github.com/EduIDE/EduIDE-Cloud/issues`.
 You need a GitHub account.
 
 :::warning Issues are public

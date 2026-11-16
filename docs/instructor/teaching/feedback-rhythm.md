@@ -29,7 +29,7 @@ of "the system didn't tell me anything" is work that never left the workspace.
 - Commit and push at the end of every session, even if the work is unfinished.
 - Pushing is how you ask for feedback. It is not a submission ceremony.
 - A saved workspace keeps your files between sessions, a temporary one loses
-  them after 60 minutes without input, and in both cases only pushed work
+  them after 60 minutes without input (the default), and in both cases only pushed work
   reaches Artemis.
 
 Say it again in week two.

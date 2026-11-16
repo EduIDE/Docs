@@ -77,7 +77,7 @@ curl -X POST https://<cloud-service>/service \
   }'
 ```
 
-The response is a plain-string session URL. When that session later ends, its URL no longer answers with an error: the gateway redirects the request to the landing page's `/session-ended` page, see [Session Lifecycle](./session-lifecycle#the-session-ended-page).
+The response is a plain-string session URL. When that session later ends, the gateway redirects its URL to the landing page's `/session-ended` page, as long as the installation keeps `gateway.routes.sessionEndedRedirect` on (the default) and runs a landing page that serves the page. Do not rely on it for every installation, see [Session Lifecycle](./session-lifecycle#the-session-ended-page).
 
 `GET /service/{appId}` is available as an optional health or readiness probe. It returns a boolean and is not a prerequisite for launching. It establishes no session state.
 

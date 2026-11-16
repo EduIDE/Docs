@@ -91,9 +91,10 @@ different.
 :::
 
 Repeat this for each installation. Check first whether the client already
-exists: installations on the same Keycloak server and realm with the same
-`clientId` share **one** client, so adding one usually means appending its two
-hostnames to the lists above. At TUM, for example, the four test installations
+exists. Installations on the same Keycloak server and realm with the same
+`clientId` share **one** client. If it exists, skip the creation steps above and
+append the installation's two hostnames to the lists of the existing client.
+Create a new client only when none exists yet. At TUM, for example, the four test installations
 share one client, and Bonn and Mannheim share another. Editing a shared client
 edits it for everyone on it, and a removed or mistyped entry breaks their login
 too. Copy the current lists first, add rather than replace, and log in to an

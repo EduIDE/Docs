@@ -247,8 +247,10 @@ kubectl -n <namespace> get workspace <name> \
 | `theia-cloud.io/last-session-end-time` | when the operator stopped it |
 
 `GET /service/workspace/{appId}/{user}` returns both as `lastSessionEndReason`
-and `lastSessionEndTime`. A session a user or an admin stopped carries no
-reason. No CRD changes are involved, and the operator's ClusterRole already
+and `lastSessionEndTime`. A stop by a user or an admin sets no reason and
+leaves an earlier one in place, so a reason is current only if
+`lastSessionEndTime` is not older than the start of the session you ask about.
+No CRD changes are involved, and the operator's ClusterRole already
 allows `patch` on workspaces. The landing page uses the reason on its
 `/session-ended` page.
 

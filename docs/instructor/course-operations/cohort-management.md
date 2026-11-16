@@ -57,7 +57,10 @@ An idle session is shut down. By default, after 50 minutes without input the IDE
 asks students whether they are still there, and after 60 minutes without input
 the session stops. Installations may change these values, so confirm them with
 the platform team. Closing the browser tab does not keep a session alive: it
-ends after the same period of inactivity.
+ends after the same period of inactivity. One exception: after the platform
+restarts its operator, for example during an upgrade, a session whose tab was
+already closed runs until its lifetime limit, so closing tabs does not always
+free capacity quickly.
 
 What happens to the files depends on the workspace mode, which the launcher
 page shows as a **Temporary** or **Saved** badge and the IDE status bar shows
@@ -65,9 +68,10 @@ as **Temporary workspace** or **Saved workspace**:
 
 - **Saved workspace:** the files survive. Students click **Resume my session**
   on the session ended page, or start the exercise from Artemis again. Both
-  reopen the same workspace.
+  reopen the same workspace. Resume works only in the same browser tab and
+  within 24 hours of the start; otherwise students start from Artemis.
 - **Temporary workspace:** the files are lost when the session ends, also at
-  the 60 minute timeout. Only pushed work survives.
+  the inactivity timeout. Only pushed work survives.
 
 This matters for how you talk to students:
 

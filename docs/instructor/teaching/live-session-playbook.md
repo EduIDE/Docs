@@ -41,8 +41,9 @@ reloading is the right answer.
 branch, nothing committed, or a conflict. Treat it as you would in any other
 environment.
 
-**"My session closed."** It timed out after 60 minutes without input, or reached
-its maximum run time. The IDE asked "Are you still here?" after 50 minutes.
+**"My session closed."** It timed out after 60 minutes without input (the default),
+or reached its maximum run time. The IDE asked "Are you still here?" after 50
+minutes.
 Students who listen to a lecture with the IDE open but untouched are the usual
 case. If the workspace is **Saved**, **Resume my session** on the session ended
 page (or starting the exercise from Artemis again) gives the files back. If it

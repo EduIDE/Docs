@@ -13,7 +13,7 @@ EduIDE has real advantages, but it also has real constraints. This section shoul
 - some native or highly specialized tooling may not fit well
 - browser-based environments introduce platform and network dependencies
 - the runtime model is managed, so unrestricted machine access is not the default
-- sessions end after 60 minutes without input, and temporary workspaces lose their files then
+- sessions end after 60 minutes without input (the default, installations can change it), and temporary workspaces lose their files then
 - the platform is still in active development, so there may be bugs and limitations
 
 ## Teaching implications

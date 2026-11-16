@@ -14,7 +14,7 @@ It is published as `ghcr.io/eduide/eduide-image-mannheim/java-25`.
 ## What It Shows
 
 - **Derive from an edition.** The `Dockerfile` starts `FROM ghcr.io/eduide/eduide/java-25-standalone:${EDUIDE_VERSION}`. Use `<language>-standalone` for installations without Artemis and `<language>-artemis` for Artemis installations. Scorpio, the data bridge and the session monitor stay in the image; do not remove them.
-- **Add packages, extensions and settings.** Packages go in with `USER root` and `apt-get`, extensions are unpacked into `/home/theia/plugins/<extension id>`, and course settings and keybindings (`user/settings.json`, `user/keymaps.json`) are merged into the edition's user settings, where the course wins.
+- **Add packages, extensions and settings.** Packages go in with `USER root` and `apt-get`, extensions are unpacked into `/home/theia/plugins/<extension id>`, and course settings (`user/settings.json`) are merged into the edition's user settings, where the course wins, and the course keybindings (`user/keymaps.json`) replace the edition's `keymaps.json`.
 - **Build and test.** The workflow is the shared EduIDE one and publishes multi-arch images to `ghcr.io`. Every build runs `scripts/smoke-test.sh`: the IDE answers on port 3000, the EduIDE plugins are present, `java` and `mvn` run.
 
 ## Versioning

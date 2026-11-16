@@ -27,7 +27,7 @@ Monitoring is configured under `monitoring.*` in the **`eduide-cluster`** chart 
 
 The chart creates:
 
-- Two `PodMonitor` resources (`monitoring.coreos.com/v1`) - **not** `ServiceMonitor`s.
+- Three `PodMonitor` resources (`monitoring.coreos.com/v1`) - **not** `ServiceMonitor`s.
 - Two Grafana dashboard `ConfigMap`s, labelled `grafana_dashboard: "1"`.
 
 ### Prerequisites
@@ -98,17 +98,17 @@ This value renders nothing on its own - no template in the `eduide` chart reads 
 
 ```bash
 kubectl get podmonitor -n <prometheus-namespace>
-# expect: theia-cloud-service, theia-cloud-sessions
+# expect: theia-cloud-service, theia-cloud-sessions, theia-cloud-operator
 
 kubectl get configmap -n <grafana-dashboard-namespace> -l grafana_dashboard=1
 # expect: theia-cloud-dashboard-overview, theia-cloud-dashboard-session-startup
 ```
 
-Then confirm Prometheus picked them up: open the Prometheus UI under **Status → Targets** and look for the two job names, or port-forward and check the service discovery page. If the `PodMonitor`s exist but no targets appear, the cause is almost always the `podMonitorSelector` problem described above.
+Then confirm Prometheus picked them up: open the Prometheus UI under **Status → Targets** and look for the three job names, or port-forward and check the service discovery page. If the `PodMonitor`s exist but no targets appear, the cause is almost always the `podMonitorSelector` problem described above.
 
 ## What is actually scraped
 
-Two scrape configurations, and it is worth knowing exactly what each one covers.
+Three scrape configurations, and it is worth knowing exactly what each one covers.
 
 ### `theia-cloud-service`
 
@@ -123,6 +123,10 @@ Selects pods in `sessionNamespaces` whose `app` label is **not** one of `convers
 Session pods are labelled `app: <sessionName>-<sessionUID>`, so there is no stable label value to select on positively. That is why the selector is a negative match.
 
 Whether anything answers on `/metrics` depends entirely on the IDE image you run. A stock Theia or Code image does not serve Prometheus metrics on its application port, in which case these targets appear in Prometheus as `DOWN`. That is expected, not a fault to chase.
+
+### `theia-cloud-operator`
+
+Selects the operator pods in `targetNamespaces` and scrapes the container port named `metrics`. It finds a target only when `operator.metricsPort` is set, see [Operator metrics](#operator-metrics).
 
 ### What is not scraped
 

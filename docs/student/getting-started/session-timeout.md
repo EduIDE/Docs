@@ -15,6 +15,9 @@ It ends when you are away for too long, or when it reaches the maximum run time 
 | 50 minutes without input | The IDE asks **Are you still here?** and the browser tab title blinks **Session ends soon** |
 | 60 minutes without input | The session stops |
 
+These are the default limits.
+Your installation can use other values, so ask your instructor if you are not sure.
+
 Input means typing, clicking, moving the mouse and scrolling in the IDE tab, and editing or saving files.
 Background output from Artemis, Git or language servers does not count.
 Scrolling inside a panel that shows a web page, for example the Artemis problem statement, does not count either.

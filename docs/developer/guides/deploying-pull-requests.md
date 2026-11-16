@@ -18,7 +18,7 @@ EduIDE Deployment is the only place where preview artifacts from several reposit
 Pull request artifacts are never published as `latest`.
 
 - **Images** (EduIDE Cloud, EduIDE, the landing page) get the tag `pr-<number>`. The shared build workflow in `EduIDE/.github` computes it for every pull request. That tag moves with each commit, and the IDE app definitions default to `imagePullPolicy: IfNotPresent`, so a node that already has the tag can run a stale image. For a test deployment use the immutable tag `pr-<number>-<sha7>`, with the short hash of the pull request merge commit (for example `pr-223-2aac0e3`).
-- **Charts** (EduIDE Helm) get a preview version on every push, published by the `release-pr-preview` job of `release.yml` for both charts, `eduide-cluster` and `eduide`. The job only runs for pull requests from a branch of the EduIDE Helm repository itself, so a fork gets no preview: push the branch to the repository instead. The version is the chart's version with a PR suffix and the short commit hash: `3.0.0-pr.79.<sha7>` for chart 3.0.0 and pull request 79. If the chart version already is a prerelease, the suffix is appended with a dot instead (`<version>.pr.<number>.<sha7>`). A preview sorts below the release it previews, so `helm upgrade` never picks it up by accident.
+- **Charts** (EduIDE Helm) get a preview version on every push, published by the `release-pr-preview` job of `release.yml` for both charts, `eduide-cluster` and `eduide`. The job only runs for pull requests from a branch of the EduIDE Helm repository itself, so a fork gets no preview: push the branch to the repository instead. The version is the chart's version with a PR suffix and the short commit hash: `3.0.0-pr.79.<sha7>` for chart 3.0.0 and pull request 79. If the chart version already is a prerelease, the suffix is appended with a dot instead (`<version>.pr.<number>.<sha7>`). For a release version, the preview sorts below the release (`3.0.0-pr.79.<sha7>` is below `3.0.0`). For a prerelease base, the preview sorts above that prerelease (`3.0.0-rc.1.pr.79.<sha7>` is above `3.0.0-rc.1`), so pin `chart_version` explicitly in that case.
 
 Several pull requests coexist because each has its own tag or version.
 
@@ -74,7 +74,7 @@ Set several inputs in one run to test pull requests of different repositories to
 1. Open the pull request in the repository that builds the artifact.
 2. Wait until the build has published the preview images or charts.
 3. Open EduIDE Deployment and run `Deploy environment` with `dry_run` on.
-4. Check the diff, then run it again with `dry_run` off.
+4. Open the diff in the run summary. The workflow ignores a failing `helm diff`, so a green dry run does not prove the diff worked. If the diff shows an error or is empty without reason, stop and fix the inputs. Otherwise run it again with `dry_run` off.
 5. Validate the result in the chosen test environment.
 
 ## Quick Reference

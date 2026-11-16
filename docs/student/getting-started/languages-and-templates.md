@@ -23,6 +23,8 @@ Your installation may show only some of them.
 
 When you start a language yourself, you can pick a starter template.
 It puts a small example project into your workspace, with tasks that run and test it.
+A template only fills an empty workspace.
+If you pick one in a Saved workspace that already has files, EduIDE does not replace them.
 
 | Language | Templates |
 |---|---|

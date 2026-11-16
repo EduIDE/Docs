@@ -45,8 +45,9 @@ shows the same files and does not download your exercise again.
 
 ## 6) Come back after a break
 
-If your session ends, start the exercise from Artemis again, or use **Resume my session** on the session ended page.
+If your session ends with a **Saved workspace**, start the exercise from Artemis again, or use **Resume my session** on the session ended page.
 Both reopen the same workspace.
+With a **Temporary workspace**, starting from Artemis again gives you a new session with only the work you pushed before.
 See [When Your Session Ends](./session-timeout.md).
 
 ## 7) Continue in EduIDE
