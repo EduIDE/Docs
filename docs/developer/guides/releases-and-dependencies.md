@@ -7,12 +7,6 @@ description: How the EduIDE repositories depend on each other and how a manual r
 
 Every released EduIDE repository is released by hand. Nothing publishes on a push to `main`. This page shows which repository pins which other repository, in which order to release, and how one release runs.
 
-:::note
-
-This is the process once the `ci/manual-release` pull requests are merged in the org `.github` repository and in every released repository. Until then, EduIDE-Helm, workspace-garbage-collector and EduIDE-shared-cache still release on a push to `main`, and the other repositories release when someone publishes a GitHub Release by hand.
-
-:::
-
 ## Dependency graph
 
 An arrow points from the consumer to the repository whose release it pins. Dashed arrows are pins that are dormant or not released yet.
@@ -24,7 +18,7 @@ flowchart LR
   cloud["EduIDE-Cloud<br/>3 images + monitor vsix"]
   landing["EduIDE-Landing-Page<br/>image"]
   ide["EduIDE<br/>IDE images"]
-  gc["workspace-garbage-collector<br/>chart"]
+  gc["workspace-garbage-collector<br/>chart + image"]
   cache["EduIDE-shared-cache<br/>chart + image"]
   pool["EduIDE-pool-scaler<br/>image"]
   lsp["EduIDE-lsp-extension<br/>dormant"]
@@ -56,8 +50,8 @@ All repositories also use the org `.github` repository through moving refs (`@v1
 | scorpio | Open VSX extension, vsix release asset | `vX.Y.Z` | none |
 | EduIDE-Cloud | `operator`, `service`, `conversion-webhook` images, monitor vsix | `vX.Y.Z` | none |
 | EduIDE-Landing-Page | image | `vX.Y.Z` | none |
-| workspace-garbage-collector | Helm chart (OCI) | `theia-workspace-garbage-collector-X.Y.Z` | none |
-| EduIDE-shared-cache | Helm chart (OCI), `gradle-cache` image | `eduide-shared-cache-X.Y.Z` | none |
+| workspace-garbage-collector | Helm chart (OCI), `garbage-collector` image | `vX.Y.Z` (until 0.2.0: `theia-workspace-garbage-collector-X.Y.Z`) | none |
+| EduIDE-shared-cache | Helm chart (OCI), `gradle-cache` image | `vX.Y.Z` (until 0.5.3: `eduide-shared-cache-X.Y.Z`) | none |
 | EduIDE-pool-scaler | image | `vX.Y.Z` | none |
 | EduIDE | IDE images (`base` plus the language images) | `vX.Y.Z` | scorpio, data-bridge and the Cloud monitor vsix (`images/base-ide/package.json.patch`, `theiaPlugins`) |
 | EduIDE-image-mannheim | image | `vX.Y.Z` | EduIDE (`Dockerfile`, `ARG EDUIDE_VERSION`) |
