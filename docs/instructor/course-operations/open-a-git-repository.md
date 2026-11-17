@@ -51,8 +51,30 @@ https://eduide.example.edu/?gitUri=https://git.example.edu/my-org/my-exercise.gi
 ## Limits
 
 - Only HTTPS links work, and only for hosts the administrator allows. GitHub and GitLab.com are allowed by default. Ask the platform team to add your own Gitea, Forgejo or GitLab server, see [Landing page values](/admins/install/installing).
-- The link must not contain credentials. Private repositories do not work through such a link today.
+- The link must not contain credentials. A private repository does not open automatically, see [Private repositories](#private-repositories).
 - Artemis exercises keep using the links Artemis creates.
+
+## Push changes
+
+Students can push from the terminal (`git push`) or from the Source Control view. EduIDE asks for a username and a password. GitHub, GitLab and most Gitea and Forgejo servers do not accept the account password for a Git push over HTTPS, so the student enters an **access token** as the password:
+
+| Host | Where to create the token | Permission |
+|---|---|---|
+| GitHub | Settings > Developer settings > Personal access tokens > Fine-grained tokens. Limit it to the one repository. | Contents: Read and write |
+| GitLab | User settings > Access tokens | `write_repository` |
+| Gitea, Forgejo | Settings > Applications > Generate new token | repository: Read and Write |
+
+In the standalone images, EduIDE keeps the username and token in memory for three hours, so the student enters them once per session. The Artemis images ask on every push. Neither writes them to disk. A student who may not push to the repository pushes to a fork: they fork it on the Git host, then run `git remote add fork <fork URL>` and `git push fork`.
+
+## Private repositories
+
+A private repository does not open automatically, because the link never carries credentials. The IDE then shows "it is private or does not exist" together with the clone command. The student opens a terminal in the empty workspace and runs:
+
+```
+git clone https://<host>/<path>.git .
+```
+
+and enters their username and an access token with read permission, as in [Push changes](#push-changes). A token with write permission also covers the later push.
 
 ## Browser extension
 
