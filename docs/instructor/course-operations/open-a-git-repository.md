@@ -19,7 +19,7 @@ https://<eduide>/?appDef=<app>&gitUri=https://<host>/<path>.git&gitRef=<branch|t
 | `gitUri` | yes | The HTTPS clone URL of the repository, ending in `.git`. |
 | `gitRef` | no | A branch, tag or commit to check out after the clone. Without it, the default branch opens. |
 
-Encode special characters in the `gitUri` value when you build the link by hand.
+Encode special characters in every value when you build the link by hand, `gitUri` and `gitRef` alike. An unencoded `#` in a branch name such as `release#2` cuts the value off.
 
 ## Examples
 
@@ -44,7 +44,8 @@ https://eduide.example.edu/?gitUri=https://git.example.edu/my-org/my-exercise.gi
 ## What the student sees
 
 - The page shows the repository and waits for one click. A link never starts a session by itself.
-- A wrong or missing `gitRef` gives a warning in the IDE, and the default branch opens.
+- A `gitRef` that does not exist in the repository gives a warning in the IDE, and the default branch opens.
+- A `gitRef` that could be read as a git option or range (it starts with `-`, or contains `..`, spaces or similar characters) is dropped by the page without a message, and the default branch opens.
 - For a repository that is not from Artemis, the IDE asks before it prewarms the Gradle build, because that runs the repository's own build code.
 - A workspace belongs to one user, app, repository and ref. A persistent workspace keeps its files, and each ref gets its own. A temporary session belongs to one user, app, repository and ref in the same way.
 
@@ -66,6 +67,8 @@ Students can push from the terminal (`git push`) or from the Source Control view
 
 In the standalone images, EduIDE keeps the username and token in memory for three hours, so the student enters them once per session. The Artemis images ask on every push. Neither writes them to disk. A student who may not push to the repository pushes to a fork: they fork it on the Git host, then run `git remote add fork <fork URL>` and `git push fork`.
 
+A link whose `gitRef` names a tag or a commit opens without a branch (detached `HEAD`), and a push fails there. The student first creates a branch with `git switch -c <branch name>` and then pushes it with `git push -u origin <branch name>`, or `fork` instead of `origin`.
+
 ## Private repositories
 
 A private repository does not open automatically, because the link never carries credentials. The IDE then shows "it is private or does not exist" together with the clone command. The student opens a terminal in the empty workspace and runs:
@@ -74,7 +77,7 @@ A private repository does not open automatically, because the link never carries
 git clone https://<host>/<path>.git .
 ```
 
-and enters their username and an access token with read permission, as in [Push changes](#push-changes). A token with write permission also covers the later push.
+Git asks for a username and a password: the student enters their username and an access token with read permission, as in [Push changes](#push-changes). If the link has a `gitRef`, they then run `git checkout <gitRef>`. A token with write permission also covers the later push.
 
 ## Browser extension
 
