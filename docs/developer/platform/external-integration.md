@@ -50,10 +50,12 @@ A link with a `gitUri` is one of two types. The landing page decides by the host
 **External link.** Every other link with a `gitUri`. The landing page checks it before anything starts:
 
 - The URL is a valid HTTPS URL.
-- The host is in `landingPage.allowedGitHosts` (default `github.com` and `gitlab.com`) or in `trustedArtemisHosts`.
+- The host is in `landingPage.allowedGitHosts` or in `trustedArtemisHosts`.
 - The URL carries no credentials.
 
 A link that fails a check shows the reason and starts nothing. Only the repository (`GIT_URI`) and the ref (`GIT_REF`) pass on; `artemisUrl`, `artemisToken`, `gitUser` and `gitMail` are dropped. A valid external link always waits for one click, because the page cannot tell who wrote it. Without credentials, only public repositories work for external links today.
+
+External links are an alpha feature in 3.0, off while `landingPage.allowedGitHosts` is empty, which is the default. While off, the page refuses every external link, and a link that is not a trusted Artemis link but carries an `artemisToken` works as before 3.0: one click, every parameter passed on, no `GIT_SOURCE`.
 
 The landing page sets `GIT_SOURCE` itself (`artemis` or `external`). A link cannot set it.
 

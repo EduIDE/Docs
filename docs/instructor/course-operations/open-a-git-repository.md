@@ -5,6 +5,11 @@ description: Share a link that opens a GitHub, GitLab or Gitea repository in Edu
 
 # Open a Git repository in EduIDE
 
+:::note Alpha
+Repository links are an alpha feature in 3.0 and are off by default.
+Ask the platform team whether your installation turned them on and which Git hosts it allows.
+:::
+
 A link can open any public Git repository in EduIDE. Scorpio clones the repository into an empty workspace, and the student works in the IDE. Use it for starter code, demos and examples that do not live in Artemis.
 
 ## The link
@@ -51,7 +56,7 @@ https://eduide.example.edu/?gitUri=https://git.example.edu/my-org/my-exercise.gi
 
 ## Limits
 
-- Only HTTPS links work, and only for hosts the administrator allows. GitHub and GitLab.com are allowed by default. Ask the platform team to add your own Gitea, Forgejo or GitLab server, see [Landing page values](/admins/install/installing).
+- Only HTTPS links work, and only for hosts the administrator allows. No host is allowed by default. Ask the platform team to add GitHub, GitLab.com or your own Gitea, Forgejo or GitLab server, see [Landing page values](/admins/install/installing).
 - The link must not contain credentials. A private repository does not open automatically, see [Private repositories](#private-repositories).
 - Artemis exercises keep using the links Artemis creates.
 
