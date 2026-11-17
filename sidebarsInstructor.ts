@@ -29,7 +29,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Running a Course',
-      items: ['course-operations/course-setup', 'course-operations/cohort-management'],
+      items: ['course-operations/course-setup', 'course-operations/cohort-management', 'course-operations/open-a-git-repository'],
     },
     {
       type: 'category',

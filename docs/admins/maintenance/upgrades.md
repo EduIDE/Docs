@@ -143,7 +143,13 @@ Then move to 2.7.3 as described in
 - **Artemis links wait for a click.** A link with `gitUri` and `artemisToken`
   starts the IDE by itself only when both hosts are in
   `landingPage.trustedArtemisHosts`, which is empty by default. List your
-  Artemis host there, and your git server's host if it differs.
+  Artemis host there, and your git server's host if it differs. Without it,
+  such a link works as before after one click, as long as
+  `landingPage.allowedGitHosts` is empty, the default. Once you list hosts
+  there to turn on repository links (alpha), a link that embeds credentials in
+  `gitUri` is refused, and any other link opens as an external link: HTTPS
+  only, no Artemis parameters, host in `landingPage.allowedGitHosts`, always
+  one click.
 - **The footer shows the landing page version.** It now reads the tag of the
   running landing page image, for example `v1.3.1`.
   `landingPage.footerLinks.attribution.version` still overrides it, so remove

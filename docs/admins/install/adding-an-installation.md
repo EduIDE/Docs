@@ -35,7 +35,8 @@ spec:
 
 `values.yaml` is a plain Helm values file: hosts, Gateway `parentRefs`, Keycloak,
 branding, and the Artemis hosts whose links may start the IDE without a click
-(`landingPage.trustedArtemisHosts`), and the apps it offers
+(`landingPage.trustedArtemisHosts`), the git hosts that repository links may
+clone from (`landingPage.allowedGitHosts`, alpha, off while empty), and the apps it offers
 (`appDefinitions.enabled`). Add `networkPolicies.privateEgressCidrs` only when
 the cluster's pod or service CIDRs are outside the default private ranges, or
 sessions must reach a private Artemis or git server; read
