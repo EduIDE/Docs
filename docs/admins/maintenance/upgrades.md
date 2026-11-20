@@ -1,615 +1,97 @@
 ---
 title: Upgrades
-description: Moving an installation to a new EduIDE version.
+description: Migrating from EduIDE 2.x to 3.0 by parallel run, and upgrading within 3.x.
 ---
 
 # Upgrades
 
-An upgrade is a version change and a `helm upgrade`. There are two charts, and
-only one of them is usually involved. When both change, upgrade `eduide-cluster`
-first.
+Commands use the variables from the [Chart reference](../install/installing.md). Do not upgrade during an exam period.
 
-## What you are upgrading
+## Upgrading within 3.x
 
-| Chart | When it changes | Blast radius |
-|---|---|---|
-| `eduide` | Most upgrades | One installation |
-| `eduide-cluster` | CRDs, the conversion webhook, Gateway or issuer changes | **Every installation on the cluster** |
-
-Both carry the same version. Read the release notes to see whether the cluster
-chart changed; if it did, upgrade it first and expect it to affect everyone.
-
-## Before
-
-- Read the release notes, particularly for CRD changes.
-- Check what you are running: `helm list -n <namespace>`.
-- Know how to go back: [Rollback](rollback.md).
-- On a cluster with more than one installation, upgrade a test one first.
-
-## Upgrading an installation
+Order: cluster chart first, then the installation chart of each deployment.
 
 ```bash
-helm upgrade eduide oci://ghcr.io/eduide/charts/eduide \
-  --version <new-version> -n <namespace> \
-  -f values.yaml -f secrets.yaml \
-  --wait --timeout 15m
+helm upgrade eduide-cluster $EDUIDE_CLUSTER_CHART --version $EDUIDE_VERSION \
+  --namespace eduide-system
+helm upgrade eduide $EDUIDE_CHART --version $EDUIDE_VERSION \
+  --namespace eduide-<deployment> -f values.yaml
 ```
 
-Keep the same release name and the same values files. Changing the release name
-is not an upgrade - Helm treats it as a new install and will refuse to adopt the
-existing resources.
+1. Read the [CHANGELOG](https://github.com/EduIDE/EduIDE-control-plane/blob/main/CHANGELOG.md) of the control plane and the release notes of the installation chart. They state compatibility and new values.
+2. Render first: `helm template ... | kubectl diff -f -` or `helm diff upgrade` shows what changes.
+3. Upgrade the cluster chart. Changes are additive, and several deployments share the CRDs. Older operators ignore unknown fields.
+4. Upgrade one deployment, run the checks from [Installing EduIDE](../install/installing.md#verify), then the next.
+5. Running sessions survive an upgrade. The operator and service restart with a rolling update. The service and authz keep serving while Envoy drops them from its endpoints.
 
-:::tip Preview it first
-`helm diff upgrade` (from the helm-diff plugin) shows what will change before
-anything is applied. On a live installation this is worth the extra step.
-:::
+Changing IDE images (`images.tag` or a template `tag`) affects new sessions only. Running sessions keep their image.
+Image tags that you pin by digest need a new digest per release.
 
-### `--wait` and image preloading
+## Migrating from 2.x
 
-The preloading DaemonSet pulls every IDE image onto every node. On an upgrade
-that changes the image set, that can take longer than a sensible Helm timeout.
+EduIDE 3.0 replaces the Java control plane of 2.x (operator, REST service, landing page, per-session login proxy, data bridge, workspace garbage collector, error reporting service) with the Go control plane.
+The migration method is a parallel run per deployment: both stacks run side by side, and users move when you say so.
+The full procedure is [docs/operations/migration.md](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/operations/migration.md) in the control plane repository. This is the summary.
 
-Either allow a generous `--timeout`, or drop `--wait` and watch the rollout
-yourself:
+### Rules
 
-```bash
-kubectl -n <namespace> rollout status deploy/operator-deployment
-kubectl -n <namespace> rollout status deploy/service-deployment
-kubectl -n <namespace> rollout status deploy/landing-page-deployment
+- The old and the new stack use different CRD groups (`theia.cloud` and `eduide.github.io`) and can share a cluster.
+- Move test deployments first, then staging, then pilots, then production. Exit criteria steer the order, not the calendar.
+- No production deployment moves during an exam period.
+- Running sessions are not migrated. They end on the old stack.
+- The old stack stays available as a way back until the end of the month after the switch, and gets only security fixes.
+- When all deployments run on the new stack, switch off the old stack and its garbage collector.
+
+### Steps per deployment
+
+1. **Prepare.** Install only the CRDs next to the 2.x release (`$EDUIDE_CRDS_CHART`, see the warning in [Installing EduIDE](../install/installing.md#1-cluster-chart-once-per-cluster)). The cluster chart refuses on a cluster that still has Theia Cloud CRDs. Create the Keycloak clients, including the confidential gateway client with redirect `https://<instance host>/oauth2/callback`. Reserve the three hostnames ([Hostnames and Certificates](../install/certificates.md)). The new hosts differ from the old ones.
+2. **Install the new stack** in its own namespace, with its own values. Do not touch the old stack.
+3. **Check the IDE images.** They must be 3.0 images: browser only, with the `eduide-session` extension. Older images do not receive launch data. The editions are `<language>-artemis` and `<language>-standalone`. Haskell, OCaml and Swift images no longer exist, and neither do Electron builds.
+4. **Smoke test** with test users: a warm and a cold launch, the IDE as owner and as a foreign user (expect 403), and the NetworkPolicy test.
+5. **Import saved workspaces** (below).
+6. **Switch** the landing page of the institution to the new stack. Watch the [runbooks](../operations/incident-response.md) and the metrics for a day.
+7. **Keep the way back.** Workspaces created on the new stack stay in their volumes.
+8. **Retire** the old stack of the deployment after the grace period. Then switch the cluster to the cluster chart with `allowRemovingTheiaCloud=true`; this deletes the 2.x CRDs.
+
+### Template names change
+
+Application definitions are now templates. The names follow the editions: `java-17` is the Artemis edition, `java-17-standalone` the standalone one.
+Artemis links must start the `artemis` edition. Check them after the switch. Old sessions on 2.x names end on the old stack.
+
+### Importing saved workspaces
+
+An `IDEWorkspace` with `persistence.mode: volume` can adopt an existing PVC through `existingClaimName`.
+The import sets `status.lastUsed` to the import time, so the adopted data does not expire at once (default retention 14 days).
+The operator becomes controller owner of the claim, so the retention deletes the claim together with the workspace. Remove the owner reference from the PVC if the data must outlive the workspace.
+
+For each old workspace:
+
+1. List the PVCs of the old namespace: `kubectl -n <ns> get pvc`.
+2. Create an `IDEWorkspace` that names the PVC. The workspace name is `w-` plus 16 hex characters (see the [data model](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/architecture/data-model.md)).
+3. Check that `status.phase` is `Ready` and `status.claimName` equals the PVC name.
+
+```yaml
+apiVersion: eduide.github.io/v1alpha1
+kind: IDEWorkspace
+metadata:
+  name: w-<16 hex>
+  labels:
+    app.kubernetes.io/managed-by: eduide
+spec:
+  owner: <user name from the token claim>
+  templateRef: <template>
+  persistence:
+    mode: volume
+    existingClaimName: <old PVC name>
 ```
 
-Note the `-deployment` suffix; the Deployments are not named `operator` or
-`service`.
-
-## Upgrading the cluster chart
-
-```bash
-helm upgrade eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
-  --version <new-version> -n eduide-system \
-  -f cluster-values.yaml --wait
-```
-
-CRDs are ordinary templates in this chart rather than files in `crds/`, which
-means `helm upgrade` genuinely updates them - unlike many charts, where CRD
-changes need a manual `kubectl apply`.
-
-That cuts both ways: a CRD change lands the moment you upgrade, for every
-installation on the cluster at once. **A release that changes a stored CRD
-version cannot be undone by rolling back the tenant chart** - see
-[Rollback](rollback.md).
-
-## What visitors see during an upgrade
-
-From chart 2.4.0, the landing page never shows Envoy's raw
-`no healthy upstream`. While it has no ready pod, Envoy answers with a static
-page instead: "EduIDE is currently unavailable", with a German line below and a
-reload every 30 seconds. The status code stays 503. It needs Envoy Gateway;
-set `maintenancePage.enabled: false` if you route with something else.
-
-An upgrade rarely gets that far. The landing page and REST service start a new
-pod before stopping an old one and drain for 10 seconds before shutting down.
-With `landingPage.replicas` and `service.replicas` at 2 they also survive a
-node going away, with a PodDisruptionBudget each. On a single-node cluster set
-`podDisruptionBudget.enabled: false`, or every `kubectl drain` hangs.
-
-To show the page on purpose, for maintenance that takes longer than an upgrade,
-scale the landing page to 0 and back:
-
-```bash
-kubectl -n <namespace> scale deploy/landing-page-deployment --replicas=0
-kubectl -n <namespace> scale deploy/landing-page-deployment --replicas=<your landingPage.replicas>
-```
-
-The next `helm upgrade` also brings it back. Only the landing page shows the
-page: the REST service and running sessions keep their own errors, and students
-already in an IDE keep working.
-
-## After
-
-- All four Deployments Ready, no pod in `ImagePullBackOff`.
-- The landing page returns 200 **and its TLS validates without `-k`**.
-- Start a real session and open something in a webview panel. Everything above
-  can be healthy while sessions do not start.
-- If the AppDefinition set changed, check the landing page offers what you
-  expect.
-
-## Upgrading from 2.4 or 2.5.0 to 2.5.1 and later
-
-Chart 2.5.1 turns on the session hardening described in
-[Session Hardening](../security/session-hardening.md). Most of it needs nothing
-from you, but some of it refuses to render, or quietly changes behaviour, until
-you act. Go to 2.6.2 directly: 2.6.x adds only the items listed at the end.
-Then move to 2.7.3 as described in
-[Upgrading from 2.6 to 2.7.0](#upgrading-from-26-to-270), which renames every app.
-
-### The upgrade fails without these
-
-- **`keycloak.cookieSecret`.** The chart no longer ships a default and fails to
-  render without one. Set a unique value per installation, see
-  [Access Control](../platform/access-control.md#oauth2-proxy-cookie-secret).
-- **`versions.cloud` 1.2.1 or later.** The chart passes the new
-  `--allowedEnvFromSecrets`, `--allowedEnvFromConfigMaps` and
-  `--allowCustomEnvFromMap` flags, which operator 1.2.0 rejects at startup. The
-  chart pins 1.2.2; check only if your values override `versions.cloud`,
-  `operator.image` or `service.image`. A full image reference there wins over
-  `versions.cloud`.
-- **`versions.landingPage` 1.3.0 or later.** The landing page Deployment now
-  runs as non-root on port 8080. An older image runs as root on port 80 and its
-  pods do not start. The chart pins 1.3.1; check only if your values override
-  `versions.landingPage` or `landingPage.image`.
-
-### Behaviour that changes unless you set something
-
-- **Artemis links wait for a click.** A link with `gitUri` and `artemisToken`
-  starts the IDE by itself only when both hosts are in
-  `landingPage.trustedArtemisHosts`, which is empty by default. List your
-  Artemis host there, and your git server's host if it differs.
-- **The footer shows the landing page version.** It now reads the tag of the
-  running landing page image, for example `v1.3.1`.
-  `landingPage.footerLinks.attribution.version` still overrides it, so remove
-  that value to show the real version.
-- **Session cookies need HTTPS.** `oauth2Proxy.cookieSecure` defaults to
-  `true`. An installation served over plain HTTP must set it to `false`, or
-  login never completes.
-- **Repository links get a new workspace.** Landing page 1.3.0 puts the user
-  and the full app key into the workspace name, so two users can no longer end
-  up with the same name. The first launch of each repository link after the
-  upgrade creates a new workspace. The old ones stay until the
-  [garbage collector](../operations/garbage-collection.md) removes them, and
-  work in them that was never pushed is no longer reachable from the landing
-  page. Playground workspaces keep their names. Upgrade between exercises, and
-  tell students to push first.
-
-### Check these against your cluster
-
-- **NetworkPolicies are on.** They need a CNI that enforces them.
-  `networkPolicies.gatewayNamespace` must name the namespace of your gateway
-  (default `envoy-gateway-system`), or no request reaches a session. If your pod
-  or service CIDR is outside the private ranges, or sessions must reach a host
-  inside them, adjust `networkPolicies.privateEgressCidrs`. See
-  [Session Hardening](../security/session-hardening.md#networkpolicies).
-- **Launch requests can no longer mount Secrets or ConfigMaps.** If something
-  of yours sends `env.fromSecrets` or `env.fromConfigMaps`, list those names in
-  `operator.allowedEnvFromSecrets` and `operator.allowedEnvFromConfigMaps`.
-  Sessions that are running keep what they already received; restart them to
-  revoke it.
-- **The operator's rights are namespaced.** If your setup needs it to act in
-  other namespaces, set `operator.clusterWideRbac: true`.
-- **The monitor port is 8081.** `appDefinitions.defaults.monitor.port` and
-  `networkPolicies.monitorPort` both default to it. If you set a different
-  monitor port on an app in `appDefinitions.apps`, the chart opens it too;
-  keep `networkPolicies.monitorPort` matching the default. An AppDefinition
-  created outside the chart with another monitor port needs its own
-  NetworkPolicy allowing the operator in on that port.
-- **Two secrets moved.** `SERVICE_AUTH_TOKEN` and `KEYCLOAK_CLIENTSECRET` are in
-  the `service-config-secret` Secret now, not in the `service-config` ConfigMap.
-  Update any tooling of your own that read them from there.
-
-### 2.6.0 to 2.6.2
-
-- **2.6.0** adds `preloading.nodeSelector`, so the preloading DaemonSet can be
-  limited to labelled nodes. Empty, the default, renders as before. Sessions
-  are not pinned by it: one that lands on another node pulls its image cold.
-- **2.6.0** stops serving the AppDefinition versions `v1beta8` to `v1beta10`,
-  which the conversion webhook cannot map. Every read at those versions failed
-  anyway, and the API server retried them about six times a second, flooding its
-  log. Use `theia.cloud/v1beta11`. This change is in `eduide-cluster`, so
-  upgrade the cluster chart too. 2.5.1 was published without it.
-- **2.6.1** pins landing page 1.3.1 and **2.6.2** pins EduIDE-Cloud 1.2.2. Both
-  carry dependency security fixes only.
-
-### Still on EduIDE 1.4.0
-
-Every chart up to 2.6.2 pins the IDE images to EduIDE 1.4.0. The IDE-side
-changes (Theia on loopback, no scanoss, the data bridge and Scorpio fixes, the
-session monitor) arrive with EduIDE 1.5.0, which chart 2.7.0 pins. Until the IDE
-images carry the session monitor, every activity poll fails, and from
-EduIDE-Cloud 1.2.1 the operator keeps such a session running rather than
-treating it as idle. Inactivity shutdown therefore does not happen yet; sessions
-end at the app definition's `timeout`. It starts working with
-[Upgrading from 2.x to 3.0.0](#upgrading-from-2x-to-300).
-
-EduIDE 1.5.0 no longer publishes the `rust`, `ocaml` and `haskell` images, but
-charts up to 2.6.2 still offer `rust-latest` and `ocaml-latest`. Do not set
-`versions.ide: 1.5.0` on such a chart; move to 2.7.0 instead.
-
-## Upgrading from 2.6 to 2.7.0
-
-Chart 2.7.0 replaces the single `appDefinitions.apps` map with a catalog, your
-own apps and an `enabled` list, and renames every app. See
-[App Definitions](../platform/app-definitions.md) for the new keys. Go to 2.7.3
-directly, and skip 2.7.1:
-
-- **2.7.1** preloads the oauth2-proxy image when Keycloak is on, so the first
-  session on a node no longer pulls it. Its preload container cannot start in
-  that image, which has no shell, so the preloading DaemonSet crash-loops on
-  every node.
-- **2.7.2** fixes that.
-- **2.7.3** updates the workspace garbage collector with security dependency
-  fixes.
-
-### Running sessions end
-
-Every app loses its `-latest` suffix: `java-17-latest` becomes `java-17`,
-`c-templates-latest` becomes `c-templates`, and so on. Helm deletes the old
-AppDefinitions, and with them the prewarmed pods, session ingresses and sidecars
-they own, so every running session ends. Upgrade outside lecture hours.
-
-### Move every reference to the new names in the same window
-
-- `landingPage.appDefinition` (the chart default is now `java-17-templates`)
-- keys under `appDefinitions.apps` in your values files
-- the app names your Artemis offers (`theia.images` in its configuration)
-- `theiaImage` of existing Artemis exercises and saved workspaces, which need
-  a data migration
-
-### Persistent workspaces get new names
-
-The landing page derives a persistent workspace's name from the app name, so
-after the rename a link opens a new, empty workspace instead of the old one.
-The old workspace is not migrated, and the workspace garbage collector can
-delete it later. Installations with `landingPage.ephemeralStorage: false` should
-tell students to push their work before the upgrade.
-
-### Which apps you get
-
-- **On chart defaults** you lose Rust and OCaml, keep the other six apps, and
-  gain `java-25` and `java-25-templates`.
-- **A list of `null` removals** still works (`apps.<name>: null`), but an
-  `enabled` list naming what you offer is shorter and does not grow when the
-  catalog does. Replace one with the other.
-- **With a non-empty `enabled`**, an app of your own under `apps` renders only
-  if `enabled` names it too.
-- **A name in `enabled` with no definition** is skipped, and `helm upgrade`
-  prints a warning naming it. Read the output after the upgrade.
-- **An image of your own** goes under `apps` with its full reference including
-  the tag, for example `registry.example.edu/ide/haskell:2.1.0`. An `image`
-  without a tag still takes the tag from `versions.ide`.
-
-The cluster chart moves to 2.7.0 without changes; upgrade it to keep both
-versions equal.
-
-## Upgrading from 2.7 to 2.8, 2.9 and 2.10
-
-Chart 2.8.0 to 2.10.0 add behaviour that is off or harmless until you use it.
-Go to 3.0.0 directly if you can, see
-[Upgrading from 2.x to 3.0.0](#upgrading-from-2x-to-300). Where you stop on one
-of these, this is what each adds:
-
-- **2.8.0** adds `global.nodeSelector`, which pins every EduIDE workload to the
-  nodes carrying those labels. See
-  [Pinning EduIDE to a node pool](../install/prerequisites.md#pinning-eduide-to-a-node-pool).
-  Empty, the default, renders as before. The chart pins EduIDE-Cloud 1.3.0, the
-  first release with `--sessionNodeSelector`, and updates the workspace garbage
-  collector to chart 0.2.0, which reads the value too. Set the same value on
-  `eduide-cluster` to pin the conversion webhook, and delete prewarmed sessions
-  once after setting it.
-- **2.8.1** shows the "Are you still here?" dialog after 50 minutes without
-  input instead of 55 and times out after 60. Both are explicit in
-  `appDefinitions.defaults.monitor.activityTracker` (`notifyAfter: 50`,
-  `timeoutAfter: 60`). Whether the timeout fires depends on the operator and the
-  IDE images, see [Session Management](../operations/session-management.md#when-a-session-ends-for-inactivity).
-- **2.9.0** redirects a request for an ended session to the landing page's
-  `/session-ended` page instead of answering 5xx. Pair it with a landing page
-  image that serves that page; an older image shows its start page, which is
-  still better than the 5xx it replaces. Turn it off with
-  `gateway.routes.sessionEndedRedirect.enabled: false`.
-- **2.10.0** adds `operator.metricsPort` and, in `eduide-cluster`, a `PodMonitor`
-  and a "Sessions ended per hour, by reason" dashboard panel, see
-  [Operator metrics](../operations/monitoring-basics.md#operator-metrics). Set
-  `operator.metricsPort` only with an EduIDE-Cloud release that has
-  `--metricsPort`; an older operator does not start with it.
-
-Both charts move together to 2.10.0 and 3.0.0, so upgrade the cluster chart
-first as usual. Landing page logout also changed in this window: the landing
-page drops the Keycloak callback fragment from its redirect URI, which fixes
-"Invalid redirect uri" on logout. The Keycloak client needs no change, see
-[Access Control](../platform/access-control.md#invalid-redirect-uri-when-logging-out).
-
-## Upgrading from 2.x to 3.0.0
-
-Chart 3.0.0 is a breaking release. It introduces two editions per language, a
-new app catalog and renames three apps. It also contains the fixes of an
-internal security audit, which add breaking changes to EduIDE-Cloud 3.0 and the
-data bridge. It needs these matching releases:
-
-| Component | Version |
-|---|---|
-| Helm charts `eduide` and `eduide-cluster` | 3.0.0 |
-| EduIDE IDE images (`appVersion`) | 2.0.0 |
-| EduIDE-Cloud (operator, REST service, conversion webhook) | 3.0.0, and 3.0.1 once released (see [Admin API off by default](#admin-api-off-by-default)) |
-| EduIDE-Landing-Page | 1.4.1 |
-| EduIDE-data-bridge (inside the IDE images) | 2.0.0 |
-| Scorpio (inside the IDE images) | 3.0.0 (3.1.0 with the next EduIDE release) |
-| workspace-garbage-collector | 1.0.0 |
-
-The chart pins all of them, so on chart defaults you only choose the chart
-version. The old image names are frozen at their last tag, so 3.0.0 only works
-with EduIDE 2.0.0. Go to 3.0.0 from 2.10.0; read the sections above if you are
-older.
-
-:::warning Security release
-Chart 3.0.0 and EduIDE-Cloud 3.0.0 contain security fixes. Do not stay on an
-earlier version once the upgrade is possible, and do the two admin tasks in
-[Rotate the secrets](#rotate-the-secrets) and
-[Delete orphaned sessions](#delete-orphaned-sessions) after it.
-:::
-
-### Order of the upgrade
-
-1. **`eduide-cluster` first.** The operator gets the right to create, get and
-   delete NetworkPolicies, which it needs for sessions with sidecars. The
-   cluster chart also adds a `PodMonitor` for the REST service on its
-   `management` port, plus a legacy `PodMonitor` that keeps scraping the old
-   port of pods that have not been upgraded yet, so you can move installations
-   one by one. Remove the legacy monitor (`theia-cloud-service-legacy`) when
-   every installation runs chart 3.x.
-2. **Then `eduide`.** It brings the Secret Role the operator needs for the data
-   bridge token, EduIDE-Cloud 3.0.0 and the 2.0.0 IDE images.
-3. **IDE images with data bridge 2.0.0 only after EduIDE-Cloud 3.x and chart 3.x.**
-   The new bridge rejects every injection that does not carry the per-instance
-   token. An old operator does not send it, and sessions then open without
-   their Artemis credentials: no auto-clone, no Artemis sign-in. The chart pins
-   a matching set, so this matters only if you pin `versions.*` or image tags
-   yourself, or run your own RBAC (grant the operator `get`, `create`, `update`
-   and `delete` on `secrets` in its namespace, see
-   [Access Control](../platform/access-control.md#operator-and-secrets)).
-4. **Restart the operator** after the upgrade, so it reconciles the warm pool.
-   It replaces unclaimed instances that carry the old pod settings. Instances
-   that serve a session keep them until the session ends.
-
-### What changes
-
-- **Two editions per language.** The Artemis apps (`java-17`, `java-25`,
-  `python`, `javascript`, `c`, and new `rust` and `go`) keep their names and now
-  use the images `eduide/<lang>-artemis`. All of them are hidden from the
-  landing page. New `<lang>-standalone` apps use `eduide/<lang>-standalone`, are
-  offered on the landing page and list their starter projects in
-  `landingPage.buildSystems`. See [App Definitions](../platform/app-definitions.md).
-- **Three apps are renamed.** `java-17-templates`, `java-25-templates` and
-  `c-templates` are now `java-17-standalone`, `java-25-standalone` and
-  `c-standalone`. The render fails while `appDefinitions.enabled` still names an
-  old one, with the new name in the message.
-- **`python` and `javascript` are hidden Artemis apps.** An installation that
-  offered them on the landing page switches to `python-standalone` and
-  `javascript-standalone`.
-- **Empty `enabled` offers and preloads 14 images** on every node, two editions
-  of seven languages. List the apps you use.
-- **`landingPage.appDefinition` defaults to `java-17`**, the app for links
-  without `?appDef=`, which is the Artemis start. The render fails when it names
-  an app the installation does not render, so update an override that still
-  names a `*-templates` app.
-- **Per-app `landingPage.ephemeral`** overrides `landingPage.ephemeralStorage`.
-  Template apps were persistent before; the standalone apps follow the setting
-  now. The privacy page states the workspace as persistent when any rendered
-  app, hidden ones included, is persistent.
-- **Temporary sessions lose their files after 60 minutes without input**, not
-  after the 24 hour lifetime. The timeout now works, see below.
-- **A closed tab ends its session too**, 60 minutes after the last input.
-- **Ended sessions land on `/session-ended`**, with an explanation and a resume
-  button for a saved workspace.
-- **Installation-specific images need a full path and tag.** The chart prefixes
-  `imageRegistry` to anything else. Derive such an image `FROM` an edition image,
-  see [Installation-specific images](../platform/app-definitions.md#installation-specific-images).
-- **The images `java-17`, `java-25`, `python`, `javascript`, `c`, the
-  `*-templates` images and `thm-java-25` get no new tags.** Only the
-  `<lang>-artemis` and `<lang>-standalone` images are built from 2.0.0 on.
-
-### EduIDE-Cloud 3.0 breaking changes
-
-Check each against your setup before you upgrade:
-
-- **A service auth token is mandatory.** The service refuses to start without
-  one. The chart creates it; check it if you manage the Secret yourself. The
-  image has no default `APPID` any more and reads its secrets from environment
-  variables, not from command line arguments.
-- **`keycloak.enable: false` is refused** unless `keycloak.allowUnauthenticated:
-  true` is set too. Anonymous mode lets anyone act as any user, so use it only
-  in a throwaway environment.
-- **CORS is off by default.** The chart allows the landing page origin. Browser
-  clients on other origins need them in `service.corsOrigins`. The app
-  definition lookup `GET /service/appdefinition/{appId}` returns names only.
-- **TLS of the identity provider is always verified.** Before, the service
-  skipped the check. A Keycloak with a certificate from a private CA needs a
-  trust store in `service.oidcTrustStore`, or every login fails.
-- **Optional audience check.** Set `keycloak.audience` to require that value in
-  the `aud` claim of access tokens. Add the audience mapper to the Keycloak
-  client first, see
-  [Access Control](../platform/access-control.md#audience-mapper). Empty, the
-  default, keeps the old behaviour.
-- **Session limit per user.** `service.sessionsPerUser` limits active sessions
-  per user on every launch path. Empty means the value of
-  `operator.sessionsPerUser`, a number overrides it, 0 means no limit.
-- **Metrics and OpenAPI moved to the management port 9000**, which the gateway
-  does not route. Point a Prometheus scrape of `/q/metrics` at that port; the
-  cluster chart does this for you.
-- **Images run as a non-root user** (uid 10001): operator, service and
-  conversion webhook. Check volume permissions and security contexts of your
-  own that assume root.
-- **The session keep-alive endpoint is gone** (`PATCH /service/session`). The
-  operator polls the monitor in the session pod instead. Custom clients that
-  called it must stop.
-- **Ephemeral session names start with `eph-`**, for example
-  `eph-<app>-<user>-<hash>-session`. A workspace name that starts with `eph-` is
-  rejected. A user whose ephemeral session started under the old name keeps it
-  until it ends.
-- **Launch requests are checked.** Launching a session whose name exists for
-  another user is refused with 403, and an email claim with unusual characters
-  is rejected with a clear 403 instead of a failure later.
-- **Sidecars are isolated.** Sidecar pods carry the session labels, run with the
-  restrictions of the IDE container and get no service account token. The
-  operator creates one NetworkPolicy per session, or per warm pool instance,
-  that connects the IDE pod to its own sidecars only.
-- **The data bridge authenticates the operator.** See
-  [the data bridge token](../platform/app-definitions.md#data-bridge-token).
-
-### Admin API off by default
-
-The admin API token protected scaling endpoints are off by default, see
-[Admin API Tokens](../security/admin-api-tokens.md). The toggle
-`service.adminApiEnabled` ships with EduIDE-Cloud 3.0.1. Until the service runs
-3.0.1, leave `service.adminApiTokenSecret` unset where you do not need the
-scaling API. If you use it, set `service.adminApiEnabled: true`; the scaling API then works
-for the PATCH call in step 6, and `kubectl patch` works either way.
-
-### Rotate the secrets
-
-Versions before EduIDE-Cloud 3.0.0 wrote configuration values to the service
-startup log. In every environment that ran an earlier version, **rotate the
-admin API token** (see [Admin API Tokens](../security/admin-api-tokens.md)) and
-the OIDC client secret of the Keycloak client, and check how long those logs are
-kept.
-
-### Delete orphaned sessions
-
-A Session whose AppDefinition no longer exists never times out, and keeps the
-pod settings it was created with. Renaming apps in 3.0.0 leaves such sessions
-behind if they survived the upgrade, and they run with the old, weaker proxy
-arguments. After the upgrade, list sessions and delete every one whose
-`spec.appDefinition` is not in `kubectl get appdefinitions.theia.cloud`:
-
-```bash
-kubectl -n <namespace> get appdefinitions.theia.cloud -o name
-kubectl -n <namespace> get sessions.theia.cloud \
-  -o custom-columns=NAME:.metadata.name,APP:.spec.appDefinition,USER:.spec.user
-kubectl -n <namespace> delete sessions.theia.cloud <name>
-```
-
-Deleting the Session keeps the workspace and its files. A later release of the
-operator is meant to end such sessions by itself.
-
-### What a running installation loses
-
-Removing or renaming an app deletes its AppDefinition, and with it the prewarmed
-pods, session ingresses and sidecars it owns. **Running sessions of the renamed
-apps end.** The new images also replace every running session. Persistent
-workspaces created under the old template apps are not reachable afterwards:
-the landing page names a workspace after its app, so a link opens a new, empty
-one. The old workspaces stay until the
-[garbage collector](../operations/garbage-collection.md) removes them, and work
-in them that was never pushed is gone for the student.
-
-### EduIDE-deployment at TUM
-
-The `environments/_base.yaml` of EduIDE-deployment still names
-`java-17-templates-latest` as `landingPage.appDefinition`, and chart 3.0.0
-refuses to render with it. EduIDE-deployment#169 fixes it as part of the
-rollout, so move TUM environments to chart 3.0.0 only with that change.
-
-### Steps, in order
-
-1. **Pick a maintenance window** outside lecture hours and exercises. Tell
-   students to push their work before it.
-2. **Check the version pins.** `versions.cloud` must be EduIDE-Cloud 3.0.0 or
-   later, `versions.landingPage` EduIDE-Landing-Page 1.4.1 (1.4.0 and later read
-   the per-app `ephemeral` flag, older ones ignore it and use
-   `landingPage.ephemeralStorage` for every app), and the IDE images EduIDE
-   2.0.0. The garbage collector comes as chart 1.0.0, which pins its own image
-   instead of a commit SHA; remove an `image.tag` override under
-   `theia-workspace-garbage-collector` so the chart's version is used. The
-   chart's `appVersion` is 2.0.0; check your values only if they override
-   `versions.*`, `operator.image`, `service.image` or `landingPage.image`, and
-   check `appDefinitions.apps` for an `image` override: an old tagged override
-   keeps the old image, for example one without the monitor v3.0.0 or with a
-   data bridge that does not match the operator.
-3. **Update your values files.**
-   - In `appDefinitions.enabled`, rename the three `*-templates` names, and add
-     `python-standalone`, `javascript-standalone` and any of the new `rust-standalone`
-     and `go-standalone` you want. List every app explicitly.
-   - Rename the keys under `appDefinitions.apps` that override a renamed app.
-   - Update `landingPage.appDefinition` if it names a `*-templates` app.
-   - Keep the app name where persistent workspaces exist for it, as TH Mannheim
-     does with `thm-java-25-latest`. Only its `image` changes, to a full path and
-     tag.
-   - Decide per app whether sessions are temporary. To keep the standalone
-     sessions persistent as the template ones were, set
-     `landingPage.ephemeral: false` on the `-standalone` apps.
-   - Review `timeoutAfter` and `notifyAfter` (see below).
-   - Set the new service values you need: `service.corsOrigins`,
-     `keycloak.audience`, `service.oidcTrustStore`, `service.sessionsPerUser`
-     and, where something calls the scaling API, `service.adminApiEnabled`.
-4. **Look at the diff.** `helm diff upgrade` shows which AppDefinitions are
-   deleted and created, and which images join the preload list.
-5. **Upgrade the cluster chart**, then the installation (order above), with a generous
-   `--timeout` or without `--wait`, because every node preloads the new images
-   (see [`--wait` and image preloading](#--wait-and-image-preloading)).
-6. **Move `minInstances` to the new apps.** The chart reads the live
-   `minInstances` back, so a new AppDefinition starts with the catalog value
-   (`0`, and `3` for `java-17`) and your setting on the old app is gone. Pre-warming
-   only works with `operator.eagerStart: true` (chart default `false`) and for
-   ephemeral apps. Patch the new apps with `kubectl`, which needs no admin API:
-
-   ```bash
-   kubectl -n <namespace> patch appdefinition java-25-standalone \
-     --type merge -p '{"spec":{"minInstances":10}}'
-   ```
-
-   Where you enabled the admin API (`service.adminApiEnabled: true`, EduIDE-Cloud
-   3.0.1 or later), the PATCH call in
-   [Adjusting scaling at runtime](../platform/app-definitions.md#adjusting-scaling-at-runtime)
-   does the same.
-
-7. **Restart the operator, then delete orphaned sessions and rotate secrets**
-   as described above.
-8. **Check afterwards.**
-   - `kubectl -n <namespace> get appdefinitions.theia.cloud` lists what you
-     expect, and the landing page offers one tile per language with a
-     "Temporary" or "Saved" badge.
-   - Start a session from the landing page and one from Artemis. Open a webview
-     panel in each.
-   - Check the idle timeout. The operator log shows
-     `Notifying session as timeout of N minutes was reached!` after an idle
-     period, and a closed tab ends its session.
-   - `kubectl -n <namespace> get secrets | grep bridge-token` lists one Secret
-     per warm pool instance, and an Artemis session opens with its credentials
-     (auto-clone and Artemis sign-in work).
-   - A new ephemeral session is named `eph-...`, and its pod runs as a non-root
-     user.
-   - The Artemis configuration still names the Artemis apps (`java-17`, `c`,
-     `python`, ...), which keep their names. A configuration that names a
-     `*-templates` app needs the new name, and existing exercises that carry one
-     in `theiaImage` need a data migration.
-
-Rolling back from 3.0.0 to 2.x deletes the new AppDefinitions and recreates the
-old ones, which ends running sessions a second time (a rollback only spares
-sessions when no app was renamed or removed). Plan the window so that you
-do not need it, see [Rollback](rollback.md).
-
-### Idle sessions end now
-
-Since chart 2.8.1 the limits are `notifyAfter: 50` and `timeoutAfter: 60`, but
-an open idle tab only times out with IDE images that carry `theia-cloud-monitor`
-3.0.0 (the pin in EduIDE 2.0.0), and a closed tab only ends its session with an
-operator from EduIDE-Cloud 1.4.0 or later. Before, sessions
-effectively ran until the 24 hour lifetime. Expect more "my session closed"
-questions in the first weeks, especially from students who listen to a lecture
-with the IDE open but untouched. Raise `timeoutAfter` and `notifyAfter` per
-installation if 60 and 50 are too short, and keep the gap between them larger
-than `monitor.activityTracker.interval`.
-
-Two details to know: a monitor older than v1.4.0 (the IDE images of EduIDE 1.5.0) never times out an open idle
-tab, and after the operator restart that every `helm upgrade` causes, sessions
-whose tab was already closed run until their lifetime limit once.
-
-If you set `operator.metricsPort`, the sessions dashboard shows the sessions
-that ended for inactivity and for lifetime, see
-[Operator metrics](../operations/monitoring-basics.md#operator-metrics).
-
-## Two things that do not behave as you would guess
-
-**`minInstances` and `maxInstances` stop taking effect after the first install.**
-The chart deliberately reads the live values back so that Helm does not reset
-scaling that was changed at runtime. The consequence is that changing them in
-your values file on an upgrade does nothing. Change them with `kubectl patch
-appdefinition` or the admin API, see [App Definitions](../platform/app-definitions.md).
-
-**`hosts.allWildcardInstances` does not update cleanly on upgrade.** If you
-change it, reinstall rather than upgrade. This is called out in the chart's own
-values file.
-
-## Coordinating with your identity provider
-
-An EduIDE upgrade does not change your Keycloak configuration. But if an upgrade
-adds a hostname - a new installation, or a renamed one - the client's redirect
-URIs need updating in the same change window, or login breaks for that host
-only. See [Access Control](../platform/access-control.md).
+An import job for all PVCs of a namespace is planned. Until then, import by hand or with a script you have reviewed.
+Make sure no old session mounts the PVC before a new session uses it.
+
+### What users notice
+
+- A session URL is `https://<instance host>/<instance id>/`, with a random id.
+- Webviews run on one fixed host, `webview.<instance host>`.
+- The landing page shows "Your environments" and "Start new" tiles, and File, "Back to Start Page" leads back from the IDE.
+- Artemis passes the token in the URL fragment. This needs Artemis pull request [ls1intum/Artemis#14702](https://github.com/ls1intum/Artemis/pull/14702), which is not yet merged upstream. The old `?artemisToken` query is still read during the migration and logged as deprecated.
+- Saved workspaces expire after last use, not after their creation date.

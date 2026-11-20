@@ -1,613 +1,148 @@
 ---
 title: Incident Response
-description: Runbooks for common EduIDE incident classes, triage sequence, and post-incident procedures.
+description: Triage sequence and runbooks for slow launches, empty pools, authz errors, gateway backlog and lost workspace volumes.
 ---
 
 # Incident Response
 
-This page contains runbooks for the most common incident classes in EduIDE, a triage sequence for unknown incidents, and the post-incident procedure.
+Replace `<ns>` with the namespace of the deployment. The runbooks here summarize the ones in the control plane repository, [docs/operations](https://github.com/EduIDE/EduIDE-control-plane/tree/main/docs/operations), which are the source of truth.
 
-:::note Placeholders on this page
+## Triage
 
-Each EduIDE installation lives in its own namespace, named `eduide-<name>` by convention (`eduide-staging`, `eduide-cs101`, and so on). Commands use `-n <namespace>` - substitute the affected installation's namespace. The cluster-level chart installs into `eduide-system`, which is spelled out literally where it applies.
+1. Check the public status page and the admin panel. Which part is `slow` or `down`: sign-in, starting, workspaces?
+2. `kubectl -n <ns> get pods`. Are operator, service and authz `Ready`?
+3. Look at the metrics: start time, failures, claims, capacity pressure ([Monitoring](monitoring-basics.md)).
+4. Take one affected session and read it: `kubectl -n <ns> describe idesession <name>`. Events, `status.errorCode` and `status.message` usually name the cause.
+5. Open the trace of that launch in Jaeger by `eduide.session=<name>`.
 
-Hostnames appear as `<service-host>`, `<landing-host>` and `<instance-host>` - the DNS names you configured for the REST service, the landing page and session instances.
+Never copy launch data from Secrets into tickets or chats. Logs and traces contain none; if you find one, treat it as a bug.
 
-The Deployments are named `operator-deployment`, `service-deployment` and `landing-page-deployment`. Their pods carry the shorter labels `app=operator`, `app=service` and `app=landing-page`, so log selectors and rollout commands use different names. Both forms appear below; they are not typos.
+## Slow launch
 
-The CRDs are in the `theia.cloud` API group even though the charts are named `eduide*` - a historical name that was never migrated. Searching the CRD list for `eduide` finds nothing and does not mean the CRDs are missing.
+Symptom: users wait longer than the budget (warm under 2 s, cold under 30 s at p95), or sessions end in `Failed`.
 
-:::
-
-## Triage sequence for unknown incidents
-
-When an incident is reported and the root cause is not immediately clear, work through this sequence before jumping to a specific runbook:
-
-1. **Confirm impact scope** - Is it one user, one session type, one installation, or every installation on the cluster? A cluster-wide symptom points at `eduide-system` (Gateway, certificates, CRDs) rather than any one namespace.
-2. **Check pod health** - `kubectl get pods -n <namespace> | grep -v Running`
-3. **Check operator logs** - `kubectl logs -n <namespace> -l app=operator --tail=100`
-4. **Check service logs** - `kubectl logs -n <namespace> -l app=service --tail=100`
-5. **Check routing** - `kubectl get gateway -n eduide-system` and `kubectl get httproute -n <namespace>`
-6. **Check recent deployments** - Did a `helm upgrade` run in the last 30 minutes? `helm history eduide -n <namespace>`
-7. **Check Keycloak** - Are authentication failures spiking?
-8. **Apply the relevant runbook below.**
-
----
-
-## Runbook: Sessions failing to launch
-
-**Symptoms:** Users report they cannot start an IDE session. Launch requests return an error or time out.
-
-**Step 1: Check for pending session pods**
+Find the slow phase with `eduide_session_phase_seconds`, or read the timestamps of one session:
 
 ```bash
-kubectl get pods -n <namespace> | grep -E 'Pending|ContainerCreating'
+kubectl -n <ns> get idesession <name> -o yaml | grep -A12 -E 'startStrategy|timestamps|errorCode|message'
 ```
 
-Pending pods indicate a scheduling or resource problem. Investigate:
+Compare `claimed`, `podReady`, `agentReady` and `ready` with the creation time. The largest gap is the slow phase.
 
-```bash
-kubectl describe pod <pending-pod-name> -n <namespace>
-```
-
-Common causes in the `Events` section:
-- `Insufficient memory` or `Insufficient cpu` - cluster is at capacity
-- `no nodes available` - all nodes are unschedulable
-- `PodToleratesNodeTaints` - taints misconfiguration
-
-**Step 2: Check resource quota**
-
-```bash
-kubectl describe resourcequota -n <namespace>
-```
-
-If `persistentvolumeclaims` or `requests.memory` are at the hard limit, no new sessions can start.
-
-**Step 3: Check the operator**
-
-```bash
-kubectl logs -n <namespace> -l app=operator --tail=200
-```
-
-Look for reconciliation errors or repeated error messages on the same resource.
-
-**Step 4: Check the per-user session limit**
-
-If only some users are affected and they all already have a session running, they may be hitting the per-user cap. `operator.sessionsPerUser` defaults to **`1`**, so on a default install a user with one live session cannot start a second one. This is configuration working as intended, not an outage.
-
-```bash
-kubectl get sessions.theia.cloud -n <namespace> \
-  -o custom-columns='NAME:.metadata.name,USER:.spec.user,CREATED:.metadata.creationTimestamp'
-```
-
-**Step 5: Check image availability**
-
-If pods are in `ErrImagePull` or `ImagePullBackOff`:
-
-```bash
-kubectl describe pod <pod-name> -n <namespace> | grep -A 5 Events
-```
-
-This indicates the session image is unavailable. Verify the image tag in the App Definition still exists in the container registry.
-
-**Mitigation options:**
-- Free capacity by scaling down `maxInstances` on underused App Definitions.
-- Remove stale workspaces to free PVC quota (see [Session Management](/admins/operations/session-management)).
-- Increase cluster capacity if node resources are exhausted.
-
----
-
-## Runbook: 403 on session launch after a deploy
-
-**Symptoms:** Login at Keycloak succeeds, then the session URL returns **403 Forbidden**. Only some users or some sessions are affected. Nothing appears in the operator or service logs, and `status.operatorMessage` on the Session is empty.
-
-**Cause:** the session was assigned a **warm-pool instance**, and a deploy changed the AppDefinition's `metadata.generation`. The operator treats the instance's oauth2-proxy ConfigMaps as outdated and recreates them, so each instance's `authenticated-emails-list` is rebuilt empty. The Session object still points at the instance, but oauth2-proxy denies every authenticated user when that list is empty.
-
-A restart of the operator on its own does **not** cause this - it only creates ConfigMaps that are missing. The trigger is the generation change that a helm upgrade produces, which is why it presents as "broken by the last deploy".
-
-**Confirm it:**
-
-```bash
-kubectl -n <namespace> get cm -o name | grep -- '-email' | \
-  xargs -n1 kubectl -n <namespace> get -o \
-  jsonpath='{.metadata.name}={.data.authenticated-emails-list}{"\n"}'
-```
-
-An affected instance shows an empty list. A session with its own dedicated pod shows the user's address and works, which is the contrast that identifies this.
-
-**Fix:** delete the orphaned Session so a fresh one is issued.
-
-```bash
-kubectl -n <namespace> delete sessions.theia.cloud <session-name>
-```
-
-The user then launches again normally. Their workspace volume is untouched.
-
-:::note Fixed in the operator from 2026-08-28
-`operator.eagerStart` defaults to `false`; where it is on (warm pools), any deploy landing while a user holds a session on a warm instance could cause this. EduIDE-Cloud issue 135 fixed it: the operator now writes the claiming session's user back into the instance's ConfigMap during the same reconcile that recreates it.
-
-Verified on a test environment against a real reproduction: an installation broken by the old operator was **healed within about twenty seconds** of the fixed one starting, with no manual intervention. If you are running an operator from before that date, this runbook still applies and upgrading is the fix.
-:::
-
-## Runbook: Authentication outage
-
-**Symptoms:** All users are redirected to Keycloak but cannot log in, or receive "Access Denied" after successful login.
-
-**Step 1: Identify the failure point**
-
-- If the Keycloak login page itself fails to load: the problem is upstream of EduIDE. Contact the Keycloak instance admin.
-- If login succeeds but users are rejected by EduIDE: the problem is in oauth2-proxy or the token claim configuration.
-
-**Step 2: Check oauth2-proxy logs**
-
-oauth2-proxy runs as a **sidecar container inside each session pod**. There is no oauth2-proxy Deployment, no oauth2-proxy Service, and no pod labelled `app=oauth2-proxy` - a selector like `kubectl logs -l app=oauth2-proxy` matches nothing and returns silently, which reads like "no errors" and is not.
-
-You must pick a session pod and name the container:
-
-```bash
-# Find a session pod: everything that is not a platform component
-kubectl get pods -n <namespace> \
-  -l app.kubernetes.io/component=session
-
-# Read that pod's oauth2-proxy sidecar
-kubectl logs <session-pod> -n <namespace> -c oauth2-proxy --tail=100
-```
-
-Because each session has its own proxy, a configuration fault shows up identically in every session pod. Checking two or three is enough to tell a global misconfiguration from one broken pod.
-
-Look for:
-- `invalid cookie` - cookie secret mismatch, likely after an upgrade with a changed secret
-- `failed to verify token` - audience claim missing or wrong
-- `upstream response 403` - the service is rejecting the proxied request
-
-**Step 3: Check the oauth2-proxy configuration**
-
-The sidecar's configuration comes from ConfigMaps that the `eduide` chart renders into the installation namespace and the operator mounts by name:
-
-```bash
-kubectl get configmap oauth2-proxy-config -n <namespace> -o yaml
-```
-
-A change here only reaches sessions started **after** the change. Existing sessions keep the configuration they were launched with.
-
-**Step 4: Verify the Keycloak client scope**
-
-If token claims are missing (username, groups, audience), the client scope mappers may have been removed or the scope unassigned from the client. Check in the Keycloak admin console:
-
-1. Open the client → **Client scopes**.
-2. Confirm the EduIDE client scope is listed as a Default scope.
-3. Open the scope → **Mappers** and verify all three mappers exist.
-
-**Step 5: Check the cookie secret**
-
-If the cookie secret was rotated, all existing sessions are invalidated. Users need to clear cookies and log in again. This is expected behaviour, not a bug.
-
-**Mitigation:** Communicate to affected users that they need to clear browser cookies for the domain and log in again.
-
----
-
-## Runbook: Gateway or HTTPRoute failure
-
-**Symptoms:** Users get a connection error, a 404, or a 503 from the load balancer rather than an EduIDE page. Pods are healthy and logs show no inbound requests at all - the traffic never reaches them.
-
-Routing is Gateway API, served by Envoy Gateway. A **shared Gateway** lives in `eduide-system` and carries one set of listeners per installation; each installation namespace contributes **HTTPRoutes** that attach to specific listeners by name. There is no Ingress resource anywhere in the system, so checking for one is a dead end.
-
-The failure mode that makes this worth its own runbook: a route that does not attach produces **no error anywhere in EduIDE's own logs**. Nothing is broken from the operator's or the service's point of view; the request simply never arrives.
-
-**Step 1: Check the Gateway itself**
-
-```bash
-kubectl get gateway -n eduide-system
-```
-
-The default name is `theia-shared-gateway`. The `PROGRAMMED` column is the one that matters - `True` means Envoy Gateway has translated the Gateway into a live listener configuration.
-
-```bash
-kubectl describe gateway theia-shared-gateway -n eduide-system
-```
-
-Under `Status`, the Gateway carries top-level `Accepted` and `Programmed` conditions. `Accepted=False` means the spec was rejected (a bad `gatewayClassName`, most often). `Accepted=True, Programmed=False` means the spec is valid but the controller could not realise it - typically no address is available, or the controller is not running:
-
-```bash
-kubectl get pods -n envoy-gateway-system
-```
-
-Envoy Gateway is **not installed by the EduIDE charts**. It is assumed to be present. If that namespace is empty, that is your incident.
-
-**Step 2: Check individual listener conditions**
-
-Each listener reports its own conditions, and one broken listener does not stop the others. This is why a single installation can be unreachable while every other installation on the cluster is fine.
-
-```bash
-kubectl get gateway theia-shared-gateway -n eduide-system \
-  -o jsonpath='{range .status.listeners[*]}{.name}{"\t"}{range .conditions[*]}{.type}={.status}({.reason}) {end}{"\n"}{end}'
-```
-
-What to look for per listener:
-
-- `Accepted=False` - the listener spec is invalid. A duplicate hostname across listeners or an unsupported protocol will do this.
-- `Programmed=False` - accepted but not serving.
-- `ResolvedRefs=False` with reason `InvalidCertificateRef` - the listener names a TLS Secret that does not exist, is not of type `kubernetes.io/tls`, or is in a namespace the Gateway may not read. Check the Secret exists:
-
-  ```bash
-  kubectl get secret <tls-secret-name> -n eduide-system
-  ```
-
-- `Conflicted=True` - two listeners claim the same port and hostname combination.
-
-Also check `attachedRoutes` per listener in the same status block. A listener with `attachedRoutes: 0` that should have routes is the direct link to step 3.
-
-**Step 3: Check the HTTPRoutes**
-
-The `eduide` chart creates three HTTPRoutes in the installation namespace:
-
-| Route | Serves | Target |
+| Slow phase | Causes | Checks and fixes |
 |---|---|---|
-| `landing-route` | the landing page host | `landing-page-service` |
-| `service-route` | the REST service host, path prefix `/service` | `service-service` |
-| the instances route (default name `theia-cloud-demo-ws-route`) | catch-all for ended sessions and the template for session routes | the operator does not patch it; it creates one HTTPRoute per live session |
-
-```bash
-kubectl get httproute -n <namespace>
-```
-
-Then read the attachment status, which is the part `kubectl get` does not show:
-
-```bash
-kubectl get httproute <route-name> -n <namespace> \
-  -o jsonpath='{range .status.parents[*]}{.parentRef.name}/{.parentRef.sectionName}{"\t"}{range .conditions[*]}{.type}={.status}({.reason}) {end}{"\n"}{end}'
-```
-
-The conditions to read:
-
-- **`Accepted=False`, reason `NoMatchingListenerHostname`** - the most common routing fault in this system. The route declares a hostname that does not intersect the hostname of the listener it names. Gateway API requires the two to overlap; if they do not, the route is silently dropped. This happens when an installation's hostnames are changed in the tenant values without re-running the cluster bootstrap that generates the matching listeners, so the listener still carries the old hostname.
-- `Accepted=False`, reason `NoMatchingParent` - the `sectionName` names a listener that does not exist on that Gateway. Same root cause: listener names are generated per installation, and the tenant values must reference them exactly.
-- `Accepted=False`, reason `NotAllowedByListeners` - the listener's `allowedRoutes` does not permit routes from this namespace.
-- `ResolvedRefs=False`, reason `BackendNotFound` - the target Service does not exist. Check `kubectl get svc -n <namespace>` for `service-service` and `landing-page-service`.
-
-Compare the two hostnames directly when you suspect a mismatch:
-
-```bash
-kubectl get httproute <route-name> -n <namespace> -o jsonpath='{.spec.hostnames}{"\n"}'
-kubectl get gateway theia-shared-gateway -n eduide-system \
-  -o jsonpath='{range .spec.listeners[*]}{.name}{"\t"}{.hostname}{"\n"}{end}'
-```
-
-**Step 4: If only session URLs are broken**
-
-The **operator** creates one HTTPRoute per live session, owned by the session. If the landing page and the service work but session URLs 404, check that the operator is running and reconciling (see the operator runbook below), then list the routes:
-
-```bash
-kubectl get httproute -n <namespace>
-kubectl get httproute <session-route> -n <namespace> -o yaml
-```
-
-A running session without its own route means the operator did not reconcile it. An operator restart is the usual fix.
-
-**Mitigation:** Re-run the cluster-level `helm upgrade` for `eduide-cluster` with listener definitions that match the installation's current hostnames, then re-check the route conditions. Fixing the tenant side alone does not help if the listener is what is stale.
-
----
-
-## Runbook: Certificate does not cover a hostname
-
-**Symptoms:** Browsers show a certificate warning on one hostname. More confusingly, the landing page loads but stays empty or reports that it cannot reach the service, with no error in any EduIDE log.
-
-This one deserves care because **the cluster reports itself healthy throughout**. Gateway API never compares a certificate's Subject Alternative Names against the listener's hostname. If a listener for `<service-host>` references a certificate valid only for `<landing-host>`, the listener still reports `Programmed=True` and `ResolvedRefs=True`: from Envoy's point of view the Secret exists, parses, and was loaded. The mismatch is a client-side judgement, so the only place it appears is in the browser.
-
-The second-order effect is the one that generates support tickets. The landing page and the REST service are on **different hostnames**, so the landing page's calls to the service are cross-origin. The browser refuses to complete a TLS handshake it does not trust, and because the request is a background `fetch` rather than a top-level navigation, the user is never offered the "proceed anyway" interstitial. They see a landing page that simply does not work, with no warning explaining why. Meanwhile the service is running perfectly and logs nothing, because no request ever reached it.
-
-So: if the landing page is blank or cannot list workspaces, and the service pod looks healthy and idle, check the service host's certificate before anything else.
-
-**Step 1: Check what the certificate actually covers**
-
-Ask the live endpoint, which is what the browser sees:
-
-```bash
-echo | openssl s_client -connect <service-host>:443 -servername <service-host> 2>/dev/null \
-  | openssl x509 -noout -checkhost <service-host>
-```
-
-This prints either `Host <service-host> does match certificate` or `Host <service-host> does NOT match certificate`. The `-servername` flag matters: without it, SNI is not sent and you may be handed a different listener's certificate than the browser gets.
-
-Run it for every hostname the installation uses - landing, service, and at least one instance host:
-
-```bash
-for h in <landing-host> <service-host> <instance-host>; do
-  printf '%s: ' "$h"
-  echo | openssl s_client -connect "$h":443 -servername "$h" 2>/dev/null \
-    | openssl x509 -noout -checkhost "$h"
-done
-```
-
-**Step 2: List the SANs to see what is missing**
-
-```bash
-echo | openssl s_client -connect <service-host>:443 -servername <service-host> 2>/dev/null \
-  | openssl x509 -noout -text \
-  | grep -A1 'Subject Alternative Name'
-```
-
-Also check the validity window while you have the certificate in hand - an expired certificate produces the same silent cross-origin failure:
-
-```bash
-echo | openssl s_client -connect <service-host>:443 -servername <service-host> 2>/dev/null \
-  | openssl x509 -noout -dates -subject -issuer
-```
-
-**Step 3: Check the certificate in the cluster**
-
-Verify the Secret the listener references, without going over the network:
-
-```bash
-kubectl get secret <tls-secret-name> -n eduide-system \
-  -o jsonpath='{.data.tls\.crt}' | base64 -d \
-  | openssl x509 -noout -checkhost <service-host> -dates
-```
-
-If this passes but step 1 fails, the listener is referencing a **different** Secret than you think. Confirm which one:
-
-```bash
-kubectl get gateway theia-shared-gateway -n eduide-system \
-  -o jsonpath='{range .spec.listeners[*]}{.name}{"\t"}{.hostname}{"\t"}{range .tls.certificateRefs[*]}{.name}{" "}{end}{"\n"}{end}'
-```
-
-That command prints listener name, hostname and certificate Secret side by side, which makes a mismatched pairing obvious.
-
-**Step 4: If cert-manager manages the certificate**
-
-The `eduide-cluster` chart can create cert-manager `Certificate` resources, off by default. When enabled, check the resource rather than the Secret:
-
-```bash
-kubectl get certificate -n eduide-system
-kubectl describe certificate <certificate-name> -n eduide-system
-```
-
-`Ready=False` with a `CertificateRequest` stuck in the events usually means the ACME challenge is not completing. Note that an HTTP-01 challenge **cannot** issue a wildcard certificate, so a listener that needs a wildcard hostname requires a DNS-01 solver or a certificate you supply yourself.
-
-**Mitigation:** Re-issue the certificate with every hostname the installation serves in its SAN list, then let the listener reload. Envoy Gateway picks up a changed Secret without a Gateway restart, but confirm with step 1 rather than assuming. Adding a hostname to an installation always means widening the certificate as well as adding a listener - the two are separate changes and forgetting the second produces exactly this incident.
-
----
-
-## Runbook: Certificate stuck, no challenges outstanding
-
-**Symptoms:** a `Certificate` sits `Ready=False`, its listener never programs, and there are no `Challenge` resources left to look at.
-
-**Check the order.** The `Certificate`'s own conditions rarely say enough - a `Certificate` owns a `CertificateRequest`, which owns an `Order`, which owns the `Challenge`s, and the real error is usually further down that chain than you started:
-
-```bash
-kubectl -n eduide-system describe certificate <name>
-kubectl -n eduide-system get certificaterequest,order,challenge
-kubectl -n eduide-system describe order <name>
-```
-
-Two different situations look the same from outside.
-
-**Finalize failed.** The challenges validated and the CA then failed the final step:
-
-```text
-Failed to finalize Order: 404 urn:ietf:params:acme:error:malformed:
-Certificate not found
-```
-
-This is transient. cert-manager will retry, but only after an exponential backoff starting at an hour. Clear the backoff to retry now - only once you have read that exact message off the `Order`, since the patch below does nothing for any other cause and just hides how long the certificate has been failing:
-
-```bash
-kubectl -n eduide-system patch certificate <name> --type=merge --subresource=status \
-  -p '{"status":{"lastFailureTime":null,"failedIssuanceAttempts":null}}'
-```
-
-`--subresource` requires kubectl v1.24 or newer; on older clients the flag is silently unavailable and the patch will not apply to status.
-
-It normally issues within a minute. If a cleared retry fails again, it was not transient after all - work back down the chain above, and check the `ClusterIssuer` and the cert-manager controller logs before changing any configuration.
-
-**Challenges pending and staying pending.** That is a real fault, and the error recorded on the `Challenge` distinguishes the two causes:
-
-- **HTTP 404.** Something answered on port 80 but did not route the `/.well-known/acme-challenge/` path. The hostname has no listener on the Gateway, or its listener is on a Gateway the solver route does not attach to. A name on a certificate with no listener blocks the whole certificate, including every other name on it.
-- **DNS failure, connection refused or timeout.** Nothing answered at all: the hostname does not resolve, or it resolves to an address that is not this Gateway. Fix DNS first - no amount of listener configuration helps until the challenge reaches the cluster.
-
-## Runbook: Storage exhaustion
-
-**Symptoms:** New workspace creation fails with storage errors. Existing sessions are unaffected.
-
-**Step 1: Check PVC quota**
-
-```bash
-kubectl describe resourcequota -n <namespace> | grep persistentvolumeclaims
-```
-
-If at the hard limit, no new PVCs can be created.
-
-**Step 2: Check storage capacity**
-
-```bash
-kubectl describe resourcequota -n <namespace> | grep requests.storage
-```
-
-**Step 3: Identify stale workspaces**
-
-```bash
-# List workspaces sorted by age
-kubectl get workspaces.theia.cloud -n <namespace> \
-  --sort-by=.metadata.creationTimestamp
-
-# Count total workspaces
-kubectl get workspaces.theia.cloud -n <namespace> --no-headers | wc -l
-```
-
-**Step 4: Delete old workspaces**
-
-If the garbage collector has not yet run, manually delete workspaces older than the TTL:
-
-```bash
-kubectl delete workspace <workspace-name> -n <namespace>
-```
-
-The PVC is released according to the storage class reclaim policy. See [Storage and Quotas](/admins/platform/storage-and-quotas) for PVC cleanup.
-
-**Step 5: Look for orphaned PersistentVolumes**
-
-With a `Retain` reclaim policy, deleting a workspace leaves the underlying PV behind in the `Released` phase, still counting against your storage system.
-
-`Released` is a **PersistentVolume** phase, not a PersistentVolumeClaim phase. PVCs are only ever `Pending`, `Bound` or `Lost`, so a field selector for `Released` PVCs matches nothing and will mislead you into concluding there is nothing to clean up. PVs are also cluster-scoped, so no `-n` applies:
-
-```bash
-# Released PVs: correct
-kubectl get pv --field-selector=status.phase=Released
-
-# Narrow to the ones that belonged to this installation
-kubectl get pv -o json \
-  | jq -r '.items[] | select(.status.phase=="Released")
-      | select(.spec.claimRef.namespace=="<namespace>")
-      | .metadata.name'
-```
-
-Delete them once you are certain the data is not needed:
-
-```bash
-kubectl delete pv <pv-name>
-```
-
-**Mitigation:** Lower the garbage collection TTL temporarily to accelerate cleanup. See [Garbage Collection](/admins/operations/garbage-collection).
-
----
-
-## Runbook: Node pressure / cluster capacity
-
-**Symptoms:** Many pods are in `Pending` state. Session launches are slow or failing. Dashboards show high node CPU or memory utilisation.
-
-**Step 1: Identify the bottleneck**
-
-```bash
-kubectl top nodes
-kubectl describe nodes | grep -A 5 "Allocated resources"
-```
-
-**Step 2: Reduce pre-warmed instances temporarily**
-
-```bash
-curl -X PATCH \
-  -H "X-Admin-Api-Token: $ADMIN_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"minInstances": 0}' \
-  https://<service-host>/service/admin/appdefinition/<app-definition-name>
-```
-
-Repeat for each affected App Definition. This frees scheduling space for active user sessions.
-
-This endpoint is off by default (`service.adminApiEnabled`) and needs the admin API token. See [Admin API Tokens](/admins/security/admin-api-tokens). If the toggle is off or no token is set up, edit the App Definition resource directly instead:
-
-```bash
-kubectl patch appdefinitions.theia.cloud <app-definition-name> -n <namespace> \
-  --type=merge -p '{"spec":{"minInstances":0}}'
-```
-
-**Step 3: Communicate status**
-
-If user-visible impact is ongoing, post a status update to the relevant channel. Include:
-- What is affected (slow starts, new sessions failing, etc.)
-- What is being done
-- Expected resolution time if known
-
-**Step 4: Scale cluster if needed**
-
-If the pressure is sustained and expected (a large cohort exercise, for instance), coordinate with whoever manages the cluster's node pool to add capacity.
-
----
-
-## Runbook: Operator not reconciling
-
-**Symptoms:** App Definitions are updated but no new pre-warmed sessions appear. Sessions that should be cleaned up remain running. New sessions get no HTTPRoute of their own.
-
-**Step 1: Check operator pod status**
-
-```bash
-kubectl get pods -n <namespace> -l app=operator
-```
-
-The chart default is **`operator.replicas: 1`**. One `Running` operator pod is a healthy operator, not a degraded one - do not escalate on a single replica unless you deliberately configured more. Check what you actually asked for:
-
-```bash
-kubectl get deployment operator-deployment -n <namespace> \
-  -o jsonpath='{.spec.replicas} desired / {.status.readyReplicas} ready{"\n"}'
-```
-
-If a pod is missing or restarting, check for crash loops:
-
-```bash
-kubectl describe pod <operator-pod> -n <namespace>
-kubectl logs <operator-pod> -n <namespace>
-kubectl logs <operator-pod> -n <namespace> --previous
-```
-
-**Step 2: Check for CRD version mismatches**
-
-After a CRD upgrade, the operator may fail to process resources if it is running an older version:
-
-```bash
-kubectl get crd | grep theia.cloud
-```
-
-Expect `workspaces.theia.cloud`, `sessions.theia.cloud` and `appdefinitions.theia.cloud`. To see the stored version of each:
-
-```bash
-kubectl get crd appdefinitions.theia.cloud \
-  -o jsonpath='{.status.storedVersions}{"\n"}'
-```
-
-Confirm the CRD versions match what the currently running operator expects. The CRDs are installed by the **cluster-level** `eduide-cluster` chart and carry a `helm.sh/resource-policy: keep` annotation, so they survive a tenant uninstall and are upgraded independently of any one installation.
-
-**Step 3: Restart the operator**
-
-If logs show the operator is running but not reconciling (stuck in a watch loop, for instance):
-
-```bash
-kubectl rollout restart deployment/operator-deployment -n <namespace>
-kubectl rollout status deployment/operator-deployment -n <namespace>
-```
-
-The Deployment is `operator-deployment`. `kubectl rollout restart deployment/operator` fails with `deployments.apps "operator" not found` - the short name is the pod **label**, not the Deployment name.
-
----
-
-## Post-incident procedure
-
-After every incident affecting a production installation:
-
-1. **Confirm resolution** - Verify the platform is fully operational with a smoke-test session launch.
-2. **Write up the timeline** - Document what happened, when it was detected, what was done, and when it was resolved.
-3. **Identify root cause** - Was it a chart upgrade, a capacity event, a configuration drift, a certificate change, or an external dependency?
-4. **Record follow-up actions** - Create tasks for any changes needed to prevent recurrence or improve detection speed.
-5. **Update runbooks** - If this incident class was not covered, add it here.
-
-Keep incident records even for minor events. Patterns across small incidents often predict larger ones.
-
-## Alert runbooks
-
-The `PrometheusRule` of the cluster chart links every alert to this section, see [Alerts](monitoring-basics.md#alerts). Each entry names the first thing to check. Placeholders are as above.
-
-| Alert | Meaning | First checks |
+| Created to `claimed` | Operator not running or not leader, API server slow | `kubectl -n <ns> get lease eduide-operator`, operator logs, restart the operator |
+| `claimed` | No idle pod, conflicts | See [Pool is empty](#pool-is-empty) |
+| `podReady` | Image pull, unschedulable pod, volume binding, slow IDE start | `kubectl -n <ns> describe pod ide-<instance>`, enable prepull, check the StorageClass |
+| `agentReady` | Agent not ready, claim call fails | `kubectl -n <ns> logs ide-<instance> -c agent`, NetworkPolicy from operator to port 8081 |
+| `ready` to usable IDE | Gateway not programmed, login redirect, IDE start | Check the HTTPRoute, see [Gateway backlog](#gateway-backlog) and [Authz errors](#authz-errors) |
+
+Failed sessions carry a stable `errorCode`:
+
+| `errorCode` | Meaning | Fix |
 |---|---|---|
-| `EduIDEComponentDown` | The operator, service, landing page or garbage collector Deployment has no ready pod for 5 minutes | `kubectl get pods -n <namespace>`, then `kubectl describe pod` and the logs of the failing component |
-| `EduIDEConversionWebhookDown` | The conversion webhook in `eduide-system` is down, for every installation | `kubectl get pods -n eduide-system`; custom resources cannot be read at other versions until it is back |
-| `EduIDEComponentCrashLooping` | A platform container restarted more than 3 times in 15 minutes | `kubectl logs --previous` of the container. After an upgrade, check the chart notes and the operator flags |
-| `EduIDEServiceScrapeDown` | Prometheus cannot scrape the service for 10 minutes | The service scrape uses the `management` port 9000 from chart 3.0.0, check the `PodMonitor` and the pod label `eduide.io/metrics-port` |
-| `EduIDEWarmPoolEmpty` | An app has a warm pool and no available instance | `kubectl get deploy -n <namespace> \| grep instance-`; check image pulls, quota and node capacity. Raise `minInstances` if demand grew |
-| `EduIDESessionOOMKillSpike` | Sessions are killed for memory | Raise `limitsMemory` of the app, see [Storage and Quotas](../platform/storage-and-quotas.md#per-session-resource-configuration) |
-| `EduIDESessionCrashSpike` | Session containers crash repeatedly | `kubectl logs` of a failing session pod, container by name; compare with a recent image change |
-| `EduIDESessionStartupSlow` | p95 session startup is above 90 seconds for 15 minutes | Image preloading, node pressure, pending pods, see [Monitoring](monitoring-basics.md#session-launch-latency) |
-| `EduIDESessionPodPending` | A session pod cannot be scheduled | `kubectl describe pod`: resources, `global.nodeSelector` or taints |
-| `EduIDESessionImagePullFailing` | An image cannot be pulled | The event names the image. Check the tag, the registry and `ImagePullBackOff` on the preloading DaemonSet |
-| `EduIDESessionEvicted` | Pods are evicted | Node disk or memory pressure, see [Node disk](../install/prerequisites.md#5-node-disk-for-preloaded-images) |
-| `EduIDEWorkspaceVolumeFilling` | A workspace volume is above the threshold | Find the PVC, ask the student to clean up or enlarge `requestedStorage` for new workspaces |
-| `EduIDEWorkspaceInodesFilling` | A workspace volume runs out of inodes | Usually `node_modules` or build output; same remedy as above |
-| `EduIDEPVCPending` | A workspace volume will not provision | `kubectl describe pvc`: storage class name, provisioner, capacity |
-| `EduIDECertificateExpiringSoon` | A certificate expires within 21 days | Renew it, see [Certificates](../install/certificates.md); a hand-renewed wildcard is the usual one |
-| `EduIDECertificateNotReady` | cert-manager cannot issue a certificate | `kubectl describe certificate`, then the `Order` and `Challenge`; check the issuer name |
+| `capacity-exhausted` | No room for the pod after `capacity.exhaustedAfter` | Add capacity or quota |
+| `template-not-found` | The template does not exist | Check the template name in the values |
+| `workspace-not-found` | The workspace does not exist | It may have expired |
+| `workspace-lost` | The volume of a saved workspace is gone | [Workspace volume lost](#workspace-volume-lost) |
+| `start-failed` | Pod or agent failed | Read `status.message`, pod logs and events. Image errors such as a wrong name or a missing manifest fail after 60 seconds |
 
-## Runbook: Rollback
+Users at the per-user limit get `session-limit-reached` from the API. That is not a fault.
 
-If a deploy succeeded and behaves badly, run the `Rollback` workflow with the environment and an optional `revision` (blank goes back one revision). It runs `helm rollback --wait --timeout 15m`. See [Rollback](../maintenance/rollback.md) for what it does not undo.
+## Pool is empty
 
-## Runbook: Students cannot start a second session
+Symptom: launches are cold instead of warm, sessions show `startStrategy: cold` or `warm-starting`, users wait at the start of an exam.
 
-`operator.sessionsPerUser` (default 1) and `service.sessionsPerUser` limit the active sessions per user. A student who starts another language or exercise before the first session ended gets the answer 553, shown as "Your previous session is still shutting down", and has to wait or let the old session end. Check the user's sessions with `kubectl get sessions.theia.cloud -n <namespace>`, delete a stuck one, or raise the limit (0 means no limit).
+Look at `eduide_pool_instances` (`idle_ready` at 0 while `claimed` is high), `eduide_claim_total{result="empty"}` rising and `eduide_capacity_pressure`.
+
+```bash
+kubectl -n <ns> get idepool
+kubectl -n <ns> get idepool <pool> -o jsonpath='{.spec}{"\n"}{.status}{"\n"}'
+kubectl -n <ns> get pods -l eduide.github.io/state=idle,eduide.github.io/pool=<pool>
+kubectl -n <ns> get events --sort-by=.lastTimestamp | tail -30
+```
+
+| Cause | Sign | Fix |
+|---|---|---|
+| Target too low for the burst | `idleReady` 0, `targetIdle` equals `minIdle` | Raise `minIdle` before an exam. Check that the pool scaler runs |
+| Pool scaler down or overridden | Annotation `scaler-override` on the `IDEPool`, no scaler pod | Restart the scaler or remove the annotation |
+| Capacity pressure | `eduide_capacity_pressure` is 1, pods unschedulable | Add nodes or quota. The operator keeps pools of that node pool at 0 idle and fails sessions with `capacity-exhausted` after 45 seconds |
+| Idle pods not ready | `idleStarting` high | Image pull slow or failing: check the registry and enable prepull. Agent not ready: check the agent log |
+| `maxInstances` reached | `replicas` equals `maxInstances` | Raise `maxInstances` |
+| Session has a saved workspace | `startStrategy: cold` | Expected, saved workspaces always start cold |
+
+Emergency scale without the scaler: `kubectl -n <ns> scale idepool <pool> --replicas=<n>`.
+
+## Authz errors
+
+Symptom: users get 403 or a redirect loop on `https://<instance host>/<instance>/`, or nobody reaches a new IDE.
+
+```bash
+kubectl -n <ns> get pods -l app.kubernetes.io/component=authz
+kubectl -n <ns> logs deploy/<authz> --since=15m
+kubectl -n <ns> get idesession <name> -o jsonpath='{.status.phase}{" "}{.status.instance}{" "}{.spec.owner}{"\n"}'
+kubectl -n <ns> get securitypolicy,httproute
+```
+
+Log lines carry the decision reason and the trace id, never tokens or cookie values.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| 403 for the owner right after launch | Session not yet `Ready` in the authz cache | Wait a second. If it stays, check RBAC and `/readyz` of authz |
+| 403 for the owner, session `Ready` | `spec.owner` differs from the token claim `oidc.userClaim` | Compare the claim in the token with `spec.owner`. Fix `userClaim` or the Keycloak mapper |
+| 403 for everyone | authz internal error (it fails closed) or the instance is being deleted | Read the authz logs, restart authz, check `oidc.issuerURL` and `oidc.gatewayClientID` |
+| 403 for a foreign user | Expected | None |
+| Redirect loop | Token invalid: wrong audience, issuer mismatch, clock skew | Check the gateway client id and the node time |
+| Redirect loop after login | Cookie not sent: wrong cookie domain or too large | Check the SecurityPolicy cookie domain covers the instance host |
+| `/oauth2/callback` returns 404 | The `/oauth2/` route is missing | Check the route and the redirect URI of the gateway client |
+| Nobody reaches a new IDE | Both authz replicas down | Check pods and the PodDisruptionBudget, restart. Open WebSockets stay up |
+| JWKS errors in logs | authz cannot reach the identity provider | Check egress policy and DNS |
+
+Never turn authz off or make it fail open to get users in. After any change, request a session URL without cookies and confirm you get a login redirect.
+
+## Gateway backlog
+
+Symptom: new sessions are `Ready` but the URL returns 404 or 503 for a while. Typical during a burst, because every cold session and every pool instance adds an HTTPRoute. Claims change no gateway state.
+
+```bash
+kubectl -n <ns> get httproute | wc -l
+kubectl -n <ns> get httproute ide-<instance> -o jsonpath='{.status.parents}{"\n"}'
+kubectl -n <gateway-ns> get pods
+kubectl -n <gateway-ns> logs deploy/envoy-gateway --since=15m | tail -50
+```
+
+The route status shows `Accepted` and `ResolvedRefs` when the gateway took it.
+
+| Cause | Sign | Fix |
+|---|---|---|
+| Too many routes at once | Many `idle_starting`, route `Accepted` lags | Raise `minIdle` stepwise and well before the exam |
+| Total route count too high | Hundreds of routes, several deployments on one gateway | Lower `maxInstances` and idle targets |
+| Gateway pods short on memory or CPU | Restarts, OOM | Raise the Envoy Gateway resources (cluster admin) |
+| Route not accepted | `status.parents` shows a reason | Check `gateway.name`, `gateway.namespace`, `gateway.sectionName` and the listener hostnames |
+| 503 while the pod is ready | The Service has no endpoint yet | `kubectl -n <ns> get endpoints ide-<instance>`, wait for readiness |
+
+Never edit routes by hand. The operator reconciles them back.
+
+## Workspace volume lost
+
+Symptom: an `IDEWorkspace` shows `Ready=False` with reason `VolumeLost`. Starting a session on it answers 409 with `workspace-lost`.
+
+Cause: the volume claim of a workspace that held data no longer exists, for example after a manual delete. The operator does not create a new empty claim, because the user would silently lose the old files.
+
+1. Restore the PVC under the name in `status.claimName` (from a snapshot or a PersistentVolume that still exists). The operator sets `Ready=True` again.
+2. Or give up the data: `kubectl -n <ns> delete ideworkspace <name>`. The next launch creates a fresh workspace.
+
+## Logs
+
+One JSON line per event on stdout. Raise one component to debug for a short time:
+
+```bash
+kubectl -n <ns> set env deploy/<release>-eduide-control-plane-authz LOG_LEVEL=debug
+kubectl -n <ns> set env deploy/<release>-eduide-control-plane-authz LOG_LEVEL=info
+```
+
+The next `helm upgrade` resets the value. Logs never contain tokens, cookies, launch data values, owner names or e-mail addresses.
+
+## After the incident
+
+Write down what happened, the time window and what fixed it, in an issue of your deployment repository. Check whether an alert or a threshold should change.

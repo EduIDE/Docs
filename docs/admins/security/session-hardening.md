@@ -5,318 +5,62 @@ description: What keeps sessions apart from each other and from the cluster, whi
 
 # Session Hardening
 
-A session pod runs code that a student, or a link a student clicked, put there.
-From chart 2.5.1 the platform treats it that way by default. This page lists
-each control, the value that turns it, and what to check after a change.
+A session is an IDE pod that runs code of a student. Treat it as untrusted. Four layers keep it contained.
 
-:::note Placeholders on this page
-`<namespace>` is your installation's namespace, `eduide` its Helm release name.
-:::
+## 1. Login and owner check at the gateway
 
-## At a glance
+Every request to a session URL passes the gateway. Envoy Gateway runs the OIDC login (SecurityPolicy). Then it asks the `authz` service whether the signed-in user owns this session.
+`authz` checks the ID token itself and fails closed: if it is down or unsure, the request is denied. Nobody without a login reaches an IDE, and nobody reaches the session of someone else ([ADR 0005](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0005-session-auth-at-gateway.md)).
+There is no login proxy in the session pod.
 
-| Control | Where | Default | Since |
-|---|---|---|---|
-| IDE reachable only through oauth2-proxy | IDE images | on | EduIDE 1.5.0 |
-| Session NetworkPolicies | `networkPolicies.*` | on | chart 2.5.1 |
-| Env injection allowlist | `operator.allowedEnvFromSecrets`, `allowedEnvFromConfigMaps`, `allowCustomEnvFromMap` | Secrets and ConfigMaps denied | chart 2.5.1, EduIDE-Cloud 1.2.1 |
-| Pod securityContext | operator | on | EduIDE-Cloud 1.2.1 |
-| Workspace ownership check | REST service | on | EduIDE-Cloud 1.2.1 |
-| Namespace-scoped operator RBAC | `operator.clusterWideRbac` | namespaced | chart 2.5.1 |
-| Secrets out of ConfigMaps | `service-config-secret` | always | chart 2.5.1 |
-| Unique cookie secret, HTTPS-only cookie | `keycloak.cookieSecret`, `oauth2Proxy.cookieSecure` | required, `true` | chart 2.5.1 |
-| Landing page hardening | `landingPage.*` | on | chart 2.5.1, landing page 1.3.0 |
-| Per-session sidecar NetworkPolicy, sidecar pods without service account token | operator | on | chart 3.0.0, EduIDE-Cloud 3.0.0 |
-| Per-instance data bridge token | operator, data bridge | on | chart 3.0.0, EduIDE-Cloud 3.0.0, data bridge 2.0.0 |
-| Authentication kept on the monitor route of the session proxy | operator, chart | on | chart 3.0.0, EduIDE-Cloud 3.0.0 |
-| Non-root operator, service and webhook images (uid 10001) | images | on | EduIDE-Cloud 3.0.0 |
-| CORS off by default, OIDC TLS verification, optional audience check | `service.corsOrigins`, `service.oidcTrustStore`, `keycloak.audience` | on, on, off | chart 3.0.0, EduIDE-Cloud 3.0.0 |
-| Admin scaling API off | `service.adminApiEnabled` | `false` | EduIDE-Cloud 3.0.1 |
-| Workspace content never wiped by the clone | Scorpio | on | Scorpio 3.0.0 |
-| Gradle wrapper asks first outside Artemis | `GRADLE_PREWARM_AUTO_CONFIRM` | `false` | Scorpio 3.0.0 |
-| No environment values in operator logs | operator | on | EduIDE-Cloud 3.0.1 |
+## 2. The agent is the only door
 
-## The IDE only listens on loopback
+Every session pod has an agent sidecar. The IDE itself listens only on `127.0.0.1` and has no network port.
 
-The Theia server inside a session has no authentication of its own. Anyone who
-reaches its port gets the files, a terminal and task execution. The IDE images
-therefore bind it to `127.0.0.1:3000`. Only the oauth2-proxy sidecar in the same
-pod reaches it; the gateway reaches the proxy on port 5000, which forces the
-Keycloak login.
-
-The retired `thm-java-25` image was the exception: it started Theia with
-`--hostname=0.0.0.0`. It gets no new tags, and every image published from EduIDE 2.0.0 binds to loopback. An installation that still runs it relies on the
-NetworkPolicies alone to keep other pods off port 3000.
-
-Loopback is shared by every container in the pod, so any sidecar you add to a
-session pod can reach Theia without the login. Only add containers you trust as
-much as the IDE itself.
-
-Installations without oauth2-proxy (`keycloak.allowUnauthenticated: true`) keep
-working: from EduIDE-Cloud 1.2.1 the operator's template for that case binds
-Theia to the pod IP instead.
-
-This change ships in the IDE images, not in the chart. Charts up to 2.6.2 pin
-EduIDE 1.4.0, whose images listen on all interfaces, so on those images the
-NetworkPolicies below are the only barrier. They still let every
-pod in the gateway namespace reach port 3000, so with 1.4.0 images such a pod
-reaches Theia without the login. Run nothing but the gateway in that namespace.
-
-## NetworkPolicies
-
-`networkPolicies.enabled` (default `true`) renders five policies that select
-session pods by their `app.kubernetes.io/component=session` label. They do
-nothing unless your CNI enforces NetworkPolicies, so check that first.
-
-NetworkPolicies only add allowances. If another policy in the namespace already
-selects session pods and allows more, for example egress to private ranges, the
-chart cannot take that away. Review every policy that selects session pods.
-
-| Policy | Effect |
-|---|---|
-| `session-default-deny` | No ingress, no egress, unless another policy allows it |
-| `session-allow-dns` | DNS to `networkPolicies.dnsNamespace` (default `kube-system`) |
-| `session-allow-gateway-ingress` | Ingress on `networkPolicies.sessionPorts` (3000, 5000) from `networkPolicies.gatewayNamespace`, the namespace of the gateway's proxy pods (default `envoy-gateway-system`). This is not necessarily the namespace of the Gateway resource |
-| `session-allow-operator` | Ingress from the operator on the data bridge port (`networkPolicies.dataBridgePort`, 16281) and the monitor port (`networkPolicies.monitorPort`, 8081) |
-| `session-allow-external-egress` | Egress to the internet, except the metadata endpoint (`networkPolicies.metadataCidr`, `169.254.169.254/32`) and `networkPolicies.privateEgressCidrs` |
-
-The last one exists only while `networkPolicies.allowExternalEgress` is `true`
-(the default). Setting it to `false` leaves sessions with DNS only: no git clone
-from outside and no package downloads.
-
-Language server sidecars are covered by the operator, not by the chart. From
-EduIDE-Cloud 3.0 and chart 3.0.0 the chart no longer renders
-`session-allow-sidecars`, which let every session pod reach every sidecar. The
-operator creates one NetworkPolicy per session, or per warm pool instance, that
-connects the IDE pod to its own sidecars on the sidecar ports only. The sidecar
-pods carry the session labels, so the default deny covers them, and they mount
-no service account token. This needs the `networkpolicies` permission of the
-`eduide-cluster` chart, see [Upgrades](../maintenance/upgrades.md#order-of-the-upgrade).
-
-### Private ranges
-
-`privateEgressCidrs` defaults to `10.0.0.0/8`, `172.16.0.0/12`,
-`192.168.0.0/16` and `100.64.0.0/10`. Excluding them is what stops a session from
-reaching the operator, the REST service, the landing page and every other pod
-and service in the cluster.
-
-Two cases need a change:
-
-- **Your pod or service CIDR is outside these ranges.** Add it, or sessions can
-  reach cluster services again.
-- **Sessions must reach a host inside one of these ranges**, such as an Artemis
-  or git server on a private address. Remove that range. Sessions can then reach
-  everything else in it too, so prefer giving that host a public address.
-
-The policies also block in-cluster services that sessions call on purpose, such
-as a shared build cache, because those run on cluster addresses. There is no
-per-service allow for them yet.
-
-Node addresses are not covered. In the integration test on a TUM cluster, a session still reached the Kubernetes API through
-its ClusterIP and the node kubelet port. Restrict those at the node or cloud
-firewall.
-
-### Prewarmed pods
-
-The policies select pods by label. Before EduIDE-Cloud 1.2.1, claiming a
-prewarmed instance labelled only its Services, so prewarmed pods ran with no
-isolation at all. From 1.2.1 the pod template carries the labels, and the
-operator replaces unclaimed pool deployments whose pods lack them, keeping their
-volumes. Claimed sessions keep their old pod until they end.
-
-Check after an upgrade:
-
-```bash
-kubectl -n <namespace> get networkpolicy
-kubectl -n <namespace> get pods -l app.kubernetes.io/component=session
-kubectl -n <namespace> get pods
-```
-
-Compare the last two lists. Every IDE pod, including the warm pool, must appear
-in both. A pod of a session claimed before the upgrade is missing from the
-filtered list and stays unprotected until that session ends.
-
-### The data bridge port must match
-
-The chart fails to render when an app definition's `options.dataBridgePort`
-differs from `networkPolicies.dataBridgePort`, because the default-deny would
-then drop the environment injection into prewarmed sessions. Those sessions
-would start without credentials: no clone and no Artemis sign-in.
-
-The same holds for the monitor: `networkPolicies.monitorPort` and
-`appDefinitions.defaults.monitor.port` both default to 8081, the monitor
-extension's own port. The chart adds every app's monitor port to
-`session-allow-operator` itself.
-
-## Environment injection allowlist
-
-A launch request can ask for environment variables in three ways. Before
-EduIDE-Cloud 1.2.1, a request could mount any Secret or ConfigMap of the
-namespace into its session, including the platform's own.
-
-| Request field | Allowed when | Value |
+| Listener | Reachable from | Protection |
 |---|---|---|
-| `env.fromSecrets` | the Secret name is listed | `operator.allowedEnvFromSecrets` (default `[]`, deny all) |
-| `env.fromConfigMaps` | the ConfigMap name is listed | `operator.allowedEnvFromConfigMaps` (default `[]`, deny all) |
-| `env.fromMap` | always, unless switched off | `operator.allowCustomEnvFromMap` (default `true`) |
+| Proxy, port 8080 | The Envoy pods only | Needs the instance token header, which the route sets. The agent removes it before the request reaches the IDE |
+| Control, port 8081 | The operator only | Bearer instance token. Health probes without auth for the kubelet |
+| Local, `127.0.0.1:8082` | The `eduide-session` extension in the same pod | Loopback only |
 
-The Artemis flow passes its values through `fromMap`, so the defaults work for
-it. Setting `allowCustomEnvFromMap: false` drops those values too, and Artemis
-sessions start without a repository.
+The instance token is 32 random bytes per pod. Admins and the operator can read it in the route and in the Secret ([ADR 0006](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0006-agent-sidecar.md)). Limit who has Kubernetes access to the namespace.
+The agent strips the gateway login cookies and moves IDE cookies below the instance path, so one IDE cannot overwrite the cookies of another.
 
-The allowlists apply to every caller that can launch a session. Any of them can
-request a listed Secret and read its values inside their session, so list only
-Secrets and ConfigMaps that are safe to hand to all of them.
+## 3. Network isolation
 
-Reserved names are always dropped from `fromMap`, whatever the flag says: the
-prefixes `THEIACLOUD_`, `KEYCLOAK_`, `BUILD_CACHE_`, `DEPENDENCY_CACHE_`,
-`DATA_BRIDGE_` and `SIDECAR_`, and the names `LD_PRELOAD`, `LD_LIBRARY_PATH`,
-`NODE_OPTIONS`, `BAZEL_BUILD_CACHE_URL` and `SCORPIO_THEIA_ENV_STRATEGY`. A
-caller therefore cannot redirect the build cache, the data bridge or a sidecar.
+NetworkPolicies are part of the chart ([ADR 0019](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0019-network-isolation.md)):
 
-The operator logs every refusal:
+- Default deny for ingress in the namespace.
+- Session pods accept traffic on the proxy port only from Envoy, and on the control port only from the operator. No rule allows traffic between session pods.
+- Session egress: DNS to `kube-system` and the internet, without private and link-local ranges (`networkPolicy.sessionEgressDeny`). Add the pod and node ranges of your cluster to `sessionEgressExtraDeny` if they are public, also IPv6. `sessionEgress` replaces the default.
+- No Role grants `pods/exec`, `pods/attach`, `pods/portforward` or `*` rules.
 
-```bash
-kubectl -n <namespace> logs deploy/operator-deployment | grep "Dropped env injection"
-```
+This works only if the CNI enforces NetworkPolicies. Run the smoke test from [Installing EduIDE](../install/installing.md#verify) after every installation and CNI change. If a cluster does not enforce policies, do not release the deployment.
 
-Sessions started before the upgrade keep what they received until they end.
-Restart them to revoke it.
+## 4. Launch data is an allowlist
 
-## Pod securityContext
+Users and Artemis pass data to a session, such as a repository URL or a token ([ADR 0012](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0012-user-data-secrets-allowlist.md)). The rules:
 
-From EduIDE-Cloud 1.2.1 the IDE and oauth2-proxy containers run with
-`allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]` and the
-`RuntimeDefault` seccomp profile; oauth2-proxy also with `runAsNonRoot: true`.
+- Each template lists the keys it accepts and a format per key. Unknown keys are rejected. There is no way to reference a Secret or ConfigMap from a request.
+- `GIT_URI` and `ARTEMIS_URL` must be `https` and their host must be in `config.allowedHosts`.
+- User name and e-mail come from the verified token, not from the request.
+- The service writes the data into a Secret owned by the session. The operator pushes it once to the agent, which keeps it in memory. It never appears in the object spec, logs, traces, metrics or status.
+- A repository URL with credentials (the Artemis case) is accepted only for keys with `allowCredentials`, set through `templateDefaults.gitUriAllowCredentials` for templates that Artemis opens.
 
-This is not the full Restricted Pod Security Standard. The IDE container runs as
-a fixed non-zero UID without `runAsNonRoot`, and an app definition with
-bandwidth limits still adds a `NET_ADMIN` init container. A namespace label
-enforcing `restricted` will reject those pods.
+Encryption of Secrets at rest in etcd is a cluster setting. Turn it on.
 
-## Workspace ownership
+## Other values that matter
 
-From EduIDE-Cloud 1.2.1 the REST service refuses a launch or a workspace
-creation with `403` when the requested workspace name belongs to another user.
-Before, any logged-in user could start a session on someone else's workspace by
-sending its name. The refusal never changes the other user's workspace.
-
-In anonymous mode (no Keycloak) the check compares the `user` the caller sends,
-so it stops accidental name collisions but not a caller who claims to be the
-owner. The service also rejects anonymous user names outside letters, digits and
-`._@+-`.
-
-## Operator RBAC
-
-The operator needs broad rights on Sessions, Deployments, Pods, Services and
-ConfigMaps. From chart 2.5.1 those apply only in the release namespace, through
-a RoleBinding to the shared `operator-api-access` ClusterRole.
-
-Two cluster-scoped reads cannot be namespaced: CustomResourceDefinitions, which
-the operator lists at startup, and PersistentVolumes. The chart grants them
-through a minimal per-namespace ClusterRole, `operator-api-access-cluster-<namespace>`,
-with write access to PersistentVolumes only for the `MINIKUBE` provider.
-
-Set `operator.clusterWideRbac: true` only for a setup where the operator really
-acts across namespaces. It renders a ClusterRoleBinding instead.
-
-## Secrets and cookies
-
-- `SERVICE_AUTH_TOKEN` and `KEYCLOAK_CLIENTSECRET` live in the
-  `service-config-secret` Secret, no longer in the `service-config` ConfigMap,
-  and the operator reads the service token from there instead of a plain
-  argument.
-- `keycloak.cookieSecret` has no default. The chart fails to render without it,
-  so every installation has its own. See
-  [Access Control](../platform/access-control.md).
-- `oauth2Proxy.cookieSecure` defaults to `true`, so the session cookie only
-  travels over HTTPS. Set it to `false` only for an install served over plain
-  HTTP.
-- The REST service compares the admin API token in constant time and redacts the
-  session secret in its responses and logs.
-
-The oauth2-proxy cookie secret itself still sits in a ConfigMap
-(`oauth2-proxy-config`). Anyone who can read ConfigMaps in the namespace can read
-it.
-
-## The landing page
-
-From landing page 1.3.0, which chart 2.5.1 pins:
-
-- **Nothing from third-party hosts.** No CDN scripts, no Google Fonts, no
-  Gravatar. A Content-Security-Policy and the usual security headers enforce it.
-  This is why the page looks different: a flat background instead of the
-  animated birds, the system font, and no profile picture next to the email.
-- **Sentry is off by default.** To enable it on the landing page, set
-  `landingPage.sentry.enable: true` and `landingPage.sentry.dsn` to your
-  project's DSN. Tokens, credentials and URL fragments are stripped from what it
-  reports.
-  The operator and the REST service have their own `operator.sentry.enable` and
-  `service.sentry.enable`. Their DSN is built into the images and points at
-  TUM's Sentry.
-- **No secrets in the access log.** nginx logs the path without the query, since
-  `gitUri` and `artemisToken` are in it.
-- **Runs without root**, on port 8080 with a read-only root filesystem, no
-  capabilities and the `RuntimeDefault` seccomp profile. The Service stays on
-  port 80.
-- **Links start a session only from trusted hosts.** A link with `gitUri` and
-  `artemisToken` starts the IDE without a click only when the hosts of both
-  `gitUri` and `artemisUrl` are in `landingPage.trustedArtemisHosts`. Otherwise
-  the page names the repository host and waits for **Launch**. Anyone can write
-  such a link, so a token in it proves nothing.
-- **Anonymous mode asks first.** Without Keycloak, a `?user=` in the link is
-  shown for confirmation instead of being taken as the identity.
-
-```yaml
-landingPage:
-  trustedArtemisHosts:
-    - artemis.example.edu
-```
-
-The TUM installations trust `artemis.tum.de` (production) and
-`artemis-test1.artemis.cit.tum.de` and `artemis-test2.artemis.cit.tum.de` (test1
-and test2). Production also keeps `artemis.cit.tum.de`, which redirects to
-`artemis.tum.de`, so real links never carry it; the landing page compares hosts
-exactly, so list the host Artemis actually puts in its links. Staging, e2e, Bonn
-and Mannheim trust none: no Artemis links to staging or e2e yet, and Bonn's and
-Mannheim's Artemis hosts still have to be confirmed. Their Artemis links need
-the click.
-
-## Inside the IDE
-
-From EduIDE 1.5.0:
-
-- **No code leaves for scanoss.com.** The `@theia/scanoss` extension, which sent
-  code snippet hashes there, is gone.
-- **Gradle prewarm asks first.** Scorpio runs the exercise's Gradle wrapper
-  right after the clone to warm the build. Since Scorpio 3.0.0
-  `GRADLE_PREWARM_AUTO_CONFIRM` defaults to `false`, so it asks the student
-  before running it; a dismissed prompt counts as no. It reads the value only
-  from the pod or image environment, never from the data bridge. The Artemis
-  edition images set it to `true`, because those exercises come from your own
-  Artemis. `GRADLE_PREWARM=off` turns prewarming off entirely.
-
-## Controls added in 3.0
-
-- **Admin scaling API off** by default (`service.adminApiEnabled`, EduIDE-Cloud 3.0.1).
-- **Anonymous mode needs an opt-in**: `keycloak.enable: false` is refused without `keycloak.allowUnauthenticated: true`.
-- **Browser origins**: CORS allows the landing page and `service.corsOrigins` only. TLS to Keycloak is verified, with `service.oidcTrustStore` for a private CA, and `keycloak.audience` adds an audience check.
-- **`service.sessionsPerUser`** limits active sessions per user.
-- **Management port 9000** carries metrics and OpenAPI and is not routed through the gateway.
-- **The session proxy skips authentication only for `/health`.** The route is anchored to `^/health$`.
-- **Non-root images** (uid 10001) for operator, service and conversion webhook.
-- **TUM extra egress ranges**: only the TUM production cluster adds both `198.18.0.0/15` and `131.159.88.0/24` to `networkPolicies.privateEgressCidrs`. The student cluster adds `198.18.0.0/15` only, and Bonn and Mannheim add neither.
+| Value | Effect |
+|---|---|
+| `sessionsPerUser`, `workspaces.perUser`, `rateLimit.launchesPerMinute` | Bound what one user can consume |
+| `templateDefaults.runAsUser` | IDE images run as an unprivileged user (101) |
+| `templateDefaults.resources` | CPU and memory limits per session |
+| Template `bandwidth` | Ingress and egress bandwidth annotations |
+| `config.security.hstsIncludeSubdomains` | HSTS for the service host |
 
 ## What this does not cover
 
-- **The data bridge token does not stop code inside the pod.** From data bridge
-  2.0.0 `POST /data` needs the per-instance token, and `session-allow-operator`
-  keeps other pods away, if your CNI enforces it. Processes inside the session
-  pod, including the student's own code, can read `DATA_BRIDGE_TOKEN` and
-  reach the bridge on localhost.
-  Keep NetworkPolicies on and keep `dataBridgePort` out of
-  `networkPolicies.sessionPorts`.
-- **A token inside `gitUri` ends up in the clone's `.git/config`**, because
-  pushing from the IDE needs it.
-- The controls above are about sessions. The operator, service and landing page
-  pods have no NetworkPolicies of their own.
+- A student can use the internet from a session, within the egress rules. Add a stricter `sessionEgress` for exams if needed.
+- Anyone with `get` on Secrets in the namespace can read launch data and instance tokens.
+- A node compromise is a cluster problem. Use dedicated node pools for sessions (`placement.nodeSelector`).

@@ -1,206 +1,199 @@
 ---
 title: Installing EduIDE
-description: Installing the platform on a cluster from the published charts.
+description: Installing the CRDs once per cluster and the platform once per deployment, with the OIDC clients and the first checks.
 ---
 
 # Installing EduIDE
 
-EduIDE ships as two Helm charts, published as OCI artifacts to
-`ghcr.io/eduide/charts`. They always carry the same version, and that version
-is the platform version.
+Install order: the CRDs once per cluster, then the installation chart once per deployment.
+A deployment is one namespace. Read [Prerequisites](prerequisites.md) and [Hostnames and Certificates](certificates.md) first.
 
-| Chart | Installed | Owns |
-|---|---|---|
-| `eduide-cluster` | once per **cluster** | CRDs, the conversion webhook, ClusterRoles, cert-manager issuers, the shared Gateway, PodMonitors and dashboards |
-| `eduide` | once per **installation** | operator, REST service, landing page, routes, app definitions, image preloading |
-
-The split exists because the two halves have different cardinality. CRDs and a
-Gateway must exist once on a cluster; a tenant install exists once per namespace,
-and there may be several on the same cluster. Installing cluster-scoped
-resources from every tenant deploy is what previously made concurrent deploys
-race each other.
-
-## Prerequisites
-
-The cluster must already have:
-
-- **cert-manager**, for the conversion webhook's certificate and for issuing
-  hostname certificates
-- **Gateway API CRDs** and a Gateway controller. EduIDE is tested with Envoy
-  Gateway
-- a **storage class** for session volumes
-
-## Cluster half
-
-These two commands are the manual path. Day to day, `bootstrap-cluster.yml` and
-`deploy.yml` run them for you - see
-[Provisioning](../platform/provisioning.md).
+:::info Chart reference
+This page is the only place that names the charts. All other pages use these variables. The installation chart and the cluster chart share one version.
 
 ```bash
-helm install eduide-cluster oci://ghcr.io/eduide/charts/eduide-cluster \
-  --version 3.0.0 -n eduide-system --create-namespace \
-  -f cluster-values.yaml
+export EDUIDE_CHART=oci://ghcr.io/eduide/charts/eduide
+export EDUIDE_VERSION=3.0.0
+export EDUIDE_CLUSTER_CHART=oci://ghcr.io/eduide/charts/eduide-cluster
+export EDUIDE_CRDS_CHART=oci://ghcr.io/eduide/eduide-control-plane/charts/eduide-control-plane-crds
+export EDUIDE_CRDS_VERSION=0.2.0
 ```
 
-`cluster-values.yaml` supplies the Gateway's listeners and the certificate
-names. In the TUM installations this file is not written by hand - the
-`Bootstrap cluster` workflow derives it from the environment manifests, so
-adding an environment does not mean remembering to edit a second file.
+Pass a prerelease such as `3.0.0-rc.9` explicitly in `EDUIDE_VERSION`, because `helm` skips prereleases otherwise.
+:::
 
-## Tenant half
+## 1. Cluster chart (once per cluster)
+
+The cluster chart goes first. It carries the control plane CRDs, a cluster identity ConfigMap and, optionally, the Envoy Gateway `GatewayClass` and `EnvoyProxy` (with `mergeGateways: true`, so all deployments share one data plane).
+Helm does not upgrade CRDs from a chart's `crds/` directory, so the chart ships them as templates. Changes are additive.
 
 ```bash
-helm install eduide oci://ghcr.io/eduide/charts/eduide \
-  --version 3.0.0 -n eduide-test1 --create-namespace \
-  -f values.yaml -f secrets.yaml
+helm upgrade --install eduide-cluster $EDUIDE_CLUSTER_CHART \
+  --version $EDUIDE_VERSION --namespace eduide-system --create-namespace
 ```
 
-The chart refuses to install if the cluster chart is absent, rather than letting
-the operator crash-loop on a missing CRD.
+:::warning Cluster with a 2.x installation
+Do not install or upgrade the cluster chart on a cluster that still runs a 2.x (Theia Cloud) installation. Version 3 no longer ships the Theia CRDs, so Helm would delete them and with them every 2.x session and workspace.
+The chart looks up the CRD `appdefinitions.theia.cloud` and refuses while it exists, unless you set `allowRemovingTheiaCloud=true`. Set that only when the 2.x installation is gone or should be destroyed.
+To run 3.0 next to 2.x during a [migration](../maintenance/upgrades.md#migrating-from-2x), install only the CRDs and leave the 2.x release alone:
 
-## What one version pins
+```bash
+helm upgrade --install eduide-crds $EDUIDE_CRDS_CHART --version $EDUIDE_CRDS_VERSION
+```
 
-A bare install with no overrides pins every image. Nothing floats.
+Or use a separate cluster.
+:::
 
-| Value | Source repository | Default |
-|---|---|---|
-| `versions.ide` | EduIDE - the IDE images | empty, meaning the chart's `appVersion` |
-| `versions.cloud` | EduIDE-Cloud - operator and REST service | set by the release |
-| `versions.landingPage` | EduIDE-Landing-Page | set by the release |
+## 2. Namespace and gateway secret
 
-They are separate because the three repositories release on different cadences,
-and a one-line landing-page fix should not rebuild fifteen multi-gigabyte IDE
-images.
+```bash
+kubectl create namespace eduide-<deployment>
+```
 
-**Never set a single tag for everything.** A pull request only builds the images
-of the repository it came from, so pointing all three at `pr-451` puts most of
-the namespace into `ImagePullBackOff`.
+Create the Keycloak clients first ([below](#keycloak)). Then store the secret of the gateway client in the namespace.
+Create it from a file or a pipe. Never print it and never put it in a values file in Git.
 
-## Minimum values
+```bash
+kubectl -n eduide-<deployment> create secret generic eduide-oidc \
+  --from-file=client-secret=<path-to-file>
+```
+
+## 3. Values
+
+Hosts, gateway and OIDC settings appear in the control plane block and the landing page block. State them once with YAML anchors; the chart checks that both blocks agree.
+This example is based on a real test deployment. Hosts and credentials are replaced.
 
 ```yaml
-hosts:
-  configuration:
-    baseHost: example.edu
-    landing: eduide
-    service: service.eduide
-    instance: instance.eduide
-  allWildcardInstances: ["*.webview."]
-  # The chart builds <landing>.<baseHost>: eduide.example.edu, service.eduide.example.edu,
-  # instance.eduide.example.edu.
+x-hosts: &hosts
+  service: eduide.example.org
+  instance: instance.eduide.example.org
+  webview: webview.instance.eduide.example.org
 
-keycloak:
-  enable: true
-  authUrl: https://sso.example.edu/
-  realm: your-realm
-  clientId: eduide
+x-gateway: &gateway
+  name: eduide
+  namespace: eduide-<deployment>
+  sectionName: ""
+  port: 443          # only the HTTPS listeners carry routes
 
 gateway:
-  parentRefs:
-    - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-landing }
-    - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-service }
-    - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-instances }
-    - { name: theia-shared-gateway, namespace: eduide-system, sectionName: prod-webview }
+  create: true
+  className: envoy
 
-landingPage:
-  trustedArtemisHosts:     # links from these hosts start the IDE without a click
-    - artemis.example.edu
+images:
+  registry: ghcr.io/eduide
+  tag: 3.0.0
+
+templates:
+  java-17-standalone:
+    pool: {minIdle: 1, maxInstances: 5}
+  python-standalone: {}
+
+eduide-control-plane:
+  poolScaler: {enabled: true, mode: active}
+  config:
+    deployment: course-a
+    hosts: *hosts
+    gateway: *gateway
+    oidc:
+      issuerURL: https://keycloak.example.org/realms/eduide
+      clientIDs: [eduide]
+      gatewayClientID: eduide-gateway
+      admin: {rolePath: resource_access.eduide.roles, role: eduide-admin}
+    admin:
+      prometheusURL: http://prometheus-operated.monitoring:9090
+    allowedHosts: [github.com, gitlab.com, artemis.example.org]
+    workspaces: {storageClassName: standard}
+    telemetry: {otlpEndpoint: jaeger-collector.eduide-<deployment>:4317}
+  monitoring:
+    podMonitor: {enabled: true}
+    rules: {enabled: true}
+    dashboard: {enabled: true}
+  oidc:
+    clientSecretName: eduide-oidc
+
+eduide-landing-page:
+  host: eduide.example.org
+  gateway: *gateway
+  legal:
+    imprint: {url: https://example.org/imprint}
+    privacy: {url: https://example.org/privacy}
+  config:
+    title: EduIDE
+    keycloak:
+      url: https://keycloak.example.org/
+      realm: eduide
+      clientId: eduide
 ```
 
-Session pods are isolated by NetworkPolicies from the start. Set
-`networkPolicies.gatewayNamespace` to the namespace where the gateway's **proxy
-pods** run, which is `envoy-gateway-system` for Envoy Gateway even though the
-Gateway resource above is in `eduide-system`. A wrong value blocks every request
-to every session. See [Session Hardening](../security/session-hardening.md).
+The installation chart lists every value with its default in its `values.yaml`. The most important ones:
 
-Secrets go in a second values file, never on the command line: the Keycloak
-cookie secret (`keycloak.cookieSecret`, required, unique per installation) and
-the admin API token (`service.adminApiToken`, base64-encoded, with
-`service.adminApiTokenSecret.create: true`). `--set` puts them in the process list
-and in Actions debug logs.
+| Value | Meaning |
+|---|---|
+| `eduide-control-plane.config.deployment` | Short name of the deployment, used in metrics and traces. |
+| `...config.hosts.*`, `...config.gateway.*` | The three hostnames and the Gateway all routes attach to. |
+| `...config.oidc.issuerURL`, `clientIDs`, `gatewayClientID` | The realm, the clients whose tokens the service accepts, and the confidential gateway client. |
+| `...config.allowedHosts` | Git and Artemis hosts users may pass in. See [Templates and Pools](../platform/templates-and-pools.md). |
+| `...config.sessionsPerUser` | Parallel sessions per user (default 3). |
+| `...config.workspaces.*` | Storage class, size, retention, grace and the workspace limit per user. See [Storage and Workspaces](../platform/storage-and-workspaces.md). |
+| `...config.placement.*` | Node selector, node pool label, tolerations, image prepull. |
+| `...config.capacity.exhaustedAfter` | How long a session waits for room before it fails (default 45 s). |
+| `...config.telemetry.otlpEndpoint` | OTLP endpoint for traces. |
+| `...config.rateLimit.launchesPerMinute` | Launch rate per user (default 10). |
+| `templates` | The templates this deployment offers. |
 
-```yaml
-# secrets.yaml
-keycloak:
-  cookieSecret: <openssl rand -base64 32 | tr -- '+/' '-_'>
-service:
-  adminApiTokenSecret:
-    create: true
-  adminApiToken: <base64 of the token>
-```
+Image prepull on every IDE node (`placement.prepull.enabled`) matters: a cold start without it can wait for image pulls for a long time.
 
-From EduIDE-Cloud 3.0.1 the scaling API behind the token is off unless
-`service.adminApiEnabled: true`, see [Admin API Tokens](../security/admin-api-tokens.md).
-
-**In normal operation you do not write that file.** The deploy workflow
-generates it on the runner from the environment's GitHub Environment secrets and
-it never reaches the repository. The commands on this page are for a first
-install on a new cluster, or for manual intervention when the pipeline is
-unavailable - in which case write `secrets.yaml` yourself, keep it out of git,
-and delete it afterwards. Everything non-secret belongs in `values.yaml`.
-
-## Four hostnames, not one
-
-Each installation serves:
-
-```
-<landing>                        the landing page
-service.<landing>                the REST service
-instance.<landing>               session ingress
-*.webview.instance.<landing>     per-session webviews
-```
-
-All four need DNS and all four need to be on a certificate. The webview host is
-two labels below the instance host, so a wildcard covering the others does not
-cover it - it needs its own certificate, and because it is a wildcard,
-cert-manager cannot issue it over HTTP-01.
-
-**A certificate that omits a hostname fails silently.** The Gateway reports the
-listener healthy - Gateway API never compares a certificate's names against a
-listener's hostname - so the first symptom is a browser warning, and the second
-is the landing page being unable to call its own REST service, because the
-browser blocks that cross-origin request over an invalid certificate.
-
-## Feedback links
-
-The landing page footer carries "Report a bug" and "Request a feature" links.
-Unset, both fall back to the EduIDE-Cloud issue tracker built into the landing
-page, so point them at the place where your users should report problems. They are per installation,
-under `landingPage.footerLinks`:
-
-```yaml
-landingPage:
-  footerLinks:
-    bugReport:
-      text: Report a bug
-      url: https://github.com/EduIDE/EduIDE/issues
-    featureRequest:
-      text: Request a feature
-      url: https://github.com/EduIDE/EduIDE/issues
-    about:                       # optional, as is attribution
-      text: About
-      url: https://eduide.example.edu/about
-```
-
-Each link also takes `target` and `rel`, and the URLs go through Helm's `tpl`.
-The TUM installations set both links to `https://github.com/EduIDE/EduIDE/issues`
-in `environments/_base.yaml` of EduIDE-deployment.
-
-The "Report Issue" entry in the IDE's Help menu opens
-`https://github.com/eduide/eduide/issues` and cannot be changed per
-installation, because the URL is part of the IDE image. Tell your users which
-channel is yours if they should not file issues on the public tracker. Those
-issues are public, so students should not include personal data, Artemis links
-(they hold tokens) or exercise code.
-
-## Verifying
+## 4. Install
 
 ```bash
-kubectl -n <namespace> get deploy          # operator-deployment, service-deployment, landing-page-deployment, garbage-collector
-kubectl -n <namespace> get appdefinitions.theia.cloud
-kubectl -n <namespace> get httproute -o wide
-curl -sI https://<landing>/                # 200, and TLS must validate without -k
+helm upgrade --install eduide $EDUIDE_CHART --version $EDUIDE_VERSION \
+  --namespace eduide-<deployment> -f values.yaml
 ```
 
-Then start a real session from the landing page. Everything above can be healthy
-while sessions do not start.
+The chart installs the operator, the service (2 replicas), authz (2 replicas), the landing page, PodDisruptionBudgets, RBAC, the Gateway, the SecurityPolicy, the NetworkPolicies, the `/oauth2/` route and the configuration.
+Unknown keys in the control plane configuration make the binaries fail on start, so a typo shows up at once.
+
+### Keycloak
+
+Create two clients in the realm of the deployment.
+
+| Client | Type | Settings |
+|---|---|---|
+| Landing page, for example `eduide` | public, standard flow | Valid redirect URI `https://<service host>/*`, web origin `https://<service host>`. Its id goes into `oidc.clientIDs` and the landing page `keycloak.clientId`. |
+| Gateway, for example `eduide-gateway` | confidential | Valid redirect URI `https://<instance host>/oauth2/callback`. Its id is `oidc.gatewayClientID` and the audience `authz` checks. |
+
+The tokens must carry the claim named in `oidc.userClaim` (default `preferred_username`), plus `name` and `email`.
+Some identity providers speak only TLS curves that Envoy does not offer for upstream TLS.
+The chart has an optional TLS bridge for that case (`oidcBridge.enabled` and `oidc.providerBackendRefs`); check its `values.yaml`.
+
+### HSTS
+
+The service and the landing page send `Strict-Transport-Security: max-age=31536000; includeSubDomains`.
+If the instance and webview hosts are not subdomains of the service host, set `config.security.hstsIncludeSubdomains: false` for the service and `hstsIncludeSubdomains: false` in the landing page config.
+
+### Salt for pseudonymous ids
+
+The chart generates a salt once and keeps it on `helm upgrade`. Traces, logs and the admin API show users as an HMAC with this salt.
+authz also derives the key of its session cookie from it. Treat it as an authentication secret.
+A renderer without cluster access (`helm template`, Argo CD) cannot look the Secret up and renders a new salt every time.
+Then create the Secret yourself (key `salt`) and set `userSalt.secretName`.
+
+## Verify
+
+```bash
+kubectl -n eduide-<deployment> get pods
+kubectl -n eduide-<deployment> get idetemplate,idepool
+kubectl -n eduide-<deployment> get networkpolicy
+```
+
+- Operator, service and authz pods are `Ready`.
+- Each pool shows `idleReady` equal to `minIdle` after a minute.
+- Open `https://<service host>/`, sign in, start a session, and check `kubectl -n eduide-<deployment> get idesession`.
+- An unauthenticated request to `https://<instance host>/anything/` redirects to the login and never returns IDE content.
+- NetworkPolicy smoke test: start a foreign pod in the namespace and confirm it cannot reach an IDE pod on port 8080 or 8081. From a terminal in a session, confirm that the node address on port 10250, the API server and a pod of another namespace do not answer.
+  If they answer, the CNI does not enforce policies. Do not release the deployment.
+
+:::note Artemis links
+Artemis passes the token and the repository URL in the URL fragment. This needs Artemis pull request [ls1intum/Artemis#14702](https://github.com/ls1intum/Artemis/pull/14702), which is not yet merged upstream.
+For templates that Artemis opens, set `templateDefaults.gitUriAllowCredentials: true`, so the repository URL may carry the student's token.
+:::

@@ -1,59 +1,38 @@
 ---
 title: Rollback
-description: Undoing a deploy that succeeded but behaves badly.
+description: Undoing an upgrade that succeeded but behaves badly, with helm rollback.
 ---
 
 # Rollback
 
-Deploys run with `--wait --atomic`, so a deploy that **fails** already rolls
-itself back. This page is for the other case: the deploy succeeded, the pods are
-healthy, and the release is wrong.
+The charts are OCI artifacts, and Helm keeps the history of each release. This page is for the case that the upgrade succeeded, the pods are healthy, and the release is wrong.
+Use `helm upgrade --atomic --wait` and a failed upgrade rolls itself back.
 
 ## Rolling back
 
-```
-Actions -> Rollback -> environment: <name>, revision: <number or blank>
-```
-
-The `revision` input is the Helm revision to go back to. Blank goes back one revision.
-
-or directly:
-
 ```bash
-helm rollback eduide -n <namespace> --wait --timeout 15m
+helm history eduide -n eduide-<deployment>
+helm rollback eduide <revision> -n eduide-<deployment> --wait --timeout 15m
 ```
 
-Helm restores the previous revision. `helm history eduide -n <namespace>` shows
-what you are going back to.
+Without a revision, Helm goes back one revision. Helm restores the previous chart version and values. You do not need the old chart on disk.
+If you pin versions with `$EDUIDE_VERSION` ([Chart reference](../install/installing.md)), you can also run `helm upgrade` with the older version and the old values file. Both end in the same state.
 
 ## What a rollback does not touch
 
-**Sessions, workspaces and their volumes survive**, as long as no app was renamed or removed. They are custom resources and
-PersistentVolumeClaims that the release does not own the lifecycle of, so a
-rollback does not disturb anyone's work. A student in a session will usually not
-notice.
-
-An app rename is the exception: AppDefinitions are part of the release, and Helm deletes the ones that the target revision does not have. Rolling back 3.0.0 to 2.x deletes the `*-standalone` apps and ends their sessions, see [Upgrades](upgrades.md).
-
-**CRDs are not rolled back.** They belong to `eduide-cluster`, not to the tenant
-release. A rollback of the tenant chart cannot undo a CRD change.
-
-That second point is the important one. If a release changed a CRD's stored
-version, rolling back the tenant chart leaves the new CRD in place with an older
-operator that may not understand it. **A CRD-breaking change needs a major
-version bump and a written runbook, not a rollback.**
+- Sessions and saved workspaces survive. They are objects and volumes that the release does not own the lifecycle of. A student in a session usually does not notice.
+- The CRDs stay. The cluster chart is separate and its changes are additive, so an older control plane ignores unknown fields.
+- A template that the older revision does not have is removed by the rollback, and so is its pool. Sessions that already run on it keep running until they end. New launches of it fail with `template-not-found`.
 
 ## When rollback is the wrong tool
 
 | Situation | Do this instead |
 |---|---|
-| The images are wrong but the chart is fine | Redeploy with the correct `versions.*` |
-| A certificate does not cover a hostname | Fix the certificate; the release is not the problem |
-| A CRD changed incompatibly | Follow the release's runbook. Rolling back the tenant chart will not help |
-| The cluster chart is wrong | Roll back `eduide-cluster` in `eduide-system`, and understand that this affects **every** installation on the cluster |
+| The IDE image is wrong but the chart is fine | Pin the correct `images.tag` or template `tag` and upgrade |
+| A certificate does not cover a hostname | Fix the certificate. The release is not the problem |
+| A CRD changed incompatibly | Follow the runbook of that release. A rollback of the deployment chart will not help |
+| You are rolling back from 3.x to 2.x | Not a rollback. See the way back in [Upgrades](upgrades.md#migrating-from-2x) |
 
 ## Afterwards
 
-A rollback is a statement that the deployed version was wrong. Say so somewhere
-durable - an issue on the release - or the same version gets deployed again next
-week.
+A rollback says the deployed version was wrong. Write it down in an issue on the release, or the same version gets deployed again next week.
