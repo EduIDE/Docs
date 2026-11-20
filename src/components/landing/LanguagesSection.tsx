@@ -38,7 +38,7 @@ export default function LanguagesSection() {
             Ready-to-code environments
           </h2>
           <p>
-            We provide pre-configured Cloud IDEs with full toolchain support and LSP-powered editing right out of the box.
+            We provide pre-configured browser IDEs with full toolchain support and LSP-powered editing right out of the box.
             <br />Enjoy seamless syntax highlighting, autocompletion, and real-time error detection without any setup.
           </p>
         </div>

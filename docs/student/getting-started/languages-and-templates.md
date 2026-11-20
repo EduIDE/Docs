@@ -7,7 +7,7 @@ description: Which languages EduIDE offers, what a starter template contains, an
 
 ## Languages
 
-The launcher offers these languages:
+EduIDE offers seven languages:
 
 - Java 17
 - Java 25
@@ -19,12 +19,22 @@ The launcher offers these languages:
 
 Your installation may show only some of them.
 
+## Two editions
+
+Each language comes in two editions.
+You rarely choose between them, because the way you start decides:
+
+- **Artemis edition.** It opens from an Artemis exercise through **Open online IDE**. It includes the Artemis view and Iris, the Artemis assistant. It does not appear as a tile on the start page.
+- **Standalone edition.** It opens from a tile on the start page. It has no Artemis view. Git credentials you enter are kept in memory for 3 hours.
+
+Both editions have the same toolchain and the same starter templates.
+
 ## Starter templates
 
-When you start a language yourself, you can pick a starter template.
+When you start a language yourself from a tile, you can pick a starter template.
 It puts a small example project into your workspace, with tasks that run and test it.
 A template only fills an empty workspace.
-If you pick one in a Saved workspace that already has files, EduIDE does not replace them.
+If you pick one in a saved workspace that already has files, EduIDE does not replace them.
 
 | Language | Templates |
 |---|---|

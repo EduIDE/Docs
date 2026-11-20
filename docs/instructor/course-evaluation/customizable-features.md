@@ -9,7 +9,8 @@ EduIDE is not limited to one fixed IDE setup. A major strength of the platform i
 
 ## The Most Important Customization Point: The IDE Image
 
-The entire image that runs the IDE can be customized for the course.
+The image that runs the IDE can be customized for the course.
+A university builds its own image from one of the published edition images (`<language>-artemis` or `<language>-standalone`) and the platform team offers it as a template.
 
 This is the most important fact instructors should understand when evaluating EduIDE, because it means the platform is not only configurable at the UI level. The actual environment students receive can be prepared ahead of time to match the course closely.
 
@@ -87,15 +88,15 @@ Beyond the three levels, the **Customize** panel (**Experience Levels**, then **
 
 ![Customize panel](/img/instructor/customize-panel.png)
 
-The file sets the starting level only. Once a student picks a level themselves, their choice wins over the file. The choice is stored in the session, so a new session without a persistent home directory starts from the file again. The file cannot lock students to a level.
+The file sets the starting level only. Once a student picks a level themselves, their choice wins over the file. The choice is stored in the session, so a new session starts from the file again. The file cannot lock students to a level.
 
-Without the file, students start at **Expert** from EduIDE 1.5.0, and so in release 3.0 (EduIDE 2.0.0). The level is a setting inside the session, so it resets to the starting level in every new session, also with a persistent workspace. EduIDE 1.4.0 itself starts them at **Beginner**. Older versions have no experience levels at all. Ask the platform team which version your installation runs.
+Without the file, students start at **Expert**. The level is a setting inside the session, so it resets to the starting level in every new session, also with a saved workspace.
 
 ### Starter Templates
 
 For students who start a language themselves, the image ships starter templates, for example Maven or Gradle for Java, Make or Bazel for C, and Cargo for Rust.
 A template is a small example project with its tasks for running and testing it.
-Students pick one on the launcher page.
+Students pick one when they start a tile on the start page.
 Exercises you start from Artemis bring their own files, so no template applies.
 See [Languages and Starter Templates](/student/getting-started/languages-and-templates) for the list.
 

@@ -1,95 +1,41 @@
 ---
 title: What Changed in 3.0
-description: What instructors notice in release 3.0, and what to tell students.
+description: What lecturers, students and operators notice in EduIDE 3.0.0.
 ---
 
 # What Changed in 3.0
 
-This page lists what changes for your course in release 3.0.
-Read it before the semester starts.
+EduIDE 3.0.0 replaces the platform that starts and stops sessions.
+The IDE still runs in the browser, but the start page, the session handling and the way Artemis opens an exercise are new.
+Read this page before the semester starts.
 
-## Sessions now end after 60 minutes without input
+## For your students
 
-Before 3.0, the inactivity timer never fired, so sessions effectively ran for
-24 hours. Now:
+- **A new start page.** After login, **Your environments** lists everything a student started, and **Start new** shows one tile per environment. Each tile says how long a start takes and whether the workspace is saved or temporary.
+- **Saved and temporary workspaces.** A temporary workspace deletes its files when the session ends. A saved workspace keeps them and is deleted after a number of days without use (14 by default).
+- **Resume and delete from one place.** Students continue an environment with **Start**, and delete one they no longer need. There is no separate stop button: a session stops by itself after inactivity.
+- **Back to the start page.** **File -> Back to Start Page** in the IDE returns to the start page and keeps the session running.
+- **Session timeouts.** After 50 minutes without input the IDE warns, after 60 minutes the session stops, after 24 hours it stops in any case. The start page shows the stop time. Installations can change these values.
+- **Seven languages, two editions.** Java 17, Java 25, Python, JavaScript, C, Rust and Go. Haskell and OCaml are gone. Each language has an Artemis edition and a standalone edition.
+- **Browser only.** The desktop (Electron) application is gone.
+- **Status and legal pages.** A public status page and the privacy statement and imprint of your installation are linked in the footer.
 
-- After 50 minutes without input the IDE asks students "Are you still here?"
-  and the browser tab title blinks.
-- After 60 minutes without input the session stops.
-- A closed browser tab ends the session 60 minutes after the last input.
+## For you as a lecturer
 
-Typing, clicking, mouse moves, scrolling, saving files and starting or ending a task count as input.
-Background output from Artemis, Git or language servers does not.
-Expect more "my session closed" questions in the first weeks, especially from
-students who listen to a lecture with the IDE open but untouched.
-Your installation can use different values. Ask the platform team.
+- **You choose what students see.** Templates can be listed (a tile on the start page) or unlisted (reachable only from an Artemis link). See [What Lecturers Can Choose](./lecturer-choices.md).
+- **Warm pools for lab starts.** Operators keep idle sessions ready, so a lab start is fast. Tell them the time and headcount.
+- **Artemis links changed.** Artemis now passes the access token and the repository URL in the URL fragment, not in the query. That needs Artemis pull request #14702, which is not yet merged upstream. Until your Artemis has it, an exercise opens the IDE but may not clone itself.
+- **Experience levels** (Beginner, Advanced, Expert) work for every language and switch without a reload. `.vscode/eduide.json` still sets the starting level.
+- **Privacy.** Logs and traces use a pseudonymous user id. See [Privacy and Data](./privacy-and-data.md).
 
-## Temporary workspaces lose their files
+## For operators
 
-"Files are not lost by a timeout" is no longer true for temporary workspaces.
-When a temporary session ends, also at the 60 minute timeout, the unpushed
-files are gone. Saved workspaces keep their files.
+The platform is a new control plane with new custom resources (`IDETemplate`, `IDEPool`, `IDESession`, `IDEWorkspace`), Envoy Gateway as the only entry, login at the gateway, and OpenTelemetry and Prometheus for observability.
+It replaces the earlier Java stack, the separate login proxies per session, the data bridge, the workspace garbage collector and error reporting through Sentry.
+See the [administrator guide](/admins/intro) for installation, migration and upgrades.
 
-The launcher page shows a **Temporary** or **Saved** badge on every tile, and
-the IDE status bar shows **Temporary workspace** or **Saved workspace**.
-Tell students to push before any long break.
+## What stays the same
 
-## What students see when a session ends
-
-Reloading the tab of an ended session opens the **Your session has ended**
-page. It names the reason, when it is known: inactivity, or the maximum run
-time. For a saved workspace it offers **Resume my session**, which reopens the
-same workspace. Students can also start the exercise from Artemis again.
-
-![Session ended page](/img/student/getting-started/session-ended-01-page.png)
-
-The IDE does not switch to this page by itself. It shows "Your session has
-timed out" first, and the page appears on reload.
-
-## New languages and starter templates
-
-- Rust and Go join Java 17, Java 25, Python, JavaScript and C.
-- The launcher shows one tile per language.
-- Students who start a language themselves pick a starter template: Maven or
-  Gradle, Make or Bazel, Python, Node or Web (TypeScript), Cargo, Go.
-- Each language has an Artemis edition, which starts only from Artemis, and a
-  standalone edition, which starts from the launcher. Ask the platform team for
-  the names in your installation.
-
-See [Customizable Features](../course-evaluation/customizable-features.md) for
-the details.
-
-## Experience levels for every language
-
-Beginner, Advanced and Expert now exist for all languages, and a switch takes
-effect immediately. `.vscode/eduide.json` still sets the starting level. The
-**Customize** panel gained elements for the spell checker, Clippy, linter
-findings, the Maven view and the workspace mode.
-
-## Workspace preparation
-
-- A workspace that has files is never wiped. If it does not match the repository
-  that a student starts, the student gets a warning instead of a fresh clone.
-- Newer images show a progress notification while the workspace is prepared
-  (Scorpio 3.1.0). The clone of a large repository takes a while.
-- Java standalone sessions ask before they run the Gradle wrapper of the
-  repository. Artemis sessions run it automatically. Experience levels are
-  unchanged.
-
-## Smaller changes
-
-- HTML files open in a preview through **Open Preview to the Side**. The old
-  Live Preview extension is gone.
-- A spell checker (English and German) and Error Lens are in every image.
-- Ruff formats Python on save at the Beginner and Advanced levels, Artemis submissions included.
-- In sessions that students start themselves, Git credentials are cached in
-  memory for 3 hours.
-- Dialogs say "EduIDE" instead of "Theia IDE".
-
-## Where to report problems
-
-Instructors use the same channels as students: the GitHub issues of
-`EduIDE/EduIDE` (**Help**, **Report Issue** in the IDE; the launcher footer
-links **Report a bug** and **Request a feature** open the EduIDE-Cloud tracker
-unless your installation sets its own) and GitHub Discussions for
-questions. Issues are public, so leave out personal data and Artemis links.
+- Grading, feedback and course management stay in Artemis.
+- Pushed work is safe. Unpushed work in a temporary workspace is not.
+- The IDE is a real Theia-based IDE with a terminal, debugger and language servers.

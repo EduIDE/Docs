@@ -12,54 +12,41 @@ It ends when you are away for too long, or when it reaches the maximum run time 
 
 | After | What happens |
 |---|---|
-| 50 minutes without input | The IDE asks **Are you still here?** and the browser tab title blinks **Session ends soon** |
+| 50 minutes without input | The IDE shows a warning with the action **I am still here** |
 | 60 minutes without input | The session stops |
+| 24 hours | The session stops, whatever you do |
 
 These are the default limits.
-Your installation can use other values, so ask your instructor if you are not sure.
+Your installation or environment can use other values, so ask your tutor if you are not sure.
+The start page shows the exact stop time under **Your environments**.
 
-Input means typing, clicking, moving the mouse and scrolling in the IDE tab, editing or saving files, and starting or ending a task or debug session.
-Background output from Artemis, Git or language servers does not count.
-Scrolling inside a panel that shows a web page, for example the Artemis problem statement, does not count either.
+Input means typing, editing text, moving the cursor, switching editors and focusing the IDE window.
+Terminal output and background work do not count, so a long build does not keep a session alive.
+A closed tab counts as no input, and the session stops 60 minutes after your last one.
 
-If you close the tab, the session ends 60 minutes after your last input.
-
-Click or type in the IDE when you see the question, and the timer starts again.
+Click **I am still here**, or just keep working, and the timer starts again.
 
 ## Your files
 
-A **Saved** workspace is not kept forever: the administrators of your installation delete workspaces after a time limit (two weeks by default) after they were created, whether or not you used them recently. Push your work to keep it.
+If the status bar shows **Saved workspace**, your files stay and come back when you start again.
+A saved workspace is deleted after a time without use (14 days by default).
+See [Saved and Temporary Workspaces](./workspaces.md).
 
 :::warning Temporary workspaces lose their files
 If the status bar shows **Temporary workspace**, your files are gone when the session ends, also after 60 minutes without input.
 Push your work to Artemis or download it before a long break.
 :::
 
-If the status bar shows **Saved workspace**, your files stay and come back when you resume.
 Terminals, running programs and debug sessions are gone in both cases.
-
 Even in a saved workspace, only pushed work reaches Artemis.
 See the [Submission Checklist](../learning/submission-checklist.md).
 
-## The session ended page
+## After the end
 
-After the end, the IDE shows **Your session has timed out** or goes **Offline**.
-Reload the tab, or open the old session URL, to reach the **Your session has ended** page.
-It tells you why the session ended, when it knows:
+The IDE tab shows that the connection is lost.
+Go to the start page of your installation.
 
-- it closed after a period without activity
-- it reached the maximum time a session may run
-- a general text otherwise, for example after a manual stop
+- With a saved workspace, click **Start** on the entry under **Your environments**. It reopens your files.
+- With a temporary workspace, the entry is gone. Start a new environment, or open the exercise from Artemis again.
 
-![Session ended page without a saved workspace](/img/student/getting-started/session-ended-01-page.png)
-
-The screenshot shows the general text with the **Start a new session** button.
-
-For a saved workspace, click **Resume my session**.
-It reopens the same workspace with the same files.
-**Start something else** goes back to the launcher.
-
-For a temporary workspace, the page says that your files could not be kept and offers only a new start.
-
-Resume works only in the same browser tab, for 24 hours after you started.
-In another tab or browser you get the general text and the launcher.
+See [Your Environments](./your-environments.md).

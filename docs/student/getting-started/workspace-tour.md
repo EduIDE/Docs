@@ -7,7 +7,7 @@ description: Quick orientation of the EduIDE layout.
 
 This is the minimal layout you need to start working.
 
-![IDE layout overview](/img/student/getting-started/workspace-tour-01-welcome-screen.png)
+![EduIDE welcome screen with the Explorer open on the left](/img/student/getting-started/workspace-tour-01-welcome-screen.png)
 
 ## Main areas
 
@@ -23,7 +23,13 @@ The status bar at the bottom right shows where your files live:
 - **Temporary workspace** (warning colour): files are lost when the session ends
 - **Saved workspace**: files stay and come back when you resume
 
-Read [When Your Session Ends](./session-timeout.md) to know when a session ends.
+Read [Saved and Temporary Workspaces](./workspaces.md) and [When Your Session Ends](./session-timeout.md) to know what stays.
+
+## Back to the start page
+
+Choose **File -> Back to Start Page** to return to the start page.
+Your session keeps running, and you find it under **Your environments**.
+See [Your Environments](./your-environments.md).
 
 ## If something is missing
 
@@ -35,7 +41,7 @@ exercise may pick a level for you.
 If you need something you cannot see, click the level in the status bar at the
 bottom or open the **Experience Levels** menu, and pick a higher level.
 
-![Experience level picker](/img/student/getting-started/workspace-tour-04-level-picker.png)
+![Experience level picker with Beginner, Advanced and Expert](/img/student/getting-started/workspace-tour-04-level-picker.png)
 
 The change applies immediately, without a reload, and you can switch back at any time.
 
@@ -43,7 +49,7 @@ The change applies immediately, without a reload, and you can switch back at any
 
 Open **Terminal -> New Terminal**.
 
-![Open new terminal from top menu](/img/student/getting-started/workspace-tour-02-open-terminal-menu.png)
+![Terminal menu with the New Terminal entry](/img/student/getting-started/workspace-tour-02-open-terminal-menu.png)
 
 Open the terminal and run:
 
@@ -53,7 +59,7 @@ pwd
 
 You should see your workspace path (usually `/home/project`).
 
-![Terminal current directory output](/img/student/getting-started/workspace-tour-03-terminal-pwd.png)
+![Terminal showing the workspace path after pwd](/img/student/getting-started/workspace-tour-03-terminal-pwd.png)
 
 ## Next step
 

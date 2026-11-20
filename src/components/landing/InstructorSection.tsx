@@ -11,7 +11,7 @@ interface Step {
 
 const steps: Step[] = [
   {
-    title: "One-click course setup",
+    title: "Course setup in Artemis",
     description:
       <>Define the environment once within <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Every student gets an identical, pre-configured workspace with no need for manual replication.</>,
   },
@@ -23,7 +23,7 @@ const steps: Step[] = [
   {
     title: 'No "works on my machine" tickets',
     description:
-      "All runtimes, dependencies, and configs live server-side. Support tickets about setup drop to near zero.",
+      "All runtimes, dependencies, and configs live server-side. Setup problems on student machines largely disappear.",
   },
 ];
 
@@ -41,8 +41,8 @@ export default function InstructorSection() {
       <SectionHeader
         id="instructors-heading"
         label="For instructors"
-        title="Set up a full IDE for your class in minutes."
-        subtitle="No IT tickets. No setup emails. Students open a link and they're ready. You stay focused on teaching."
+        title="Give your whole class the same IDE."
+        subtitle="No setup emails. Students open a link and they're ready. You stay focused on teaching."
       />
       <div className={styles.instructorGrid}>
         <ol className={styles.instructorList}>

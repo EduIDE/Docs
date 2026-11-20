@@ -13,7 +13,8 @@ An instructor pilot can answer a lot of useful questions if it is scoped realist
 - whether the provided IDE environment is good enough for the course workflow
 - whether assignments, tools, and compilers fit into the managed environment
 - whether staff can support learners more effectively with a shared environment
-- whether startup latency and session behavior are acceptable for the course format
+- whether startup time, session timeouts and the saved or temporary workspace fit the course format
+- whether the Artemis link opens and clones the exercise on your Artemis version
 
 ## Questions worth testing directly
 

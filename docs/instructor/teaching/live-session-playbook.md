@@ -13,7 +13,7 @@ What to do in the room, in the order you will need it.
   the night before - the network between this room and the cluster is part of
   the system.
 - Have the exercise URL ready to paste. Do not make 200 people navigate.
-- Know who to contact if the platform is down, and have that open already.
+- Know who to contact if the platform is down, and have that open already. The public status page of the installation (linked in the footer) shows the current state.
 
 ## Starting everyone at once
 
@@ -27,10 +27,6 @@ Say this, in this order:
 That third point is the one that saves the session. A room full of people
 reloading turns a slow start into a much slower one.
 
-If a student is asked to log in and then lands nowhere, they should complete the
-login, go back to the Artemis exercise page, and click **Open online IDE**
-again. This is a known first-login quirk, not a failure.
-
 ## During
 
 **"My terminal is gone" / "the IDE looks frozen."** Reload the browser tab. The
@@ -41,16 +37,15 @@ reloading is the right answer.
 branch, nothing committed, or a conflict. Treat it as you would in any other
 environment.
 
-**"My session closed."** It timed out after 60 minutes without input (the default),
-or reached its maximum run time. The IDE asked "Are you still here?" after 50
-minutes.
+**"My session closed."** It stopped after 60 minutes without input (the default),
+or reached its maximum run time. The IDE warned after 50 minutes.
 Students who listen to a lecture with the IDE open but untouched are the usual
-case. If the workspace is **Saved**, **Resume my session** on the session ended
-page (or starting the exercise from Artemis again) gives the files back. If it
-is **Temporary**, the unpushed files are gone.
+case. If the workspace is saved, **Start** on the entry under **Your environments**
+on the start page (or starting the exercise from Artemis again) gives the files
+back. If it is temporary, the unpushed files are gone.
 
 **"I lost my work."** Distinguish immediately: pushed work is in Artemis and is
-safe. Unpushed work in a saved workspace lives in the workspace volume and is almost
+safe. Unpushed work in a saved workspace lives in the workspace and is almost
 certainly still there when they reopen. In a temporary workspace it is lost
 when the session ends. Work that was never saved in the editor is gone, exactly
 as it would be locally.
@@ -75,7 +70,7 @@ cluster; that is the trade for not having 200 local setups to debug.
 - Tell students to commit and push before they leave. That is what Artemis
   grades and what survives everything.
 - If something went wrong, report it even if it resolved itself. Use the GitHub
-  issues of `EduIDE/EduIDE` (**Help**, **Report Issue** in the IDE; the **Report a bug** link in the launcher footer opens the EduIDE-Cloud tracker unless your installation changed it),
-  and GitHub Discussions for questions. Issues are public, so leave out
+  issues of `EduIDE/EduIDE-control-plane` for the start page and session handling,
+  `EduIDE/EduIDE` for the IDE itself, and GitHub Discussions for questions. Issues are public, so leave out
   personal data and Artemis links. A transient failure nobody reports is one
   nobody fixes.

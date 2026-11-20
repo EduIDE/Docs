@@ -5,98 +5,61 @@ description: How the platform behaves with a whole cohort on it at once, and wha
 
 # Cohort Management
 
-There is no cohort object in EduIDE. Students are not enrolled, grouped or
-managed here - that all lives in Artemis. What this page is really about is
-capacity: what happens when a lot of people use the platform at the same
-moment, and how to schedule around it.
+There is no cohort object in EduIDE.
+Students are not enrolled, grouped or managed here. That lives in Artemis.
+This page is about capacity: what happens when many people start at the same moment.
 
-## The one number that matters: concurrent starts
+## The number that matters: concurrent starts
 
-Steady-state load is easy. The hard case is 200 students clicking **Open online
-IDE** within the same five minutes, because each one needs a container
-scheduled, a volume attached and an IDE booted.
+Steady use is easy.
+The hard case is 200 students clicking **Open online IDE** within five minutes, because each one needs a session started.
 
-The platform mitigates this in two ways, both of which have limits:
+## What helps
 
-**Pre-pulled images.** Every node keeps the IDE images on local disk, so
-starting a session does not download several gigabytes first. This is why a
-newly added language is slow for the first students to use it - the image has to
-reach every node before it helps.
+**Warm pools.** The platform keeps a number of idle sessions ready for a template.
+A student who starts while one is free gets it at once.
+When the pool is empty, the next students wait for a cold start, which takes longer.
+Pools serve sessions without a saved workspace. A session with a saved workspace always starts cold.
+Operators set the pool size, and a pool scaler can adjust it to demand.
+If you know a lab starts at a fixed time, tell the platform team in advance.
 
-**Warm sessions.** A configurable number of sessions can be kept running and
-idle, so the first students to arrive get one immediately. Once the warm pool is
-exhausted, everyone after that waits for a cold start.
-
-The size of that pool is set per environment by the platform team. If you know a
-lab will start at a fixed time, tell them in advance - it can be raised for the
-day.
+**Capacity handling.** When the cluster is full, the platform frees idle pool sessions first.
+If there is still no room, the student sees "The cluster is full right now. Please try again in a few minutes."
 
 ## Practical scheduling
 
-- **Stagger where you can.** Two labs of 100 at different hours cost far less
-  than one of 200.
-- **Ask students to start the IDE a few minutes before the exercise**, not at
-  the moment you begin talking.
-- **Expect the first session of the day to be slower.** Idle sessions are
-  reclaimed overnight.
-- **Do not have everyone reload when it feels slow.** A reload abandons the
-  session that was starting and asks for another.
+- **Stagger where you can.** Two labs of 100 at different hours cost far less than one of 200.
+- **Ask students to start the IDE a few minutes before the exercise.**
+- **Expect the first start of a new template to be slower.**
+- **Do not have everyone reload when it feels slow.** A start that is running continues, and a reload only adds load.
 
-## Session limits
+## Limit of running environments
 
-Each student may hold a small number of concurrent sessions. The default is 1
-(`operator.sessionsPerUser`, and `service.sessionsPerUser` for the other launch
-paths), and your environment may differ. This exists to stop one person accumulating
-sessions across devices and browser tabs and exhausting capacity for everyone.
-
-If a student cannot start a session, they see "Your previous session is still
-shutting down. Please try again in a few seconds." (error 553). Students cannot stop
-a session in the interface, so they wait until the old one ended, and with the
-default of 1 a second language or exercise is blocked until then. Ask your
-admin to end a forgotten session rather than to raise the limit.
+Each student may run a small number of environments at the same time.
+The default is 3, and your installation may differ.
+At the limit, the start page lists the running environments and asks the student to delete one or continue in one of them.
+Ask the platform team if a course needs more.
 
 ## Sessions end, and so can workspaces
 
-An idle session is shut down. By default, after 50 minutes without input the IDE
-asks students whether they are still there, and after 60 minutes without input
-the session stops. Installations may change these values, so confirm them with
-the platform team. Closing the browser tab does not keep a session alive: it
-ends after the same period of inactivity. One exception: after the platform
-restarts its operator, for example during an upgrade, a session whose tab was
-already closed runs until its lifetime limit, so closing tabs does not always
-free capacity quickly.
+By default, the IDE warns after 50 minutes without input and the session stops after 60 minutes. A session stops after 24 hours in any case.
+Installations and templates can change these values, so confirm them with the platform team.
+Closing the browser tab does not keep a session alive.
 
-What happens to the files depends on the workspace mode, which the launcher
-page shows as a **Temporary** or **Saved** badge and the IDE status bar shows
-as **Temporary workspace** or **Saved workspace**:
+What happens to the files depends on the workspace mode:
 
-- **Saved workspace:** the files survive. Students click **Resume my session**
-  on the session ended page, or start the exercise from Artemis again. Both
-  reopen the same workspace. Resume works only in the same browser tab and
-  within 24 hours of the start; otherwise students start from Artemis.
-- **Temporary workspace:** the files are lost when the session ends, also at
-  the inactivity timeout. Only pushed work survives.
+- **Saved workspace:** the files survive. Students click **Start** on the entry under **Your environments**, or start the exercise from Artemis again. The workspace is deleted after a number of days without use (14 by default).
+- **Temporary workspace:** the files are lost when the session ends, also at the inactivity timeout. Only pushed work survives.
 
-This matters for how you talk to students:
-
-- "Your session was closed" means the running IDE stopped. Terminals, running
-  programs and debug sessions are gone.
-- Work that was **committed and pushed** is safe regardless.
-- A saved workspace is not a backup, and it is not somewhere to keep the only
-  copy of anything that matters.
-
-Tell students to commit and push at the end of every session, and before any
-long break. That is also what Artemis grades, so the habit is the same one the
-course wants anyway.
+Tell students to commit and push at the end of every session and before any long break.
+A saved workspace is not a backup.
 
 ## Exams and assessed labs
 
-Treat a high-stakes session as an operational event, not a normal day:
+Treat a high-stakes session as an operational event:
 
 - Warn the platform team well in advance, with the exact time and headcount.
-- Have a fallback that does not need the platform. If the network between the
-  lecture theatre and the cluster fails, no amount of capacity helps.
-- Do not schedule the first-ever use of a new language image for an exam.
+- Have a fallback that does not need the platform. If the network between the lecture theatre and the cluster fails, no amount of capacity helps.
+- Do not use a new template for the first time in an exam.
 
-See [Limitations](../limitations/honest-limitations.md) for what the platform
-does not promise.
+See [Limitations](../limitations/honest-limitations.md) for what the platform does not promise.

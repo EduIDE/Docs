@@ -5,15 +5,18 @@ description: Operational realities instructors should understand before adoption
 
 # Operational Dependencies
 
-Even if the course fit is good, adoption still depends on platform operations.
+Even if the course fit is good, adoption depends on platform operations.
 
-## Dependencies instructors should be aware of
+## Dependencies instructors should know
 
-- a shared deployment and test-environment process exists
-- image and platform changes must be deployed through the platform workflow
-- authentication, routing, and cluster behavior are part of the real user experience
-- support responsibilities between course staff and platform operators must be clear
+- Your university or a platform team runs an EduIDE installation. Someone must own it, including upgrades and incident response.
+- The platform team decides which templates are offered, how large the warm pools are, and the timeouts and retention.
+- Login goes through your institution's identity provider, so its availability is part of the student experience.
+- Your Artemis server and repository host must be on the installation's list of trusted hosts.
+- Support responsibilities between course staff and platform operators must be clear before the first lab.
 
 ## Why this matters
 
-EduIDE is not just a teaching tool. It is a managed platform. That means instructors are partly dependent on platform operations, release timing, and environment readiness. A course should not adopt it under the assumption that it behaves like a purely local toolchain.
+EduIDE is not only a teaching tool. It is a managed platform.
+Instructors depend on platform operations, release timing and capacity.
+A course should not adopt it as if it behaved like a local toolchain.

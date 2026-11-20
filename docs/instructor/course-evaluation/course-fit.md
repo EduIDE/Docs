@@ -20,7 +20,9 @@ EduIDE is usually a strong fit when:
 
 ## Artemis integration
 
-EduIDE integrates particularly well with the Artemis learning management system through its Artemis and Scorpio extensions.
+EduIDE integrates with the Artemis learning management system through its Artemis and Scorpio extensions.
+Artemis opens the exercise in the Artemis edition of the IDE and passes the repository and an access token to it.
+That hand-over needs Artemis pull request #14702, which is not yet merged upstream, so check the Artemis version you run.
 
 That matters because it reduces the distance between the course platform and the coding environment. If Artemis is already part of the course setup, or is itself under evaluation, EduIDE becomes a much more natural fit than a generic IDE because the surrounding teaching workflow is already aligned with the intended ecosystem.
 
