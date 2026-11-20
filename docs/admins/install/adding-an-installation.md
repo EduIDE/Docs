@@ -12,7 +12,7 @@ Use the variables from the [Chart reference](installing.md).
 ## Checklist
 
 1. **Hostnames.** Three names and DNS records, see [Hostnames and Certificates](certificates.md).
-2. **Keycloak.** One realm per deployment, with the two clients from [Installing EduIDE](installing.md#keycloak), and the admin role if you want the admin panel ([Admin Access](../security/admin-access.md)).
+2. **Keycloak.** One realm per deployment, with the client from [Installing EduIDE](installing.md#keycloak), and the admin role if you want the admin panel ([Admin Access](../security/admin-access.md)).
 3. **Namespace and secret.** `kubectl create namespace eduide-<deployment>` and the gateway client secret.
 4. **Values file.** Copy a values file of an existing deployment and change the deployment name, hosts, realm, `allowedHosts`, templates and branding. Keep the values file in Git, without secrets.
 5. **Install.**

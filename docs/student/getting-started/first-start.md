@@ -41,8 +41,9 @@ When the IDE opens, the status bar at the bottom shows **Temporary workspace** o
 
 EduIDE only fills an **empty** workspace.
 If your workspace already has files, EduIDE never deletes them.
-Instead you see the warning "The exercise was not cloned because this workspace already contains files", and nothing is cloned.
-Empty the workspace or start a new environment to get the exercise.
+If the files come from a different repository than the exercise, you see the warning "The exercise was not cloned because this workspace already contains files", and nothing is cloned.
+Push or back up your work first, then start a new environment to get the exercise. Empty the workspace only when nothing in it is needed.
+If the workspace already holds the exercise repository, EduIDE keeps it and skips the clone without a warning.
 
 ## 4) Quick success check
 

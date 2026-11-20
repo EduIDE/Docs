@@ -16,10 +16,10 @@ export EDUIDE_CHART=oci://ghcr.io/eduide/charts/eduide
 export EDUIDE_VERSION=3.0.0
 export EDUIDE_CLUSTER_CHART=oci://ghcr.io/eduide/charts/eduide-cluster
 export EDUIDE_CRDS_CHART=oci://ghcr.io/eduide/eduide-control-plane/charts/eduide-control-plane-crds
-export EDUIDE_CRDS_VERSION=0.2.0
+export EDUIDE_CRDS_VERSION=0.2.1
 ```
 
-Pass a prerelease such as `3.0.0-rc.9` explicitly in `EDUIDE_VERSION`, because `helm` skips prereleases otherwise.
+Pass a prerelease such as `3.0.0-rc.10` explicitly in `EDUIDE_VERSION`, because `helm` skips prereleases otherwise.
 :::
 
 ## 1. Cluster chart (once per cluster)
@@ -100,7 +100,7 @@ eduide-control-plane:
     oidc:
       issuerURL: https://keycloak.example.org/realms/eduide
       clientIDs: [eduide]
-      gatewayClientID: eduide-gateway
+      gatewayClientID: eduide
       admin: {rolePath: resource_access.eduide.roles, role: eduide-admin}
     admin:
       prometheusURL: http://prometheus-operated.monitoring:9090
@@ -128,13 +128,15 @@ eduide-landing-page:
       clientId: eduide
 ```
 
+`monitoring.dashboard` writes a ConfigMap into the Grafana namespace (for example `cattle-dashboards`), outside the deployment namespace. The deploy credentials need write access there. Leave it off if they do not.
+
 The installation chart lists every value with its default in its `values.yaml`. The most important ones:
 
 | Value | Meaning |
 |---|---|
 | `eduide-control-plane.config.deployment` | Short name of the deployment, used in metrics and traces. |
 | `...config.hosts.*`, `...config.gateway.*` | The three hostnames and the Gateway all routes attach to. |
-| `...config.oidc.issuerURL`, `clientIDs`, `gatewayClientID` | The realm, the clients whose tokens the service accepts, and the confidential gateway client. |
+| `...config.oidc.issuerURL`, `clientIDs`, `gatewayClientID` | The realm, the clients whose tokens the service accepts, and the gateway client (it can be the same client). |
 | `...config.allowedHosts` | Git and Artemis hosts users may pass in. See [Templates and Pools](../platform/templates-and-pools.md). |
 | `...config.sessionsPerUser` | Parallel sessions per user (default 3). |
 | `...config.workspaces.*` | Storage class, size, retention, grace and the workspace limit per user. See [Storage and Workspaces](../platform/storage-and-workspaces.md). |
@@ -158,12 +160,16 @@ Unknown keys in the control plane configuration make the binaries fail on start,
 
 ### Keycloak
 
-Create two clients in the realm of the deployment.
+One client in the realm of the deployment is enough, for example `eduide`.
+It serves the landing page and the gateway:
 
-| Client | Type | Settings |
-|---|---|---|
-| Landing page, for example `eduide` | public, standard flow | Valid redirect URI `https://<service host>/*`, web origin `https://<service host>`. Its id goes into `oidc.clientIDs` and the landing page `keycloak.clientId`. |
-| Gateway, for example `eduide-gateway` | confidential | Valid redirect URI `https://<instance host>/oauth2/callback`. Its id is `oidc.gatewayClientID` and the audience `authz` checks. |
+| Use | Settings |
+|---|---|
+| Landing page | Valid redirect URI `https://<service host>/*`, web origin `https://<service host>`. The client id goes into `oidc.clientIDs` and the landing page `keycloak.clientId`. |
+| Gateway | Valid redirect URI `https://<instance host>/oauth2/callback`, and a client secret (the one stored in `eduide-oidc`). The client id is `oidc.gatewayClientID` and the audience `authz` checks. |
+
+A separate confidential gateway client, for example `eduide-gateway`, is possible but not required.
+In that case it needs the redirect URI and the secret, and the landing page client stays a public client.
 
 The tokens must carry the claim named in `oidc.userClaim` (default `preferred_username`), plus `name` and `email`.
 Some identity providers speak only TLS curves that Envoy does not offer for upstream TLS.

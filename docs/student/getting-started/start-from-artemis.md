@@ -36,7 +36,9 @@ Ask your tutor.
 EduIDE clones your repository into the empty workspace.
 A **Preparing your workspace** notification shows the steps.
 The notification never shows passwords or tokens.
-If your workspace already has files, EduIDE keeps them and shows the warning "The exercise was not cloned because this workspace already contains files". Empty the workspace or start a new one to get the exercise.
+If your workspace already has files from a different repository, EduIDE keeps them and shows the warning "The exercise was not cloned because this workspace already contains files".
+Push or back up your work first, then start a new environment to get the exercise. Empty the workspace only when nothing in it is needed.
+If the workspace already holds the exercise repository, EduIDE keeps it and skips the clone without a warning.
 
 In Java exercises with Gradle, Artemis sessions prepare Gradle in the background by themselves.
 

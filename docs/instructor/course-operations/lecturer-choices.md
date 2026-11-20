@@ -18,6 +18,8 @@ A template is one environment: a language image with its settings.
 
 Each template allows a workspace mode.
 A saved workspace is kept after the session ends, a temporary one is not.
+A saved workspace that students start without a repository belongs to one starter project: "Node.js", "Web" and "Empty project" each give a separate workspace, and picking the same one again resumes it.
+With the next release, the student's list of environments names such a workspace after its project template.
 Choose saved workspaces for multi-day work and temporary ones for short labs and exams where nothing should remain.
 
 ## Retention

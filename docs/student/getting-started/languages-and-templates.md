@@ -35,6 +35,11 @@ When you start a language yourself from a tile, you can pick a starter template.
 It puts a small example project into your workspace, with tasks that run and test it.
 A template only fills an empty workspace.
 If you pick one in a saved workspace that already has files, EduIDE does not replace them.
+If the session also clones a repository, the template is not applied, even in an empty workspace.
+
+Without a repository, each starter project has its own saved workspace.
+Picking **Node.js**, **Web** or **Empty project** gives three separate workspaces, and picking the same one again resumes it.
+With the next release, the entry under **Your environments** carries the name of the project template, for example "Web" or "Node.js".
 
 | Language | Templates |
 |---|---|

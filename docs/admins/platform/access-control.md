@@ -17,12 +17,16 @@ Users are not stored in EduIDE. The identity comes from the token, and every ses
 | A user with the admin role | Read the admin panel and the admin API. Read-only |
 | Cluster admins | Everything in Kubernetes. EduIDE adds no second admin layer |
 
-## Two OIDC clients per deployment
+## OIDC clients per deployment
 
-| Client | Type | Purpose |
-|---|---|---|
-| Landing page (for example `eduide`) | public, standard flow | Sign-in of the landing page, tokens for `/api/v1`. In `oidc.clientIDs` |
-| Gateway (for example `eduide-gateway`) | confidential | Sign-in at the gateway for session URLs. `oidc.gatewayClientID`, with a secret in the namespace |
+One client (for example `eduide`) can serve both uses:
+
+| Use | Purpose |
+|---|---|
+| Landing page | Sign-in of the landing page, tokens for `/api/v1`. The client id is in `oidc.clientIDs` |
+| Gateway | Sign-in at the gateway for session URLs. The client id is `oidc.gatewayClientID`, with a secret in the namespace |
+
+A separate confidential gateway client is possible but not required.
 
 Redirect URIs and the secret are in [Installing EduIDE](../install/installing.md#keycloak).
 The claim in `oidc.userClaim` (default `preferred_username`) is the owner name. If it differs from what a user sees in the identity provider, sessions show 403 for their owner, see the [authz runbook](../operations/incident-response.md#authz-errors).
@@ -51,6 +55,6 @@ More in [Admin Access](../security/admin-access.md).
 Every quarter:
 
 1. List the users with the admin role in Keycloak and remove those who left.
-2. Check that only the two clients exist and their redirect URIs are exact.
+2. Check that only the expected clients exist and their redirect URIs are exact.
 3. Check who has `kubectl` rights in the namespace. They can read launch data Secrets and instance tokens.
 4. Check the `allowedHosts` list ([Templates and Pools](templates-and-pools.md)).

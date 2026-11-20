@@ -26,7 +26,7 @@ eduide-control-plane:
 | `monitoring.podMonitor.enabled` | A PodMonitor for all components. Needs the Prometheus Operator |
 | `monitoring.rules.enabled` | PrometheusRule with the alerts. `rules.extraLabels` adds labels to every alert, for example for Alertmanager routing |
 | `monitoring.rules.certificates` | Certificate alerts (under 21 days left, not ready for an hour). Turn off if a cluster-wide rule exists |
-| `monitoring.dashboard.enabled` | Grafana dashboard ConfigMap. `dashboard.namespace` places it where the Grafana sidecar looks |
+| `monitoring.dashboard.enabled` | Grafana dashboard ConfigMap. `dashboard.namespace` places it where the Grafana sidecar looks. It writes a ConfigMap into the Grafana namespace (for example `cattle-dashboards`), outside the deployment namespace, so the deploy credentials need write access there. Leave it off otherwise. |
 | `networkPolicy.monitoringNamespace` | The namespace of the Prometheus that scrapes the metrics ports |
 
 Metrics ports: operator `:9464`, service and authz `:9090`, all on `/metrics`.

@@ -10,7 +10,7 @@ It is always at the top, also when it is empty.
 
 ## What an entry shows
 
-- the name, for example your exercise or the language
+- the name, for example your exercise or the language (with the next release, the name of the project template such as "Web" or "Node.js" for a workspace started without a repository)
 - **saved workspace** or **temporary workspace**
 - when you started it or last used it
 - when it stops or is deleted, for example "Stops at 14:30 if inactive", "Stops at ... (time limit)" or "Deleted on ... unless you start it"

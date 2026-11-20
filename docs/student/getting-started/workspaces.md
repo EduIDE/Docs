@@ -14,6 +14,10 @@ The tile on the start page shows it, and the status bar in the IDE shows **Tempo
 | Continue later | No, you start fresh | Yes, **Start** on the entry under **Your environments** |
 | Kept for | Only while the session runs | Until it is deleted (see below) |
 
+A saved workspace started without a repository belongs to one starter project.
+Picking **Node.js**, **Web** or **Empty project** gives each its own workspace, and picking the same again resumes it.
+With the next release, its entry under **Your environments** carries the name of the project template, for example "Web" or "Node.js".
+
 ## How long a saved workspace is kept
 
 A saved workspace is deleted a number of days after you last used it.

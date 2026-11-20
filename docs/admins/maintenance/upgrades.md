@@ -44,7 +44,7 @@ The full procedure is [docs/operations/migration.md](https://github.com/EduIDE/E
 
 ### Steps per deployment
 
-1. **Prepare.** Install only the CRDs next to the 2.x release (`$EDUIDE_CRDS_CHART`, see the warning in [Installing EduIDE](../install/installing.md#1-cluster-chart-once-per-cluster)). The cluster chart refuses on a cluster that still has Theia Cloud CRDs. Create the Keycloak clients, including the confidential gateway client with redirect `https://<instance host>/oauth2/callback`. Reserve the three hostnames ([Hostnames and Certificates](../install/certificates.md)). The new hosts differ from the old ones.
+1. **Prepare.** Install only the CRDs next to the 2.x release (`$EDUIDE_CRDS_CHART`, see the warning in [Installing EduIDE](../install/installing.md#1-cluster-chart-once-per-cluster)). The cluster chart refuses on a cluster that still has Theia Cloud CRDs. Create the Keycloak clients, including the gateway client (it can be the landing page client) with redirect `https://<instance host>/oauth2/callback`. Reserve the three hostnames ([Hostnames and Certificates](../install/certificates.md)). The new hosts differ from the old ones.
 2. **Install the new stack** in its own namespace, with its own values. Do not touch the old stack.
 3. **Check the IDE images.** They must be 3.0 images: browser only, with the `eduide-session` extension. Older images do not receive launch data. The editions are `<language>-artemis` and `<language>-standalone`. Haskell, OCaml and Swift images no longer exist, and neither do Electron builds.
 4. **Smoke test** with test users: a warm and a cold launch, the IDE as owner and as a foreign user (expect 403), and the NetworkPolicy test.
