@@ -22,9 +22,9 @@ The info button on a tile shows what the environment includes.
 
 ## 2) Choose a project template
 
-If the environment has more than one project template, a dialog asks you to choose, for example **Maven** or **Gradle** for Java, **Make** or **Bazel** for C.
+A dialog asks you to choose a project template, for example **Maven** or **Gradle** for Java, **Make** or **Bazel** for C.
+Python, Rust and Go have one template each.
 You can also start with an **Empty project**.
-Python, Rust and Go start directly.
 
 ![Dialog to choose a project template](/img/student/getting-started/first-start-02-build-system-picker.png)
 

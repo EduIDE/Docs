@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <Layout
       title="EduIDE"
-      description="A browser-based development environment designed for education. With zero setup, and seamless course integration."
+      description="A browser-based development environment designed for education, with zero setup and seamless course integration."
     >
       <main className={styles.page}>
         <HeroSection />

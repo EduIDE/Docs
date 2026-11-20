@@ -13,7 +13,7 @@ Read the statement there. It is the binding text.
 
 - You sign in through the login of your institution. EduIDE uses a user id from that login to show you only your own environments.
 - Your files live in your environment. Only you can open it, and the platform checks this on every request.
-- Access tokens and repository links from Artemis go to your session only. They stay in memory of the session and do not appear in logs or in the progress notification.
+- Access tokens and repository links from Artemis go to your session only. They are deleted with the session and do not appear in logs or in the progress notification.
 - Logs and traces of the platform use a pseudonymous user id, not your name or e-mail address.
 - A temporary workspace deletes its files when the session ends. A saved workspace is deleted a number of days after your last use.
 

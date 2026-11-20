@@ -11,7 +11,7 @@ These repositories together define the EduIDE platform, its deployment model, th
 
 - [EduIDE-control-plane](/developer/projects/eduide-control-plane): The Go control plane with operator, service, authz, agent, pool scaler, landing page and the `eduide-session` extension.
 - [EduIDE](/developer/projects/eduide): The IDE and the images for every language, in an Artemis and a standalone edition.
-- [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm): The installation chart that installs the whole platform.
+- [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm): The installation chart `eduide` (one per deployment) and the cluster chart `eduide-cluster` (once per cluster).
 - [scorpio](https://github.com/EduIDE/scorpio): The extension that prepares a workspace (clone, starter templates, Gradle prewarm).
 - [eduide-keycloak-theme](https://github.com/EduIDE/eduide-keycloak-theme): The Keycloak login theme.
 - [.github](https://github.com/EduIDE/.github): Reusable workflows and the Renovate preset for the organization.

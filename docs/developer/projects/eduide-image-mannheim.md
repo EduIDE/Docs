@@ -23,7 +23,7 @@ The repository has its own semver releases, cut with `release.yml` like every ot
 
 ## Using the Image in an Installation
 
-Add the image as a template in the installation's values, with its full image path and a tag. The installation chart prefixes the image registry to an image without a path, so give the full path of your own image. See [Templates and Pools](/admins/platform/templates-and-pools).
+Add the image as a template in the installation's values, with its full image path and a tag. The installation chart prefixes its image registry (`ghcr.io/eduide`) to every image without a tag, so give the full path of your own image together with the tag, for example `ghcr.io/eduide/eduide-image-mannheim/java-25:<version>`. See [Templates and Pools](/admins/platform/templates-and-pools).
 
 Keep the template name of an installation that has saved workspaces and change only the image, because a workspace belongs to a template.
 

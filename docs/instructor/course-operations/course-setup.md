@@ -26,7 +26,7 @@ Lead time for a new language image is weeks, not days.
 
 EduIDE publishes images for seven languages: Java 17, Java 25, Python, JavaScript, C, Rust and Go.
 Other languages are not offered.
-Students who start a tile choose a starter template: Maven or Gradle for Java, Make or Bazel for C, Python, Node or Web (TypeScript) for JavaScript, Cargo for Rust, Go for Go.
+Students who start a tile choose a starter template: Maven or Gradle for Java, Make or Bazel for C, Python for Python, Node or Web (TypeScript) for JavaScript, Cargo for Rust, Go for Go.
 Exercises you start from Artemis bring their own files.
 
 Each language comes in two editions.

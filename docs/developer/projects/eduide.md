@@ -69,7 +69,7 @@ Every language image writes `/opt/eduide/template.json` with its templates and i
 
 ## HTML preview
 
-Live Preview does not work in the cloud. The images use Theia's mini browser. Each `ToolDockerfile` sets `THEIA_WEBVIEW_EXTERNAL_ENDPOINT` and `THEIA_MINI_BROWSER_HOST_PATTERN` to `webview.{{hostname}}`, so webviews and previews share the fixed webview host that the gateway routes. Environment variables do not travel from the base image, so every `ToolDockerfile` repeats them. Locally, open the IDE through `http://localhost:3000`, not `127.0.0.1`, so the browser resolves `webview.localhost`.
+Live Preview does not work in the cloud. The images use Theia's mini browser. Each `ToolDockerfile` sets `THEIA_WEBVIEW_EXTERNAL_ENDPOINT` and `THEIA_MINI_BROWSER_HOST_PATTERN` to `webview.{{hostname}}`, so webviews and previews share the fixed webview host that the gateway routes. Environment variables do not travel from the base image, so every `ToolDockerfile` repeats them. Locally, open the IDE through `localhost` (for example `http://localhost:3103`), not `127.0.0.1`, so the browser resolves `webview.localhost`.
 
 ## Features in the IDE
 

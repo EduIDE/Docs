@@ -14,7 +14,7 @@ Changes go through Helm values or `kubectl`, so they have an owner and an audit 
 |---|---|
 | `GET /api/v1/admin/status` | Overall status and warnings (`pool-empty`, `capacity-pressure`, `scaler-silent`) |
 | `GET /api/v1/admin/pools`, `/sessions`, `/workspaces`, `/templates` | Lists, ordered by name, paged with `cursor` and `limit` |
-| `GET /api/v1/admin/problems` | Failed sessions of the last hour, grouped by error code |
+| `GET /api/v1/admin/problems` | Failed sessions of the last 24 hours (or `since=1h`), grouped by error code |
 | `GET /api/v1/admin/config` | The effective configuration, without secrets |
 
 The landing page shows these in the admin panel. Only `GET` exists under `/admin`.

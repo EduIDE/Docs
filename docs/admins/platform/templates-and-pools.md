@@ -66,7 +66,7 @@ The pool scaler raises and lowers `targetIdle` from demand it reads from Prometh
 | `active` | Writes `targetIdle` |
 
 Set `poolScaler.config.poolLimits.<pool>.{floor,ceiling}` to bound it.
-To stop it for one pool, set the annotation `eduide.github.io/scaler-override` on the `IDEPool`. For an emergency scale without the scaler:
+To stop it for one pool, annotate the `IDEPool` with `eduide.github.io/scaler-mode=off`. To pin a fixed target, use `eduide.github.io/scaler-override=<n>`; remove the annotation to end it. For an emergency scale without the scaler:
 
 ```bash
 kubectl -n eduide-<deployment> scale idepool <pool> --replicas=<n>

@@ -7,7 +7,7 @@ description: Common problems when you start or use EduIDE, and what to do.
 
 | Problem | What to do |
 |---|---|
-| The start takes a minute or two | This is normal for a cold start. Keep the tab open and do not reload. |
+| The start takes longer than the tile said | This happens when many people start at once. Keep the tab open and do not reload. |
 | You reloaded while it started | Wait. Starting again opens the same session instead of a second one. |
 | "The cluster is full right now" | Try again in a few minutes. Tell your tutor if it persists. |
 | "You already have N environments running" | Delete one under **Your environments**, or continue in one of them. |

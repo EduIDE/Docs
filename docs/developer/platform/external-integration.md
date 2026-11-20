@@ -32,7 +32,7 @@ https://<landing host>/?appDef=<template>&artemisUrl=<Artemis URL>#artemisToken=
 | `artemisUrl` | query | Base URL of the Artemis instance |
 | `artemisToken` | fragment | Artemis token of the student |
 | `gitUri` | fragment | Repository URL, with the student's VCS token as user info: `https://<user>:<vcs-token>@<artemis host>/git/...` |
-| `gitRef` | query | Optional branch or ref |
+| `gitRef` | query | Optional branch or ref, sent as `GIT_REF` only if the template allows that key (the templates of the `eduide` chart do not) |
 | `title` | query | Optional title shown in "Your environments" |
 | `persistence` | query | Optional `none` or `volume`, if the template allows it |
 
@@ -65,7 +65,7 @@ The rules for the usual keys:
 - `GIT_URI` accepts user info only if the key rule sets `allowCredentials`, which needs the format `HTTPSURL`. Deployments set it only for templates that Artemis opens. The host allowlist and the `https` rule still apply.
 - `GIT_USER` and `GIT_MAIL` come from the token.
 - `ARTEMIS_TOKEN` has length and character limits.
-- `TEMPLATE` accepts only the project templates of the image.
+- `TEMPLATE` accepts only the build systems the template lists (`buildSystems` in the `eduide` chart).
 
 An unknown key answers `400` with the code `unknown-key`. There is no way to make the control plane read other Secrets or ConfigMaps. The payload is at most 8 KiB.
 

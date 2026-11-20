@@ -13,8 +13,8 @@ Check them before the semester.
 
 - **Login.** Students sign in through the login of your institution. The platform uses a user id from it to show each student only their own environments.
 - **Workspaces.** Files live in the student's environment. Only the owner can open it. A temporary workspace is deleted when the session ends. A saved workspace is deleted after the retention time.
-- **Artemis tokens and repository links.** They reach the session only, stay in memory and do not appear in logs.
-- **Logs and traces.** They hold a pseudonymous user id and the session id, not names or e-mail addresses. Traces are kept for a short time (7 days by default).
+- **Artemis tokens and repository links.** They reach the session only, are deleted with it and do not appear in logs.
+- **Logs and traces.** They hold a pseudonymous user id and the session id, not names or e-mail addresses. The installation decides how long it keeps traces; ask the platform team.
 
 ## What you should do
 

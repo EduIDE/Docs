@@ -23,7 +23,7 @@ eduide-control-plane:
       storageClassName: standard
 ```
 
-Further keys under `workspaces`: `size`, `retention`, `grace` and `perUser` (default 20 workspaces per user). A template can set its own `persistence.size`, `persistence.mountPath` (default `/home/project`) and `retention`.
+Further keys under `workspaces`: `defaultSize` (default `1Gi`), `retention`, `grace` and `perUser` (default 20 workspaces per user). A template can set its own `persistence.size`, `persistence.mountPath` (default `/home/project`) and `retention`.
 
 ## Retention
 

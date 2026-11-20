@@ -61,7 +61,7 @@ The full list is the [metrics contract](https://github.com/EduIDE/EduIDE-control
 | Routes `Accepted` late, 404 or 503 after Ready | Gateway is behind | [Gateway backlog](incident-response.md#gateway-backlog) |
 | Certificate expiring | Outage in a few weeks | [Certificates](../install/certificates.md) |
 
-The chart ships alerts for empty pools and for certificates. Check `monitoring.rules` in the installation chart for the current list before you add your own.
+With `monitoring.rules.enabled` the control plane chart ships alerts for empty pools, capacity pressure, launch failures, API errors, authz denies, latency and outages, agent request errors, components that are down, and certificates. Check the PrometheusRule for the current list before you add your own.
 
 ## Admin panel and public status
 

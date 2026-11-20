@@ -20,9 +20,9 @@ What to do in the room, in the order you will need it.
 Say this, in this order:
 
 1. Open the exercise in Artemis and click **Open online IDE**.
-2. It will take a minute or two the first time. That is normal.
-3. **Do not reload.** Reloading abandons the session that is starting and puts
-   you at the back of the queue.
+2. It can take a while when everyone starts at once. That is normal.
+3. **Do not reload.** The start continues anyway, and a reload only opens the
+   same session again while it adds load.
 
 That third point is the one that saves the session. A room full of people
 reloading turns a slow start into a much slower one.

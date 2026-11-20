@@ -85,7 +85,7 @@ Skip every step that has no unreleased changes. A release of a leaf usually need
 | scorpio | Open VSX extension, vsix release asset | `vX.Y.Z` |
 | EduIDE | IDE images (`base`, both edition bases, the language images) | `vX.Y.Z` |
 | EduIDE-image-mannheim | Image | `vX.Y.Z` |
-| EduIDE-Helm | The installation chart (OCI) | `vX.Y.Z` (chart version) |
+| EduIDE-Helm | The installation chart `eduide` and the cluster chart `eduide-cluster` (OCI) | `vX.Y.Z` (chart version) |
 | EduIDE-shared-cache | Helm chart (OCI), `gradle-cache` image (released on its own) | `vX.Y.Z` |
 | eduide-keycloak-theme | JAR and checksum release assets | `vX.Y.Z` |
 | EduIDE-deployment | Not released | none |

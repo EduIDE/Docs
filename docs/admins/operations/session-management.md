@@ -5,7 +5,7 @@ description: Looking at, stopping and cleaning up sessions and workspaces with k
 
 # Session Management
 
-Sessions and workspaces are Kubernetes objects. Users manage their own on the landing page: resume, stop and delete. Admins look at everything with `kubectl` and the admin panel.
+Sessions and workspaces are Kubernetes objects. Users manage their own on the landing page: Start opens or resumes an environment, Delete stops it and deletes its files. Admins look at everything with `kubectl` and the admin panel.
 
 ## Admin panel
 

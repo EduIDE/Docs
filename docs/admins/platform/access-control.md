@@ -12,7 +12,7 @@ Users are not stored in EduIDE. The identity comes from the token, and every ses
 
 | Who | May |
 |---|---|
-| Any signed-in user | Start sessions from listed templates and from Artemis links, resume, stop and delete their own sessions and workspaces |
+| Any signed-in user | Start sessions from listed templates and from Artemis links, resume and delete their own sessions and workspaces |
 | The owner of a session | Open its URL. Everyone else gets 403 |
 | A user with the admin role | Read the admin panel and the admin API. Read-only |
 | Cluster admins | Everything in Kubernetes. EduIDE adds no second admin layer |

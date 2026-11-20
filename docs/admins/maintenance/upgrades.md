@@ -9,7 +9,7 @@ Commands use the variables from the [Chart reference](../install/installing.md).
 
 ## Upgrading within 3.x
 
-Order: cluster chart first, then the installation chart of each deployment.
+Order: cluster chart first, then the installation chart of each deployment. On a cluster that runs 3.x next to 2.x, upgrade the `eduide-crds` release with `$EDUIDE_CRDS_CHART` instead of the cluster chart.
 
 ```bash
 helm upgrade eduide-cluster $EDUIDE_CLUSTER_CHART --version $EDUIDE_VERSION \
@@ -51,7 +51,8 @@ The full procedure is [docs/operations/migration.md](https://github.com/EduIDE/E
 5. **Import saved workspaces** (below).
 6. **Switch** the landing page of the institution to the new stack. Watch the [runbooks](../operations/incident-response.md) and the metrics for a day.
 7. **Keep the way back.** Workspaces created on the new stack stay in their volumes.
-8. **Retire** the old stack of the deployment after the grace period. Then switch the cluster to the cluster chart with `allowRemovingTheiaCloud=true`; this deletes the 2.x CRDs.
+8. **Retire** the old stack of the deployment after the grace period. Only when no 2.x deployment is left on the cluster may the 2.x `eduide-cluster` release go: upgrading it to 3.x needs `allowRemovingTheiaCloud=true` and deletes the Theia CRDs with every 2.x session and workspace.
+   The EduIDE CRDs stay in the `eduide-crds` release. Keep upgrading that release and never `helm uninstall` it: that deletes the CRDs and every EduIDE session and workspace. Helm does not take over objects of another release, so moving the CRDs into the cluster chart needs them re-annotated to the new release first.
 
 ### Template names change
 
@@ -63,10 +64,11 @@ Artemis links must start the `artemis` edition. Check them after the switch. Old
 An `IDEWorkspace` with `persistence.mode: volume` can adopt an existing PVC through `existingClaimName`.
 The import sets `status.lastUsed` to the import time, so the adopted data does not expire at once (default retention 14 days).
 The operator becomes controller owner of the claim, so the retention deletes the claim together with the workspace. Remove the owner reference from the PVC if the data must outlive the workspace.
+The operator looks the claim up in the namespace of the workspace. A PVC of a 2.x namespace must first be recreated in the new namespace on the same volume (set the PV's reclaim policy to `Retain`, then bind a new PVC to it).
 
 For each old workspace:
 
-1. List the PVCs of the old namespace: `kubectl -n <ns> get pvc`.
+1. List the PVCs of the old namespace: `kubectl -n <old namespace> get pvc`.
 2. Create an `IDEWorkspace` that names the PVC. The workspace name is `w-` plus 16 hex characters (see the [data model](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/architecture/data-model.md)).
 3. Check that `status.phase` is `Ready` and `status.claimName` equals the PVC name.
 

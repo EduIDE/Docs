@@ -79,6 +79,9 @@ gateway:
   create: true
   className: envoy
 
+certManager:
+  issuerRef: {name: letsencrypt, kind: ClusterIssuer}
+
 images:
   registry: ghcr.io/eduide
   tag: 3.0.0

@@ -19,7 +19,7 @@ The operator picks one of three strategies per session and records it in `status
 
 A saved workspace (`volume`) always starts cold, because Kubernetes cannot attach a volume to a running pod. A pool serves temporary workspaces (`none`) only. Under capacity pressure a claim does not wait for idle pods.
 
-A warm start takes about 30 ms for the claim. A cold start takes 2 to 5 seconds plus the IDE start. The warm target is below 2 seconds at the 95th percentile until the IDE is reachable, and the cold target is below 30 seconds.
+Measured on a test deployment, a warm start reaches `Ready` in about 100 ms and a cold start in 3 to 5 seconds with prepulled images. The IDE then still loads in the browser. The warm target is below 2 seconds at the 95th percentile until the IDE is reachable, and the cold target is below 30 seconds.
 
 ## Pools
 

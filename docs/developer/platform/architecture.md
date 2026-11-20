@@ -35,7 +35,7 @@ The API group is `eduide.github.io`, version `v1alpha1`.
 | --- | --- |
 | `IDETemplate` | A kind of IDE: image, resources, timeouts, persistence, allowed launch keys. `listed: true` shows it as a start tile, `listed: false` hides it (reachable by name from Artemis links and the API). |
 | `IDEPool` | Optional warm pool of idle instances of one template. See [Session Prewarming](./session-prewarming). |
-| `IDEWorkspace` | A saved workspace: the files of one user on a volume. It is deleted a set time after last use (per template `retention`, default 14 days). |
+| `IDEWorkspace` | A saved workspace: the files of one user on a volume. It is deleted a set time after last use (`retention`, 14 days by default, per deployment, template or workspace). |
 | `IDESession` | One running IDE of one user. Phases are `Pending`, `Starting`, `Ready` and `Failed`. |
 
 Persistence is `none` (temporary workspace, starts from scratch) or `volume` (saved workspace). The service writes intent as custom resources and the operator turns it into pods, routes and volumes.
@@ -52,7 +52,7 @@ A deployment serves three host names:
 | --- | --- |
 | service (landing page) host | The landing page on `/` and the API on `/api/` |
 | instance host | One route per session, `https://<instance host>/<instance>/` with a random instance id |
-| webview host | Webviews and the mini browser, one fixed name `webview.<instance host>` |
+| webview host | Webviews and the mini browser, one fixed name, by default `webview.<instance host>` |
 
 Each host needs one certificate for its own name. A session never needs a certificate of its own.
 

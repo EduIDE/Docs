@@ -40,7 +40,7 @@ Artemis opens the start page with the template name and passes the access token 
 The query holds only non-secret values such as the template, the title and the Artemis URL.
 This needs Artemis pull request #14702, which is not yet merged upstream.
 The repository host must be on the installation's list of trusted hosts, or the launch fails with an error that names the host.
-Older links with `?gitUri=` still work during the migration, but they are deprecated.
+Older links that carry the token or a repository URL with credentials in the query still work during the migration, but they are deprecated.
 
 ## Starting level
 

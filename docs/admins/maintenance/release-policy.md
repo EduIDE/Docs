@@ -21,7 +21,7 @@ Semantic versioning applies: a major version may change the values or need a mig
 | Component | Repository | Version |
 |---|---|---|
 | IDE images | EduIDE | Platform version, for example `3.0.0` |
-| Control plane (operator, service, authz, agent, pool scaler, landing page) | EduIDE-control-plane | Own semver, for example `0.2.0` for EduIDE 3.0.0. One tag versions the images, both charts, the OpenAPI spec and the TypeScript client |
+| Control plane (operator, service, authz, agent, pool scaler, landing page) | EduIDE-control-plane | Own semver, for example `0.2.0` for EduIDE 3.0.0. One tag versions the images, its three charts (CRDs, control plane, landing page), the OpenAPI spec and the TypeScript client |
 | Installation chart | EduIDE-Helm | Platform version |
 
 A fix in the control plane does not rebuild the IDE images. The installation chart says exactly which versions belong together.
