@@ -5,17 +5,27 @@ description: Branches, commits, tags, changelogs and checks that apply in every 
 
 # Contributing
 
-These basics hold in every repository of the EduIDE organization. A repository's `AGENTS.md` and `README.md` add what is specific to it.
+These basics hold in every repository of the EduIDE organization. A repository's `AGENTS.md` and `README.md` add what is specific to it. For the control plane, read the "Contributing" section of its [README](https://github.com/EduIDE/EduIDE-control-plane#contributing) too.
 
 ## Branches and pull requests
 
 - Work on a branch and open a pull request against `main`. Nothing is pushed to `main` directly.
 - Keep a pull request to one change. CI must pass before it is merged.
+- Describe what you tested. A pull request in the control plane repository also builds images tagged `pr-<number>` that you can deploy to a test environment, see [Deploying Pull Requests](/developer/guides/deploying-pull-requests).
 - Do not put secrets, tokens or exploit details into a commit, an issue or a pull request. The repositories are public. Describe a security fix by what it protects, and tell admins what they must do.
 
 ## Commits
 
 Write the commit message for a reader who does not know the change: what changed and why, in the present tense. Squash fixups before merging.
+
+## Rules of the control plane repository
+
+- **Contracts first.** API and CRD changes are additive within a version and start in `api/`. Run `make generate` and never edit generated files.
+- **Tests come with the change.** Table-driven unit tests, envtest for controllers, `make e2e` for anything on the request path.
+- **Isolate `KUBECONFIG`** for every local cluster command, see [Local Development](/developer/guides/local-development).
+- **Decisions get an ADR.** Anything beyond an additive change needs a record in [`docs/adr`](https://github.com/EduIDE/EduIDE-control-plane/tree/main/docs/adr).
+- **No institution-specific defaults.** Hosts, realms and node labels live in deployment values.
+- **Words.** Template, pool, instance, session, workspace, claim, release, launch data.
 
 ## Changelog
 
@@ -27,11 +37,10 @@ Tags are `vX.Y.Z` (`vX.Y.Z-rc.N` for a release candidate). A `tag-format` workfl
 
 ## Checks in CI
 
-- The build and test workflow of the repository. EduIDE-Cloud runs its Java tests on every pull request that touches `java/`.
+- The build and test workflow of the repository. The control plane runs lint, tests, generated-code and contract checks, image builds and Trivy. The job `ci-ok` fails when any job fails.
 - `dependency-review` on pull requests, in the repositories that have it.
-- A reusable gitleaks workflow exists in the org `.github` repository (`secret-scan.yml`); no repository calls it yet.
-- Actions are mostly pinned by tag today. Renovate pins digests going forward through the shared preset.
+- Renovate proposes dependency updates through the shared preset of the organization.
 
 ## Docs
 
-Change the docs in the same piece of work as the code, in the repository's own README or in the [Docs](https://github.com/EduIDE/Docs) repository for the global pages.
+Change the docs in the same piece of work as the code, in the repository's own README or docs folder, or in the [Docs](https://github.com/EduIDE/Docs) repository for the global pages.

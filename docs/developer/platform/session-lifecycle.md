@@ -1,88 +1,57 @@
 ---
 title: Session Lifecycle and Ending
-description: How the operator decides that a session is over, how it records why, and how the landing page and metrics use that.
+description: How a session ends, how activity is detected, and when saved workspaces expire.
 ---
 
 # Session Lifecycle and Ending
 
-This page describes how a session ends and what the platform records about it. It covers the activity rules in the monitor extension and the IDE, the operator's timeout logic, the end reason on the workspace, the `/session-ended` page of the landing page, and the operator's metrics endpoint. For how a session starts, see [Architecture](./architecture) and [External Session Launch](./external-integration).
+This page describes how a session ends and what the platform does with the files afterwards. For how a session starts, see [Session Prewarming](./session-prewarming) and [Architecture](./architecture).
 
-Release status: the operator flags `--sessionNodeSelector` ships since EduIDE-Cloud 1.3.0, the end reason and the closed-tab rule since 1.4.0, and `--metricsPort` with EduIDE-Cloud 2.0.0. EduIDE-Cloud 3.0.0 removes the unauthenticated keep-alive endpoint `PATCH /service/session`: the operator polls the monitor, and nothing in the IDE needs to call the service to stay alive. The IDE images need `theia-cloud-monitor` v1.4.0 or later (EduIDE [#224](https://github.com/EduIDE/EduIDE/pull/224)) to time out an open idle tab. The monitor extension carries the version of the EduIDE-Cloud release it was built with; EduIDE 2.0.0 pins v3.0.0.
+## Phases
+
+A session moves through `Pending`, `Starting` and `Ready`, or ends in `Failed` with an `errorCode`. The operator records timestamps for each step in `status.timestamps`: `claimed`, `podReady`, `agentReady` and `ready`. The step durations are exported as `eduide_session_phase_seconds`, and the whole start as `eduide_session_startup_seconds`.
 
 ## Who ends a session
 
-The operator ends a session in two cases:
+A session ends in four ways:
 
-- **Inactivity.** The operator polls each session's monitor extension for the time of the last user activity. After `notifyAfter` minutes without activity it asks the monitor to show the "Are you still here?" dialog. After `timeoutAfter` minutes it deletes the session. The chart defaults are 50 and 60 (`appDefinitions.defaults.monitor.activityTracker`).
-- **Lifetime.** A session that reaches its lifetime limit is stopped regardless of activity.
+- **Inactivity.** After the template's `idle` time without activity (default 60 minutes), the operator deletes the session. At the `warning` time (default 50 minutes) it sends a warning that the IDE shows with the action "I am still here".
+- **Maximum lifetime.** A session that reaches `max` (default 24 hours) ends regardless of activity.
+- **The user** stops the session from the landing page or with `DELETE /sessions/{name}`.
+- **A failure.** A Ready session whose pod failed (for example by eviction) becomes `Failed`.
 
-Admins and API clients can also stop a session. Those stops leave no end reason.
+The templates set `timeouts.idle`, `timeouts.warning` and `timeouts.max`. The operator and the service resolve missing values the same way, in one place (`ResolvedTimeouts`). The API shows the result as `stopsAt` and `stopReason` on each session.
 
-## What counts as activity
+## Detecting activity
 
-The monitor extension (`EduIDE-Cloud/node/monitor`) runs in the Theia plugin host and answers the operator's polls. Since [EduIDE-Cloud#165](https://github.com/EduIDE/EduIDE-Cloud/pull/165) only events a user causes reset the timer.
+The agent in the pod collects activity and the operator pulls it, so the IDE needs no inbound port and the operator writes few updates ([ADR 0016](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0016-activity-detection.md)).
 
-- **Counts:** edits and saves of `file` and `untitled` documents, editor selection, scrolling and focus, window state, debug and task runs, file operations.
-- **Does not count:** anything an extension fires on its own, such as output channel appends (the Artemis extension logs every 5 seconds), diagnostics, configuration writes and documents opened in the background. Before 1.4.0 these kept idle sessions alive until the lifetime limit.
+- The `eduide-session` extension sends a heartbeat when the user really works: edits, selection changes, active editor changes and window focus. It sends at most one heartbeat per minute. Terminal output does not count, so a long build does not keep an abandoned session alive.
+- The operator polls the agent status with bounded concurrency. It writes `status.lastActivity` only when it moves by more than 5 minutes.
+- Proxied requests do not count, because an open tab polls without a user.
+- A claimed session with no open WebSocket connection and no activity counts as inactive. A closed tab therefore ends the session after the idle time.
+- An unreachable agent alone does not end a session. The operator marks a condition and waits for data.
 
-The rule for edits lives in `node/monitor/src/modules/user-activity.ts`. It has no `vscode` import, so `user-activity.test.ts` runs under `node:test` (`npm test` in `node/monitor`), and the `monitor-vsix.yml` workflow runs it. The monitor extension is a release asset of EduIDE-Cloud; the IDE images pin it in `images/base-ide/package.json.patch`.
+A heartbeat also clears a pending idle warning, so a reloaded IDE shows no stale warning.
 
-Much user input produces no editor event, for example moving the mouse or scrolling a view. The IDE therefore reports browser input itself. The `SessionActivityContribution` in `theia-extensions/customization` (EduIDE [#218](https://github.com/EduIDE/EduIDE/pull/218)) listens for `keydown`, `pointerdown`, `pointermove` and `wheel` in the tab and calls the monitor command `theia.cloud.monitor.activity.report`, at most once a minute. It also registers `eduide.session.timeoutWarning`. The monitor runs that command when the operator asks for the warning, and the IDE blinks the tab title.
+## What happens at the end
 
-Other extensions can report activity explicitly with `theia.cloud.monitor.activity.report`.
+The operator removes access first. The session leaves `Ready`, `authz` denies at once, and the operator then discards the pod. Open WebSockets end with it. A temporary workspace is gone with the pod. A saved workspace stays on its volume.
 
-## Closed tabs
+The launch data Secret belongs to the session and goes with it.
 
-The monitor lives in the plugin host, which ends when the last tab of the session closes. A failed activity poll is therefore no proof of inactivity by itself, and the operator treats it carefully (`MonitorActivityTracker`):
+## Expiry of saved workspaces
 
-- A session whose monitor answered at least once since the operator started is remembered. When that monitor stops answering and its last reported activity is older than `timeoutAfter`, the operator ends the session and logs "Monitor stopped answering (IDE tab closed?)".
-- A session whose monitor never answered keeps running, because its last activity is only the start time and says nothing about the user.
-- The memory is per operator process. After an operator restart, a session whose tab was already closed runs until its lifetime limit once.
+The operator deletes saved workspaces after a period without use, replacing the old garbage collector ([ADR 0007](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0007-persistence-modes.md)).
 
-Other log lines worth knowing: "Notifying session as timeout of N minutes was reached!" and "Deleting session as timeout of N minutes was reached!" for inactivity, and "was stopped after N minutes" for the lifetime limit. If `notifyAfter` and `timeoutAfter` lie closer together than `monitor.activityTracker.interval`, the warning can be skipped.
+- `status.lastUsed` is set at the start and the end of every session. A workspace with a running session never expires.
+- `retention` defaults to 14 days per deployment and is set per template or per workspace.
+- Expiry has two stages. First the phase becomes `Expired`. After the grace period (24 hours by default) the volume and the custom resource are deleted.
+- The annotation `eduide.github.io/retain: "true"` on an `IDEWorkspace` cancels expiry.
+- The overview shows `expiresAt` and `deletesAt`, and starting the workspace again extends it.
 
-## End reason on the workspace
+A user can also delete a workspace at any time. A running session on it stops first.
 
-Before it stops a session for inactivity or lifetime, the operator annotates the session's workspace ([EduIDE-Cloud#160](https://github.com/EduIDE/EduIDE-Cloud/pull/160)):
+## Metrics
 
-| Annotation | Value |
-| --- | --- |
-| `theia-cloud.io/last-session-end-reason` | `inactivity` or `lifetime` |
-| `theia-cloud.io/last-session-end-time` | ISO-8601 instant |
-
-`WorkspaceResourceClient.recordSessionEnd` writes them, `MonitorActivityTracker` calls it for inactivity and `BasicTheiaCloudOperator.stopTimedOutSessions` for the lifetime. There is no CRD change, and the operator ClusterRole already allows `patch` on workspaces.
-
-`GET /service/workspace/{appId}/{user}` returns both values as `lastSessionEndReason` and `lastSessionEndTime` on each `UserWorkspace`. Both fields are optional, so existing API clients keep working. Any other way of stopping a session leaves the previous values untouched, so a client compares `lastSessionEndTime` with the start of the session it asks about.
-
-## The `/session-ended` page
-
-A request for an instance path of a session that no longer exists reaches a catch-all rule of the instances HTTPRoute, which answers `302` to `https://<landing host>/session-ended` and keeps the query string. A live session's longer path wins over the catch-all. The rule is part of the `eduide` chart (`gateway.routes.sessionEndedRedirect.enabled`, default on, with `path` (default `/session-ended`) and `statusCode`; only `302` is accepted because eager sessions reuse instance paths and a cached `301` would break them).
-
-The landing page serves the page (`EduIDE-Landing-Page`):
-
-- `src/lastLaunch.ts` stores the launch inputs of the current tab in `sessionStorage` under `eduide.lastLaunch.v1`, for 24 hours. The inputs include `gitUri` and `artemisToken`, which is why the store is `sessionStorage` and dies with the tab.
-- `src/components/SessionEnded.tsx` renders the page. For a saved workspace it offers "Resume my session", which passes the stored inputs straight to `handleStartSession` and reopens the same workspace. After a temporary session it only offers a new start.
-- `src/sessionEndReason.ts` reads `lastSessionEndReason` from the workspace list. It shows the reason only if `lastSessionEndTime` is not older than the tab's launch, because an older stamp belongs to an earlier session on the same workspace.
-
-Limits to keep in mind: the IDE does not navigate to `/session-ended` by itself, the page appears on reload. Resume works only in the same tab. The reason is available only for logged-in users with a saved workspace.
-
-## Operator flags
-
-Both flags are options of the operator and are rendered by the `eduide` chart.
-
-| Flag | Chart value | Purpose |
-| --- | --- | --- |
-| `--sessionNodeSelector key=value,...` | `global.nodeSelector` | Pins every session pod, lazy and prewarmed, to nodes with these labels via `nodeSelector`. Empty leaves the pod spec unchanged. A malformed list fails at startup. Since EduIDE-Cloud 1.3.0 ([#164](https://github.com/EduIDE/EduIDE-Cloud/pull/164)). |
-| `--metricsPort <port>` | `operator.metricsPort` | Serves Prometheus metrics at `/metrics` on every operator replica. `0` (default) serves none. EduIDE-Cloud 2.0.0 ([#167](https://github.com/EduIDE/EduIDE-Cloud/pull/167)). |
-
-An older operator rejects an unknown flag and does not start, so set `global.nodeSelector` only with EduIDE-Cloud 1.3.0 or newer and `operator.metricsPort` only with 2.0.0 or newer. The chart also applies `global.nodeSelector` to the operator, service, landing page and preloading pods; prewarmed pods that exist before the change keep their node until they are replaced.
-
-### Metrics
-
-With `--metricsPort` set the operator exposes one counter, written in the Prometheus text format by `SessionEndMetrics`:
-
-```
-theiacloud_sessions_ended_total{reason="inactivity|lifetime", app_definition="<name>"}
-```
-
-The counter lives in the operator process and resets on restart, so use `increase()` or `rate()`. The `eduide-cluster` chart adds a PodMonitor for the `metrics` port and a "Sessions ended per hour, by reason" panel to the sessions dashboard (EduIDE-Helm [#76](https://github.com/EduIDE/EduIDE-Helm/pull/76)). Without `operator.metricsPort` the PodMonitor finds no target.
+Start and end behavior shows in the metrics `eduide_session_startup_seconds`, `eduide_session_failures_total`, `eduide_sessions` and `eduide_workspaces`. The full list is the [metrics contract](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/contracts/metrics.md). For slow starts see the [slow-launch runbook](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/operations/slow-launch.md).

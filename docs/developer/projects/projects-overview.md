@@ -5,28 +5,36 @@ description: Overview of the repositories that make up the EduIDE ecosystem.
 
 # Projects Overview
 
-The developer section includes the project catalog that previously lived in the top-level docs structure. These repositories together define the EduIDE platform, deployment model, extensions, and operational tooling.
+These repositories together define the EduIDE platform, its deployment model, the IDE images and the operational tooling.
 
-## Project catalog
+## Platform
 
-Platform:
-
-- [EduIDE-Cloud](https://github.com/EduIDE/EduIDE-Cloud): Operator, REST service, conversion webhook and session monitor.
-- [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm): The `eduide` and `eduide-cluster` charts.
-- [EduIDE-Landing-Page](https://github.com/EduIDE/EduIDE-Landing-Page): The page where users pick a language and start a session.
-- [scorpio](https://github.com/EduIDE/scorpio): The extension that prepares a workspace (clone, templates, Gradle prewarm).
-- [EduIDE-pool-scaler](https://github.com/EduIDE/EduIDE-pool-scaler): Warm pool scaler, not part of 3.0.
+- [EduIDE-control-plane](/developer/projects/eduide-control-plane): The Go control plane with operator, service, authz, agent, pool scaler, landing page and the `eduide-session` extension.
+- [EduIDE](/developer/projects/eduide): The IDE and the images for every language, in an Artemis and a standalone edition.
+- [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm): The installation chart that installs the whole platform.
+- [scorpio](https://github.com/EduIDE/scorpio): The extension that prepares a workspace (clone, starter templates, Gradle prewarm).
 - [eduide-keycloak-theme](https://github.com/EduIDE/eduide-keycloak-theme): The Keycloak login theme.
 - [.github](https://github.com/EduIDE/.github): Reusable workflows and the Renovate preset for the organization.
 
-Details:
+## Operations and tooling
 
-- [EduIDE Deployment](/developer/projects/eduide-deployment): Infrastructure-as-code and deployment workflows for EduIDE environments.
-- [Theia Scale Tests](/developer/projects/theia-scale-tests): End-to-end and scalability validation for classroom-scale IDE usage.
-- [EduIDE Shared Cache](/developer/projects/eduide-shared-cache): Shared Gradle and Bazel build cache service for faster builds.
+- [EduIDE Deployment](/developer/projects/eduide-deployment): Environments and deployment workflows.
+- [EduIDE Image Mannheim](/developer/projects/eduide-image-mannheim): Example of an installation-specific image derived from an edition image.
+- [EduIDE Shared Cache](/developer/projects/eduide-shared-cache): Shared Gradle and Bazel build cache.
 - [EduIDE LSP Extension](/developer/projects/eduide-lsp-extension): Remote language-server connector for Theia and VS Code.
-- [EduIDE Data Bridge](/developer/projects/eduide-data-bridge): Runtime data and credential injection bridge for cloud IDE sessions.
-- [EduIDE](/developer/projects/eduide): Custom Eclipse Theia Docker images and packaged IDE environments.
-- [EduIDE Image Mannheim](/developer/projects/eduide-image-mannheim): Reference example and template for an installation-specific image derived from an EduIDE edition image.
-- [Theia ARC Runners](/developer/projects/theia-arc-runners): Self-hosted GitHub Actions runner infrastructure on Kubernetes.
-- [Workspace Garbage Collector](/developer/projects/workspace-garbage-collector): Cleanup operator for expired workspaces and storage hygiene.
+- [Theia Scale Tests](/developer/projects/theia-scale-tests): End-to-end and load tests for classroom-scale usage.
+- [Theia ARC Runners](/developer/projects/theia-arc-runners): Self-hosted GitHub Actions runners on Kubernetes.
+
+## Replaced in 3.0.0
+
+EduIDE 3.0.0 replaces the Java stack with the Go control plane. These repositories get no new releases. They are archived after the rollout of 3.0.0:
+
+| Repository | Replaced by |
+| --- | --- |
+| EduIDE-Cloud (operator, REST service, conversion webhook, session monitor) | The operator, service, authz and agent of the control plane |
+| EduIDE-Landing-Page | The landing page of the control plane |
+| EduIDE-data-bridge | The `eduide-session` extension |
+| workspace-garbage-collector | The workspace expiry of the operator, see [Session Lifecycle](/developer/platform/session-lifecycle#expiry-of-saved-workspaces) |
+| EduIDE-pool-scaler | The `pool-scaler` of the control plane repository |
+
+The login proxy sidecar per session is gone as well. The gateway now does the login and the owner check, see [Architecture](/developer/platform/architecture#access-to-a-session). Error reporting moves to OpenTelemetry traces and Prometheus metrics.

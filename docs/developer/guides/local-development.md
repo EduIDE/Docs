@@ -1,109 +1,82 @@
 ---
 title: Local Development
-description: How local development is used in the EduIDE ecosystem.
+description: How to build, test and run the control plane and the IDE images locally.
 ---
 
 # Local Development
 
-Local development in EduIDE is different from a typical monolith workflow. The normal goal is not to boot the entire platform on a laptop and do all validation locally. Most changes are made in the repository that owns the feature, then deployed to a shared test environment through EduIDE Deployment.
+Most work happens in one repository at a time. For the control plane, a local kind cluster gives you the real Kubernetes behavior, so you can test the request path on your laptop. The authoritative setup guide is [`docs/development/setup.md`](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/development/setup.md) in the control plane repository.
 
-## Default Development Model
+## Control plane
 
-The usual workflow is:
+### Tools
 
-1. Make the change in the relevant repository.
-2. Validate that repository locally as far as it makes sense.
-3. Build preview artifacts if the repository publishes them for pull requests.
-4. Deploy the change to one of the test environments through EduIDE Deployment.
-5. Validate behavior against a real running cluster.
+Go (the version named in the setup guide), Node.js LTS, Docker, kind, kubectl, helm and golangci-lint. Python 3 and the `drawio` CLI are optional and only regenerate the diagrams.
 
-This is the preferred approach because the platform depends on Kubernetes behavior, routing, authentication, storage, and multiple interacting services. Those parts are usually easier to validate in the test clusters than in a fully local setup.
+### First build
 
-## Why Full Local Development Is Not the Default
+```bash
+git clone https://github.com/EduIDE/EduIDE-control-plane.git
+cd EduIDE-control-plane
+make generate   # code from the contracts in api/
+make build
+make test       # unit, envtest and TypeScript tests
+make lint
+```
 
-Running the whole EduIDE system locally is usually not how feature work is done.
+### Make targets
 
-The main reasons are:
+| Target | Does |
+| --- | --- |
+| `make generate` | CRD YAML, deepcopy, RBAC, REST stubs, agent types and the TypeScript client |
+| `make verify-generate` | Fails if generated files are stale (CI runs it) |
+| `make test` | Unit and envtest tests of all Go modules, plus the TypeScript tests |
+| `make lint` | golangci-lint |
+| `make build`, `make images TAG=x` | Binaries, images |
+| `make helm-lint` | Lint all charts |
+| `make e2e`, `make e2e-down` | Create and remove the kind cluster and run the end-to-end suite |
 
-- the complete platform depends on Kubernetes-native behavior
-- routing and authentication flows are part of the actual runtime behavior
-- service and operator changes usually only make sense against a realistic cluster
-- test environments already exist and are closer to the production shape than an ad hoc local stack
+Never edit generated files (`*.gen.go`, `zz_generated*.go`, `config/`, `clients/typescript/src/schema.gen.ts`). Change the source in `api/` and run `make generate`.
 
-In practice, this means "local development" usually means local work on one component, not full local reproduction of the whole platform.
+### End-to-end tests on kind
 
-## When Local Testing Still Makes Sense
+```bash
+make e2e        # kind cluster with Envoy Gateway, Calico, Keycloak; full matrix and browser tests
+make e2e-down   # remove the cluster
+```
 
-Local testing is still useful for focused tasks where only one part of the stack matters.
+The suite covers the four variants (temporary or saved workspace, with or without a warm pool), the gateway checks (owner, foreign user, free instance, no cookie), the NetworkPolicy negative test, timeouts and a search of logs and spans for leaked launch data. No CI workflow runs it, so run it before a release. `EG_VERSION=v1.10.0 make e2e` runs it against another Envoy Gateway version. See the [testing guide](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/development/testing.md).
 
-Typical examples include:
+:::danger Isolate your KUBECONFIG
+The default kube context on your machine can be a real cluster. Before any command that touches a local cluster, point `KUBECONFIG` at the kind cluster and check it:
 
-- testing a Theia or VS Code extension inside a local Theia application
-- iterating on the user interface of the landing page or a dashboard
-- validating isolated service logic or request handling
-- running repository-local unit tests, linters, and build steps
-- checking generated output such as charts, docs, or API clients
+```bash
+export KUBECONFIG=$(pwd)/.e2e/kubeconfig     # fish: set -x KUBECONFIG (pwd)/.e2e/kubeconfig
+kubectl config current-context               # must be kind-eduide-e2e
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'   # must be https://127.0.0.1:<port>
+```
 
-This kind of local work is especially effective when the change does not depend on real cluster reconciliation or real session routing behavior.
+If the context or the server differ, stop. Set the variable in every script and shell, not only for one command. Never run kubectl, helm or kind against a cluster you did not create for the test.
+:::
 
-## Extensions and Theia-Specific Work
+On OrbStack, containers bind to `127.0.0.1` only, so use that address instead of `localhost`.
 
-For extension work, local feedback loops are often good enough and much faster than deploying every small iteration.
+## IDE images and extensions
 
-Examples:
+Build and run an image from the [EduIDE](/developer/projects/eduide) repository:
 
-- testing UI behavior in Theia
-- validating command registration and configuration handling
-- checking extension-side integration logic
-- iterating on runtime injection consumers inside the IDE
+```bash
+docker compose -f docker-compose.images.yml up --build java-17-standalone
+```
 
-This is one of the main exceptions to the "deploy to test clusters" rule.
+Each service publishes its own port on `127.0.0.1` (`3103` for `java-17-standalone`). Check a built image with `scripts/smoke-test-image.sh <image> <standalone|artemis>`.
 
-## Service and Operator Work
+For extension work, a local Theia application gives the fastest feedback. The `eduide-session` extension has plain `node:test` tests against a fake agent: `npm ci && npm test` in `extensions/eduide-session` of the control plane repository.
 
-Changes involving the EduIDE Cloud service and operator usually need the real system shape.
+## Docs
 
-That is because these tasks often involve:
+`npm ci`, `npm run build` and `bash scripts/check-docs.sh` in the Docs repository.
 
-- custom resources
-- reconciliation logic
-- session lifecycle handling
-- routing updates
-- authentication interactions
-- persistent storage behavior
-- concurrency under burst load
+## When a shared test environment is better
 
-For those cases, the easiest and most reliable validation path is usually the shared test cluster, not a fully local stack.
-
-## Recommended Rule of Thumb
-
-Use local development when:
-
-- the change is isolated to one repository or one runtime component
-- the behavior can be meaningfully validated without the full cluster
-- fast iteration matters more than end-to-end realism
-
-Use the test environments when:
-
-- the change affects service and operator interaction
-- the change depends on routing or authentication
-- the change affects session lifecycle behavior
-- the change needs a realistic end-to-end deployment
-
-## Commands per repository
-
-These are the commands that work today. Each repository's `AGENTS.md` is the reference when they change.
-
-| Repository | What to run |
-|---|---|
-| EduIDE | Build and run an image: `docker compose -f docker-compose.images.yml up --build java-17-standalone`. Each service publishes its own port on `127.0.0.1` (`3103` for `java-17-standalone`). Check a built image: `scripts/smoke-test-image.sh <image> <standalone\|artemis>`, which also runs every template's Test task (or its build task when it has none) without network access; templates marked `needsNetwork` keep network access. |
-| EduIDE-Cloud, Java | There is no aggregator POM. Install the modules by hand in order (`java/common/maven-conf`, `org.eclipse.theia.cloud.common`, `org.eclipse.theia.cloud.operator`, then `defaultoperator`), each with `mvn clean install -Drevision=<version>-SNAPSHOT`. Run the service tests with `cd java/service/org.eclipse.theia.cloud.service && mvn verify`. Use JDK 21. The tests start containers; on OrbStack set `DOCKER_API_VERSION=1.44`, and if port 8081 is taken pass `-Dquarkus.http.test-port=18081`. |
-| EduIDE-Cloud, monitor | `cd node/monitor && npm test` (runs under `node:test`, no VS Code needed). |
-| EduIDE-data-bridge | pnpm 10 only. `vscode-test` needs a real VS Code; locally, run the compiled tests with mocha and a stub for the `vscode` module. |
-| EduIDE-Helm | `helm lint` and `helm template` on both charts. A pull request preview chart is published for every push, see [Deploying Pull Requests](/developer/guides/deploying-pull-requests). |
-
-Docs: `npm ci`, `npm run build` and `bash scripts/check-docs.sh`.
-
-## Summary
-
-EduIDE development is repository-local first and environment-based second. You usually do not run the complete platform locally. Instead, you validate locally where that is efficient and deploy to the test clusters when the change depends on the real cloud runtime.
+Use a test environment instead of a local cluster when the change depends on the real gateway, a real identity provider, real storage classes or real load. Deploy preview artifacts as described in [Deploying Pull Requests](/developer/guides/deploying-pull-requests).

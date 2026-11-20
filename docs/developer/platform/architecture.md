@@ -1,63 +1,85 @@
 ---
 title: Architecture
-description: High-level view of how EduIDE orchestrates browser IDE sessions on Kubernetes.
+description: How the EduIDE control plane starts browser IDE sessions on Kubernetes, who may open them, and where each part runs.
 ---
 
 # Architecture
 
-EduIDE runs **browser-based IDE sessions** for many users at once. Each session is an isolated workload in Kubernetes - not a shared long-lived server. The platform’s job is to **start the right IDE for the right user**, expose it at a URL, attach durable storage where needed, and **tear sessions down** when they are no longer wanted.
+EduIDE runs a **browser IDE session** for each user as an isolated pod in Kubernetes. The **control plane** starts the right IDE for the right user, exposes it under a URL, attaches storage where needed and ends the session when it is no longer wanted.
 
-At the center is **EduIDE Cloud** (Theia Cloud - based): a small **control plane** inside the cluster that turns API calls into running pods, routes, and volumes.
+The control plane lives in [EduIDE-control-plane](https://github.com/EduIDE/EduIDE-control-plane). One deployment (one namespace, for example a course or an exam) runs its own operator, service and authz. Deployments share nothing.
 
-## End-to-end picture
+## Components
 
-1. A **client** (product UI or integration) calls the **EduIDE Cloud service** to launch or stop sessions.
-2. The service writes **Kubernetes custom resources** that describe desired platform state in domain terms (session types, workspaces, live sessions).
-3. The **operator** watches those resources and reconciles them into ordinary cluster objects: Deployments/Pods, Services, routing, persistence, and related configuration.
-4. The user’s **browser** reaches the IDE through the cluster’s routing layer; access is tied to the session and user identity.
+![UML component diagram of the EduIDE control plane: subsystems, their components and the services they provide and require](/img/architecture/components.svg)
 
-The service does **not** hand-craft Deployments for callers. It records **intent**; the operator owns **how** that intent becomes concrete resources and stays aligned over time.
-
-## Main domain objects
-
-Three ideas cover most of the model:
-
-| Concept | Role |
+| Component | Role |
 | --- | --- |
-| **App definition** | A **template** for a launchable IDE: image, resources, limits, timeouts, and how routing should treat that session type. |
-| **Workspace** | The **durable** side of a user’s work: identity and storage relationship so files survive session restarts. |
-| **Session** | The **live** IDE instance bound to a user; compute here is meant to be **replaceable** while the workspace keeps continuity. |
+| **operator** | Reconciles the custom resources `IDETemplate`, `IDEPool`, `IDESession` and `IDEWorkspace`. Owns pods, services, routes, token Secrets and volumes. Claims prewarmed instances, enforces timeouts and capacity. One active replica. |
+| **service** | REST API `/api/v1` for the landing page and integrations. Verifies the OIDC token, validates launch data against the template allowlist and creates the session. Streams progress as Server-Sent Events. Creates no pods. |
+| **authz** | Envoy ext_authz service. Lets only the owner of a `Ready` session reach its IDE. Fails closed. |
+| **agent** | Sidecar in every session pod and the only door into it. Checks the instance token, holds the launch data in memory and reports activity. |
+| **pool scaler** | Sets how many idle IDEs each warm pool keeps ready. |
+| **landing page** | Start tiles, "Your environments" overview, public status page and the read-only admin panel. |
+| **`eduide-session`** | IDE extension. Reads the launch data from the agent on the loopback interface and sends activity heartbeats. It replaces the old data injection and session monitor extensions. |
 
-That split - durable workspace vs disposable session - is what lets the platform restart or swap runtime without treating the learner’s whole context as ephemeral.
+External systems are Envoy Gateway (version 1.8 or newer), an OIDC provider such as Keycloak and the Kubernetes API. Artemis opens the landing page with a link, see [External Session Launch](./external-integration).
 
-## Kubernetes as the runtime
+## Domain objects
 
-The cluster provides **scheduling, isolation, networking, volume attachment, and restarts**. EduIDE relies on that to run **many short-lived, user-specific workloads** safely and to scale with bursts (typical in teaching). Operational concerns - cleanup, observability, capacity - follow from that model rather than from a single monolithic app.
+![UML object model of the EduIDE control plane: templates, pools, workspaces and sessions with their relations](/img/architecture/object-model.svg)
 
-## Routing and access
+The API group is `eduide.github.io`, version `v1alpha1`.
 
-Each session needs a **reachable URL** that only the right user should use. The operator updates **dynamic routing** (alongside Gateway / ingress setup used in deployments) as sessions appear and disappear. **Authentication** is part of this story: it is wired into **who may open which session**, not only into the launch API.
+| Object | Role |
+| --- | --- |
+| `IDETemplate` | A kind of IDE: image, resources, timeouts, persistence, allowed launch keys. `listed: true` shows it as a start tile, `listed: false` hides it (reachable by name from Artemis links and the API). |
+| `IDEPool` | Optional warm pool of idle instances of one template. See [Session Prewarming](./session-prewarming). |
+| `IDEWorkspace` | A saved workspace: the files of one user on a volume. It is deleted a set time after last use (per template `retention`, default 14 days). |
+| `IDESession` | One running IDE of one user. Phases are `Pending`, `Starting`, `Ready` and `Failed`. |
 
-## Security model (3.0)
+Persistence is `none` (temporary workspace, starts from scratch) or `volume` (saved workspace). The service writes intent as custom resources and the operator turns it into pods, routes and volumes.
 
-A session is isolated in layers, and 3.0 tightened each of them:
+The full field list is in the [data model](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/architecture/data-model.md).
 
-- **Login in front of a loopback-only IDE.** Theia listens on `127.0.0.1` only. The `oauth2-proxy` sidecar in the same pod is the only way in, and it forces the Keycloak login. Its skip-auth route is limited to `^/health$`.
-- **NetworkPolicies per session.** A default deny covers every session pod. Only the gateway (ports 3000 and 5000) and the operator (data bridge and monitor ports) get in. The operator creates one more policy per session, or per warm pool instance, that connects the IDE pod to its own sidecars only.
-- **Authenticated data bridge.** The operator injects the session's environment with a per-instance token that the data bridge checks, see [Prewarming Architecture](./session-prewarming#data-bridge-token).
-- **A hardened service.** The REST service needs a service auth token, allows browser calls only from the landing page origin and `service.corsOrigins`, verifies the identity provider's certificate, optionally checks an audience, limits sessions per user, and serves metrics and OpenAPI only on the management port 9000, which the gateway does not route. The scaling API behind the admin token is off by default (from EduIDE-Cloud 3.0.1).
-- **Non-root images** (uid 10001) for the operator, the service and the conversion webhook.
+## Deployment
 
-For the admin side, see [Session Hardening](/admins/security/session-hardening).
+![UML deployment diagram of the EduIDE control plane: browser, identity provider, Artemis, the Envoy Gateway and the pods of one deployment namespace](/img/architecture/deployment.svg)
 
-## Variants you may see in deployments
+A deployment serves three host names:
 
-Installations can tune **how** sessions appear: for example **on-demand** creation when a user launches, or **prewarmed** pools that keep generic IDE instances ready and **personalize** them at runtime to cut perceived startup time. The same architectural split - **API → custom resources → operator → cluster** - applies; only reconciliation strategies and timing differ.
+| Host | Serves |
+| --- | --- |
+| service (landing page) host | The landing page on `/` and the API on `/api/` |
+| instance host | One route per session, `https://<instance host>/<instance>/` with a random instance id |
+| webview host | Webviews and the mini browser, one fixed name `webview.<instance host>` |
 
-## Ending sessions
+Each host needs one certificate for its own name. A session never needs a certificate of its own.
 
-The operator ends sessions that exceed their lifetime or stay idle too long, and records why on the workspace so that a client can explain it to the user. See [Session Lifecycle and Ending](./session-lifecycle).
+## Access to a session
 
-## Summary
+The Envoy Gateway enforces the login and the owner check before a request reaches a pod:
 
-**EduIDE** is a **session orchestration** stack on Kubernetes: the **service** exposes a stable API and writes **desired state** as custom resources; the **operator** implements that state with workloads, routing, and storage; **workspaces** keep continuity while **sessions** provide the live IDE. Understanding that pipeline is enough to place the rest of the documentation (API, operator behavior, operations) without memorizing every subcomponent upfront.
+1. A `SecurityPolicy` runs the OIDC login against the identity provider.
+2. `authz` allows a request only if the first path segment is a `Ready` session of the logged-in user. Everything else gets 403.
+3. The route adds the instance token header. The agent forwards a request to the IDE only with a valid token.
+4. NetworkPolicies deny all other traffic into the session pod. The IDE listens on `127.0.0.1` only, so the agent is the only way in.
+
+When a session ends, it leaves `Ready` first. `authz` then denies at once, and the operator discards the pod after that.
+
+Details are in [session access](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/architecture/session-access.md).
+
+## Launch data
+
+A launch can carry the repository URL and the Artemis token. The service accepts only keys on the template allowlist and checks each value. It stores the data in one Secret that belongs to the session. The operator sends it once to the agent, which keeps it in memory. It never appears in custom resource specs, logs, traces, metrics or status. See [External Session Launch](./external-integration#allowlist).
+
+## Observability
+
+The control plane exports Prometheus metrics and OpenTelemetry traces. A launch is one trace from the click to the usable IDE. The chart ships alerts and a Grafana dashboard. See the [metrics contract](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/contracts/metrics.md) and the [tracing guide](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/operations/tracing.md).
+
+## Where to read next
+
+- [Session Prewarming](./session-prewarming): warm and cold start, claim protocol, pool scaler
+- [Session Lifecycle and Ending](./session-lifecycle): timeouts, activity, expiry of workspaces
+- [API Specification](./api-specification): the REST API
+- [Architecture decisions (ADRs)](https://github.com/EduIDE/EduIDE-control-plane/tree/main/docs/adr)

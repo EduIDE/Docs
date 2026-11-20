@@ -1,130 +1,106 @@
 ---
 title: External Session Launch
-description: How external systems such as Artemis start an EduIDE IDE session.
+description: How Artemis and other systems start an EduIDE session, with the link contract, the repository URL and the host allowlist.
 ---
 
 # External Session Launch
 
-This page describes how an external system starts an EduIDE IDE session for a user.
+This page describes how an external system, primarily [Artemis](https://github.com/ls1intum/Artemis), starts an EduIDE session for a user.
+
+:::warning Artemis support is not merged yet
+The fragment link below depends on Artemis pull request [ls1intum/Artemis#14702](https://github.com/ls1intum/Artemis/pull/14702). It is not merged upstream. Until it ships, Artemis does not send the repository URL with credentials, and a launch from Artemis does not clone automatically.
+:::
 
 ## Overview
 
-An external system, primarily Artemis, starts an EduIDE IDE session in one of two ways:
+There are two ways in:
 
-- Path A: a deep-link URL to the EduIDE landing page. This is the current Artemis path and the recommended integration.
-- Path B: a direct REST call to the EduIDE Cloud service (`POST /service`).
+- **A link to the landing page.** The external system builds a URL. The browser logs the student in and the landing page launches the session. This is the integration for Artemis.
+- **A direct API call.** A system that holds a user's OIDC token calls `POST /sessions` of the [REST API](./api-specification).
 
-Both paths ultimately create a `Session` and either redirect the browser to the session URL or return it to the caller.
+Both end in the same `IDESession`. The browser reaches the IDE at `https://<instance host>/<instance>/`.
 
-## Path A - Deep-link URL (recommended)
-
-The external system builds a URL to the landing page and adds the launch parameters as query parameters:
+## The link contract
 
 ```
-https://<landing-page>/?appDef=<id>&gitUri=<repo>&gitUser=<u>&gitMail=<m>&artemisUrl=<url>&artemisToken=<tok>
+https://<landing host>/?appDef=<template>&artemisUrl=<Artemis URL>#artemisToken=<token>&gitUri=<repository URL>
 ```
 
-The landing page (`EduIDE-Landing-Page/src/App.tsx`) parses only the following parameters:
+| Parameter | Where | Meaning |
+| --- | --- | --- |
+| `appDef` (also `appdef`) | query | Name of the template to launch. Templates with `listed: false`, such as the Artemis editions, are reachable this way. |
+| `artemisUrl` | query | Base URL of the Artemis instance |
+| `artemisToken` | fragment | Artemis token of the student |
+| `gitUri` | fragment | Repository URL, with the student's VCS token as user info: `https://<user>:<vcs-token>@<artemis host>/git/...` |
+| `gitRef` | query | Optional branch or ref |
+| `title` | query | Optional title shown in "Your environments" |
+| `persistence` | query | Optional `none` or `volume`, if the template allows it |
 
-| Parameter | Description |
-| --- | --- |
-| `appDef` (also accepts `appdef`) | app definition id to launch |
-| `gitUri` | git repo URL to clone |
-| `gitUser` | git username |
-| `gitMail` | git email |
-| `artemisUrl` | Artemis service URL |
-| `artemisToken` | Artemis auth token |
-| `user` | user id, used only in anonymous mode when Keycloak is disabled |
+The token and the repository URL go in the **URL fragment**, which browsers do not send to servers. The service and the proxies in front of it never see the fragment.
 
-There is no `gitToken` parameter. A token goes into the `gitUri` itself, see below.
+The landing page handles the fragment in this order:
 
-### Auto-start conditions
+1. It reads `artemisToken` and `gitUri` and stores them in `sessionStorage`.
+2. It removes them from the address bar with `history.replaceState`, so the credentials leave the history too.
+3. It starts the OIDC login.
+4. After the login it launches the session and sends the values in the request body.
+5. It deletes the stored values when the launch is done.
 
-A session launches automatically, with no button click, only when all of these hold. Otherwise the user must click **Launch**.
+If `appDef` names a known template, the landing page launches at once, without a button click. An unknown name shows an error and starts nothing. The launch is idempotent, so a reload returns to the same session.
 
-1. `appDef`, `gitUri`, and `artemisToken` are all present. `appDef` plus `gitUri` alone does not auto-start.
-2. `appDef` is a registered, whitelisted app definition in the landing page config. An unregistered value shows an error and aborts, and the default app does not start in its place.
-3. The hosts of both `gitUri` and `artemisUrl` are in the installation's `landingPage.trustedArtemisHosts` (landing page 1.3.0, chart 2.5.1). Anyone can write such a link, so a token in it proves nothing. For any other host the page shows which host the repository comes from and waits for **Launch**. The list is empty by default.
-4. If Keycloak is enabled, the user must already be authenticated. Otherwise SSO login happens first. Without Keycloak, a `user` parameter is shown for confirmation before it is used.
+:::note Deprecated: query parameters
+Older links carry `?artemisToken=...` or `?gitUri=https://user:token@...` in the query. The landing page still reads them, moves them out of the URL before the login and logs a deprecation warning. Do not build new links this way. The query can end up in browser history and server logs. `appDef`, `artemisUrl`, `gitRef`, `title` and `persistence` stay in the query. A `?gitUri=` without credentials is still fine.
+:::
 
-On success the browser is redirected to the returned session URL. The landing page refreshes the login token before each launch and retries at most 4 times, on `502`, `503`, `504`, network errors, timeouts and a `200` without a session URL, after a random wait of 3 to 10 seconds. One request times out after 60 seconds on the client. A temporary start that the service rejects with 400 is retried with a workspace (landing page 1.4.0). A page at `/session-ended` never starts a session by itself. The gateway ends a request after 60 seconds while the session keeps starting, so a later request picks up the running session.
+## Allowlist
 
-## Path B - Direct REST call to `POST /service`
+The service accepts only launch keys that the template lists in `injectableKeys` ([ADR 0012](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0012-user-data-secrets-allowlist.md)). Each key has a source and a format:
 
-A caller can also launch a session directly by posting a `LaunchRequest` JSON body to `POST /service`:
+- `source: Request` takes the value from the request and checks the format: `HTTPSURL`, `Token`, `Enum` or `Pattern`, with `maxLength` (default 2048, at most 8192).
+- `source: UserName` or `UserEmail` takes the value from the verified token, not from the request.
+
+The rules for the usual keys:
+
+- `ARTEMIS_URL` and `GIT_URI` need `https` and a host in the deployment's `allowedHosts`. A host outside the list is refused, and the landing page names the host.
+- `GIT_URI` accepts user info only if the key rule sets `allowCredentials`, which needs the format `HTTPSURL`. Deployments set it only for templates that Artemis opens. The host allowlist and the `https` rule still apply.
+- `GIT_USER` and `GIT_MAIL` come from the token.
+- `ARTEMIS_TOKEN` has length and character limits.
+- `TEMPLATE` accepts only the project templates of the image.
+
+An unknown key answers `400` with the code `unknown-key`. There is no way to make the control plane read other Secrets or ConfigMaps. The payload is at most 8 KiB.
+
+The value goes only into the launch data Secret of the session. The overview shows the repository URL without user info. Error messages and logs name the key and the failed rule, never the value.
+
+## Direct API call
+
+A system that has an OIDC token of the realm launches with the REST API:
 
 ```bash
-curl -X POST https://<cloud-service>/service \
+curl -X POST "https://<service host>/api/v1/sessions" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "appId": "<service-auth-token>",
-    "user": "student@example.com",
-    "appDefinition": "java-17",
-    "workspaceName": "ws-...",
-    "ephemeral": false,
-    "timeout": 3,
-    "env": {
-      "fromMap": {
-        "THEIA": "true",
-        "GIT_URI": "https://github.com/user/repo.git",
-        "GIT_USER": "student",
-        "GIT_MAIL": "student@example.com",
-        "ARTEMIS_TOKEN": "<token>",
-        "ARTEMIS_URL": "https://artemis.example.com",
-        "TEMPLATE": "<optional-build-system-id>"
-      }
-    }
+    "template": "java-17",
+    "persistence": "volume",
+    "data": {
+      "GIT_URI": "https://<user>:<vcs-token>@artemis.example.org/git/...",
+      "ARTEMIS_URL": "https://artemis.example.org",
+      "ARTEMIS_TOKEN": "<token>"
+    },
+    "display": { "title": "Exercise 1" }
   }'
 ```
 
-The response is a plain-string session URL. When that session later ends, the gateway redirects its URL to the landing page's `/session-ended` page, as long as the installation keeps `gateway.routes.sessionEndedRedirect` on (the default) and runs a landing page that serves the page. Do not rely on it for every installation, see [Session Lifecycle](./session-lifecycle#the-session-ended-page).
+The response is a `Session`. Follow `GET /sessions/{name}/events` until the phase is `Ready` and open `url`. The owner is the user of the token. See [API Specification](./api-specification) for the rules and error codes.
 
-`GET /service/{appId}` is available as an optional health or readiness probe. It returns a boolean and is not a prerequisite for launching. It establishes no session state.
+## Persistence and repeated launches
 
-### Field notes
+A launch with the same template and workspace returns the same session. For a saved workspace, the workspace name derives from user, template and repository, so opening the same repository again returns to the same files. Scorpio never clears a workspace that already has content. If its repository differs from `GIT_URI`, it skips the clone and warns the student.
 
-- `appId` is the shared service auth token, not a user id.
-- `user` is usually the email.
-- `appDefinition` names the launchable type.
+## Project templates
 
-### Behaviors
-
-- Workspace reuse: pass a stable `workspaceName` to attach to an existing persistent workspace, which preserves files. Use one name per user and repository: if the workspace has content and its `origin` does not match `GIT_URI`, Scorpio 3.0.0 or later never clears it: it skips the clone and the Gradle prewarm, and shows the student a warning. Omit it, with `ephemeral: false`, and each call creates a new persistent volume and a fresh clone, with a name like `ws-<appDef>-<user>-<uuid>`. The landing page derives a deterministic name (`ws-<app[-buildSystem]>-<repo>-<user>-<hash>`, or `ws-<app>-playground-<user>-<hash>` without a repository); from landing page 1.3.0 the hash covers the full user, the full app key and `gitUri`, because the readable segments are cut at 12 characters. Integrators who want persistence should compute a stable name too. Because the name changed with 1.3.0, a repository link opens a new workspace after that upgrade; see [Upgrades](/admins/maintenance/upgrades#behaviour-that-changes-unless-you-set-something).
-- Ephemeral plus sidecars: `ephemeral: true` is rejected with HTTP 400 when the app definition has workspace-mounting sidecars. Use a workspace-backed launch there.
-- Blocking: `POST /service` blocks until the operator reports the session URL, up to `timeout`, which defaults to 3 minutes, then returns the URL string. Set the client HTTP timeout above 3 minutes.
-- `env.fromMap` versus `fromConfigMaps` and `fromSecrets`: `fromConfigMaps` and `fromSecrets` reference names of pre-existing in-cluster Kubernetes ConfigMaps and Secrets. External callers outside the cluster pass values directly via `fromMap`.
-- Allowlist: from EduIDE-Cloud 1.2.1 the operator honours `fromSecrets` and `fromConfigMaps` only for names the administrator lists (`operator.allowedEnvFromSecrets`, `operator.allowedEnvFromConfigMaps`, both empty by default) and always drops reserved names from `fromMap`, such as anything starting with `THEIACLOUD_`, `KEYCLOAK_` or `DATA_BRIDGE_`. Dropped values are logged, not reported back to the caller. The full list is in [Session Hardening](/admins/security/session-hardening#environment-injection-allowlist).
-- Ownership: from EduIDE-Cloud 1.2.1 a `workspaceName` that belongs to another user returns HTTP 403, and from 3.0.0 so does a session name that already exists for another user. A workspace name that starts with `eph-` is rejected, because ephemeral session names use that prefix. Derive names from the user so they cannot collide.
-- Limits and errors: the service uses its own HTTP codes between 470 and 580. 475 means the workspace belongs to another app definition, and 553 means the user's session limit (`sessionsPerUser`, default 1) is reached or the previous session is still shutting down.
-
-### Templates
-
-Without a repository, a launch can ask for a starter project. Set `TEMPLATE` in `env.fromMap` to a template id such as `maven`, `gradle`, `python`, `cargo` or `go`. If `GIT_URI` is also set, `GIT_URI` wins. Scorpio copies `/home/theia/templates/<id>` of the image into an empty workspace; an unknown id shows a notification and the session opens with an empty workspace. The landing page sets `TEMPLATE` itself only for a standalone start, that is without `gitUri` and `artemisToken`: from the build system the student picks, or from the only one the app lists (`buildSystems` in the chart's app definition). The ids come from `images/<lang>/templates/<id>/` in the EduIDE repository; see [EduIDE](/developer/projects/eduide#project-templates).
+Without a repository, a launch can ask for a starter project with the key `TEMPLATE`, for example `maven`, `gradle`, `python`, `cargo` or `go`. The ids come from the images, see [EduIDE](/developer/projects/eduide#project-templates). If `GIT_URI` is set, it wins.
 
 ## How the values reach the IDE
 
-The launch values travel from the request to the running IDE container over one of two operator paths.
-
-- Source: the values land on the `Session` custom resource (`spec.envVars`, `envVarsFromConfigMaps`, and `envVarsFromSecrets`).
-- Lazy path: the operator writes the vars directly into the IDE container's environment in the pod spec. Before EduIDE-Cloud 3.0.1 nothing was injected through the bridge on this path.
-- Data bridge path: the operator pushes the values asynchronously over HTTP (`POST /data`) to the in-container data-bridge extension, with the per-instance token as a bearer header (data bridge 2.0.0). This is the eager, prewarmed path, and from EduIDE-Cloud 3.0.1 the lazy path as well; the values stay in the pod environment too.
-
-Either way, the extensions in the session image read the values: Scorpio configures git and clones `GIT_URI`, and the Artemis extension signs in to Artemis. On both paths the operator applies the allowlist first.
-
-See [Prewarming Architecture](./session-prewarming) for the data-bridge details and [Platform Architecture](./architecture) for the surrounding design. For sensitive values, reference a Secret with `env.fromSecrets` in the launch request (it becomes `envVarsFromSecrets` on the `Session`), with the Secret on the operator allowlist. The allowlist applies to every caller, so list only Secrets every caller may read.
-
-Consumers such as Scorpio wait about 10 seconds after they start for the bridge values. If injection arrives later, they fall back to the process environment (which carries the values on lazy sessions, but not on a prewarmed pod, so those open without a clone); see [Prewarming Architecture](./session-prewarming#known-shortcomings).
-
-## Git authentication for cloning
-
-There is no separate git-token parameter or `GIT_TOKEN` env var. Scorpio clones `GIT_URI` exactly as provided and does not add any credential. For a private repository the credential must therefore be embedded in the `gitUri` / `GIT_URI` value itself, for example `https://<user>:<token>@host/org/repo.git`. A plain `gitUri` without embedded credentials only clones a public repository. Percent-encode the user and token inside the repository URL, then encode the whole URL again as the `gitUri` query value, or a `+` in a token turns into a space. The embedded credential stays in the clone's `.git/config`, because pushing from the IDE needs it.
-
-Scorpio no longer talks to Artemis itself and does not use `ARTEMIS_TOKEN`. It writes `ARTEMIS_URL` into the `scorpio.artemis.apiBaseUrl` setting; signing in to Artemis and submitting are the job of the Artemis extension bundled in the IDE images.
-
-Because `gitUri` can carry credentials, treat it as sensitive. It appears in the landing-page URL and in the launch request. From landing page 1.3.0, the landing page's nginx logs the path without the query string. Proxies and load balancers in front of it log the full URL unless you configure them not to.
-
-## Authentication
-
-- `appId` in the body must equal the server's service auth token. Otherwise the service returns HTTP 470 (invalid app id).
-- Keycloak enabled: send `Authorization: Bearer <jwt>`. The identity is the `email` claim, which passes the same character check as an anonymous `user`; a failing one is answered with 403. If the service sets `KEYCLOAK_AUDIENCE` (`keycloak.audience` in the chart), the token needs that `aud` claim. If `user` is omitted it defaults to the JWT `email`. If supplied it must match the token email, otherwise the service returns HTTP 403.
-- Anonymous mode, with Keycloak disabled: `user` is mandatory. A blank user returns HTTP 400. From EduIDE-Cloud 1.2.1 it must also start and end with a letter or digit and contain only letters, digits and `._@+-`; from 3.0.0 it is also limited to 128 characters and must not start with `placeholder-`. The landing page invents `anonymous-<hex>` when none is given. Because nothing verifies it, the ownership check above only prevents accidental collisions in this mode.
+The operator sends the data once to the agent in the pod, and the `eduide-session` extension reads it from the agent. See [Session Prewarming](./session-prewarming#launch-data-reaches-the-ide). The IDE image must contain that extension, or the session opens without launch data.

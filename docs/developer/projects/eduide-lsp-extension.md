@@ -32,7 +32,7 @@ This approach is particularly beneficial in cloud-based educational environments
 
 ## Integration
 
-Within the EduIDE/Artemis ecosystem, this extension serves as the "thin" language intelligence layer. By connecting to external language servers, it allows EduIDE to provide a rich IDE experience without the heavy memory and CPU overhead typically associated with language servers like Eclipse JDT.LS or `rust-analyzer` running inside the student's container.
+The EduIDE images do not ship this extension. It is a connector for setups that run language servers as separate workloads. In such a setup it serves as the "thin" language intelligence layer. By connecting to external language servers, it allows EduIDE to provide a rich IDE experience without the heavy memory and CPU overhead typically associated with language servers like Eclipse JDT.LS or `rust-analyzer` running inside the student's container.
 
 ## Repository
 
