@@ -59,6 +59,8 @@ GitHub, GitLab and most Gitea and Forgejo servers do not accept the account pass
 | GitLab | User settings > Access tokens | `write_repository` |
 | Gitea, Forgejo | Settings > Applications > Generate new token | repository: Read and Write |
 
+On GitHub, an outside collaborator of an organization repository cannot use a fine-grained token for it.
+Such a student creates a classic token (Personal access tokens > Tokens (classic)) with the `repo` scope instead.
 A student who may not push to the repository pushes to a fork.
 They fork it on the Git host, then run `git remote add fork <fork URL>` and `git push fork`.
 
