@@ -14,6 +14,8 @@ There are several things instructors should not overclaim after a short pilot or
 - perfect equivalence to unrestricted local development
 - how the platform behaves under every peak load or exam scenario
 - whether all student preferences will be satisfied
+- how many students start at the same time on your installation, unless you test with that number
+- how the platform behaves on a day when the cluster is busy with other courses
 
 ## Common evaluation mistakes
 

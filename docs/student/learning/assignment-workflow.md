@@ -1,11 +1,12 @@
 ---
 title: Assignment Workflow
-description: Quick terminal-first workflow for Java assignments.
+description: Quick terminal-first workflow for assignments, shown with Java.
 ---
 
 # Assignment Workflow
 
-Use this flow when you work on Java tasks.
+Use this flow when you work on programming tasks.
+The steps are shown with Java. Other languages follow the same pattern.
 
 ## 1) Open the assignment file
 
@@ -20,6 +21,8 @@ Edit the method for your task.
 ![BubbleSort after implementing method](/img/student/learning/assignment-02-edit-bubblesort.png)
 
 ## 3) Run in terminal
+
+The terminal is hidden at the Beginner level. Switch to Advanced, or use the **Run** button instead.
 
 Run:
 
@@ -44,5 +47,26 @@ Confirm that the program output matches the expected sorted order.
 - program runs successfully
 - output matches expectation
 - ready to submit from the Artemis view
+
+## Other languages
+
+For Python, JavaScript, C, Rust and Go, a starter template brings the tasks that run your project. The Java templates have tasks too.
+In the Beginner level, the **Run** button in the toolbar starts them (the default task of the Web template is **Start**).
+In the Advanced and Expert levels, you can also pick a task from the **Terminal** menu.
+
+## Help while you type
+
+The spell checker, Error Lens and, in Python, Ruff help you while you type.
+See [Languages and Starter Templates](../getting-started/languages-and-templates.md#what-every-language-includes).
+
+## Preview an HTML page
+
+Open the `.html` file and click **Open Preview to the Side** in the editor toolbar.
+See [Languages and Starter Templates](../getting-started/languages-and-templates.md).
+
+## Git credentials
+
+In the standalone edition (environments you start from a tile), the IDE remembers your Git credentials in memory for 3 hours.
+After that it forgets them and asks again on the next push.
 
 Then continue with the [Submission Checklist](./submission-checklist.md).

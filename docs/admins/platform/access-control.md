@@ -1,250 +1,60 @@
 ---
 title: Access Control
-description: Keycloak client configuration, admin group assignment, and access review procedures for EduIDE.
+description: Identity provider setup with generic OIDC, Keycloak as the worked example, and the admin role.
 ---
 
 # Access Control
 
-EduIDE uses Keycloak as its identity provider, fronted by an OAuth2 proxy (`oauth2-proxy` v7.12.0). Authentication is not optional — every request to the landing page or IDE session goes through this layer. Admin access is controlled by Keycloak group membership.
+EduIDE authenticates with any OIDC provider that issues signed tokens and publishes a discovery document. Keycloak is the example here.
+Users are not stored in EduIDE. The identity comes from the token, and every session and workspace has exactly one owner.
 
-This page covers the full Keycloak client setup, the admin group model, and ongoing access review practices.
+## Who may do what
 
-## How authentication works
-
-1. A user navigates to the EduIDE landing page.
-2. The OAuth2 proxy intercepts the request and redirects to Keycloak.
-3. The user authenticates in Keycloak.
-4. Keycloak issues a token containing the user's `username`, `groups`, and `audience` claims.
-5. The OAuth2 proxy validates the token and forwards the request with the user context attached.
-6. The EduIDE service reads the `groups` claim to determine whether the user has admin privileges.
-
-The service property `theia.cloud.auth.admin.group` (default: `theia-cloud/admin`) defines which Keycloak group grants admin access.
-
-## Keycloak client setup
-
-Each environment (production, staging, test) requires its own Keycloak client. The steps below apply to each.
-
-### Create the client
-
-1. Log in to the Keycloak admin console.
-2. Select the target realm (e.g., `tum`).
-3. Navigate to **Clients → Create client**.
-4. Set the basic configuration:
-   ```
-   Client ID:   theia-cloud          (or theia-cloud-staging, theia-cloud-test1, etc.)
-   Name:        EduIDE
-   ```
-5. Click **Next**.
-
-### Configure capability settings
-
-```
-Client authentication:  OFF  (public client)
-Authorization:          OFF
-Standard flow:          ON
-Direct access grants:   OFF
-Implicit flow:          OFF
-```
-
-Click **Next**.
-
-### Configure login settings
-
-Set URLs based on the target environment domain. For production:
-
-```
-Root URL:                         https://<landing-host>
-Home URL:                         https://<landing-host>
-Valid redirect URIs:
-  https://<landing-host>/*
-  https://instance.<landing-host>/*
-Valid post logout redirect URIs:
-  https://<landing-host>/
-  https://<landing-host>/*
-Web origins:
-  https://<landing-host>
-  https://instance.<landing-host>
-```
-
-Every entry carries the `https://` scheme. The redirect URIs and web origins
-cover **two** hosts, the landing page and the instance host; the post-logout
-entries cover the landing host only, and need both the bare `/` and the `/*`
-form.
-
-For an installation at `eduide.example.edu` that is:
-
-| Setting | Values |
+| Who | May |
 |---|---|
-| Valid redirect URIs | `https://eduide.example.edu/*`<br/>`https://instance.eduide.example.edu/*` |
-| Valid post logout redirect URIs | `https://eduide.example.edu/`<br/>`https://eduide.example.edu/*` |
-| Web origins | `https://eduide.example.edu`<br/>`https://instance.eduide.example.edu` |
+| Any signed-in user | Start sessions from listed templates and from Artemis links, resume and delete their own sessions and workspaces |
+| The owner of a session | Open its URL. Everyone else gets 403 |
+| A user with the admin role | Read the admin panel and the admin API. Read-only |
+| Cluster admins | Everything in Kubernetes. EduIDE adds no second admin layer |
 
-:::note The service and webview hosts are deliberately absent
-An installation serves four hostnames, but only two of them appear here. The
-REST service host and the `*.webview.instance.` wildcard do not take part in the
-browser redirect flow, so adding them is unnecessary. Do not "fix" this list by
-padding it out to four.
+## OIDC clients per deployment
 
-Four hostnames **is** the right number for DNS and for certificates - see
-[Certificates and DNS](../install/certificates.md). Only the Keycloak client is
-different.
-:::
+One client (for example `eduide`) can serve both uses:
 
-Repeat this for each installation — one client per installation, because each
-has its own hostnames.
-
-Click **Save**.
-
-## Client scope configuration
-
-EduIDE requires three custom token claims. These are added as mappers on a dedicated client scope.
-
-### Create the client scope
-
-1. Go to **Clients → [your-client] → Client scopes**.
-2. Click **Add client scope → Create client scope**:
-   ```
-   Name:                      theia-cloud-dedicated
-   Protocol:                  openid-connect
-   Display on consent screen: OFF
-   Include in token scope:    ON
-   ```
-3. Open the new scope and go to the **Mappers** tab.
-
-### Username mapper
-
-```
-Name:             username
-Mapper type:      User Property
-Property:         username
-Token claim name: username
-Claim JSON type:  String
-Add to ID token:       ON
-Add to access token:   ON
-Add to userinfo:       ON
-```
-
-This claim is how the EduIDE service identifies the acting user for workspace and session operations.
-
-### Audience mapper
-
-```
-Name:                       audience
-Mapper type:                Audience
-Included client audience:   theia-cloud   (your client ID)
-Add to ID token:            ON
-Add to access token:        ON
-```
-
-Without the audience claim, the service will reject tokens because the expected audience will not be present.
-
-### Groups mapper
-
-```
-Name:             groups
-Mapper type:      Group Membership
-Token claim name: groups
-Full group path:  OFF
-Add to ID token:       ON
-Add to access token:   ON
-Add to userinfo:       ON
-```
-
-The `groups` claim is what the `AdminOnlyFilter` reads to check for admin group membership.
-
-### Assign the scope to the client
-
-1. Go back to **Clients → [your-client] → Client scopes**.
-2. Click **Add client scope**.
-3. Select `theia-cloud-dedicated`.
-4. Set scope type to **Default**.
-5. Click **Add**.
-
-Verify that `theia-cloud-dedicated` appears under **Assigned client scopes** as a default scope.
-
-## Admin group assignment
-
-Admin access is granted by adding a user to the `theia-cloud/admin` group in Keycloak.
-
-### Add a user to the admin group
-
-1. In the Keycloak admin console, go to **Groups**.
-2. Expand or locate `theia-cloud/admin`. If it does not exist, create it:
-   - Create a top-level group called `theia-cloud`.
-   - Inside it, create a subgroup called `admin`.
-3. Go to **Users → [username] → Groups**.
-4. Click **Join Group** and select `theia-cloud/admin`.
-
-### Remove admin access
-
-1. Go to **Users → [username] → Groups**.
-2. Click **Leave** next to `theia-cloud/admin`.
-
-The service reads group membership from the JWT at request time. Access changes take effect on the user's next login or token refresh.
-
-## GitHub environment secrets
-
-The OAuth2 proxy and service require several secrets to be present before deployment. These are stored as GitHub environment secrets and injected during the deployment workflow.
-
-| Secret | Required value |
+| Use | Purpose |
 |---|---|
-| `THEIA_KEYCLOAK_AUTH_URL` | Keycloak base URL, e.g. `https://keycloak.ase.in.tum.de/` |
-| `THEIA_KEYCLOAK_REALM` | Realm name, e.g. `tum` |
-| `THEIA_KEYCLOAK_CLIENT_ID` | Client ID configured above |
-| `THEIA_KEYCLOAK_COOKIE_SECRET` | Base64-encoded 32-byte key for cookie encryption |
+| Landing page | Sign-in of the landing page, tokens for `/api/v1`. The client id is in `oidc.clientIDs` |
+| Gateway | Sign-in at the gateway for session URLs. The client id is `oidc.gatewayClientID`, with a secret in the namespace |
 
-## OAuth2 proxy cookie secret
+A separate confidential gateway client is possible but not required.
 
-oauth2-proxy encrypts its session cookie with `keycloak.cookieSecret`. From
-chart 2.5.1 the chart has no default for it and refuses to render without one,
-because a shared default would let anyone who knows it forge cookies for every
-installation that kept it. Use a different value per installation.
+Redirect URIs and the secret are in [Installing EduIDE](../install/installing.md#keycloak).
+The claim in `oidc.userClaim` (default `preferred_username`) is the owner name. If it differs from what a user sees in the identity provider, sessions show 403 for their owner, see the [authz runbook](../operations/incident-response.md#authz-errors).
 
-Generate one:
-```bash
-openssl rand -base64 32 | tr -- '+/' '-_'
+## Admin role
+
+The admin API is off until you configure a role. Without it every admin route answers 404. With it, users without the role get 403.
+
+1. Create the role in Keycloak. Realm role: Realm roles, Create role, name `eduide-admin`. Client role: Clients, the landing page client, Roles, Create role, name `eduide-admin`.
+2. Assign it to users, or to a group and add users to the group.
+3. Make it appear in the access token. A realm role is in `realm_access.roles` by default. A client role is in `resource_access.<client>.roles` once the client scope `roles` is assigned to the landing page client with the "client roles" mapper enabled for access tokens. Decode a token to check.
+4. Set it in the values:
+
+```yaml
+eduide-control-plane:
+  config:
+    oidc:
+      admin: {rolePath: resource_access.eduide.roles, role: eduide-admin}
 ```
 
-The cookie is sent over HTTPS only (`oauth2Proxy.cookieSecure: true`, the
-default). Set it to `false` only for an installation served over plain HTTP,
-where the browser would otherwise drop the cookie and login never completes.
+`rolePath` is exactly `realm_access.roles` or `resource_access.<client>.roles`. Anything else (for example `groups`) stops the service at start.
+More in [Admin Access](../security/admin-access.md).
 
-## Troubleshooting
+## Access review
 
-### Redirect loop after login
+Every quarter:
 
-The browser redirects continuously between the application and Keycloak.
-
-Causes and fixes:
-- **Incorrect redirect URI** — verify that the landing page and instance hosts are both in the client's valid redirect URIs, each with the `/*` suffix, and that the web origins list both hosts without a suffix
-- **Cookie secret mismatch** — confirm `THEIA_KEYCLOAK_COOKIE_SECRET` in GitHub secrets matches what was deployed
-- **HTTP/HTTPS mismatch** - the redirect URIs and the environment URL must use the scheme the installation is served on, which is HTTPS for every normal installation. An installation served over plain HTTP uses `http://` throughout and also needs `oauth2Proxy.cookieSecure: false`
-
-### "Invalid client" error in Keycloak
-
-Keycloak rejects the login attempt with "Invalid client".
-
-Causes and fixes:
-- `THEIA_KEYCLOAK_CLIENT_ID` does not match the client ID in Keycloak
-- The client is disabled — verify it is enabled in the Keycloak admin console
-- Wrong realm is configured
-
-### "Access denied" after successful login
-
-The user authenticates in Keycloak but receives an access denied response from EduIDE.
-
-Causes and fixes:
-- The `username`, `audience`, or `groups` mapper is missing or misconfigured in the client scope
-- The client scope is not assigned as a **Default** scope on the client
-- The audience claim does not match the client ID
-
-Use Keycloak's **Evaluate** tab (under the client's Client Scopes section) to inspect what claims are actually issued for a given user before debugging further.
-
-## Access review cadence
-
-| Review type | Frequency | Action |
-|---|---|---|
-| Admin group membership | Monthly | Remove any users who no longer need elevated access |
-| Client redirect URIs | On each environment change | Remove stale redirect URIs for decommissioned environments |
-| Keycloak user accounts | Quarterly | Disable accounts for users who have left the organization |
-| OAuth2 proxy cookie secret rotation | Every 6 months | Regenerate, update GitHub secret, redeploy |
+1. List the users with the admin role in Keycloak and remove those who left.
+2. Check that only the expected clients exist and their redirect URIs are exact.
+3. Check who has `kubectl` rights in the namespace. They can read launch data Secrets and instance tokens.
+4. Check the `allowedHosts` list ([Templates and Pools](templates-and-pools.md)).

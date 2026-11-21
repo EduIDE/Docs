@@ -1,32 +1,35 @@
 ---
 title: First Login
-description: Sign in and reach the app launcher.
+description: Sign in and reach the start page.
 ---
 
 # First Login
 
-Use this page for your first login flow.
+## 1) Open the start page
 
-## 1) Open the login page
+Open the address of your installation.
+Your tutor or course page gives you the address.
+For example, at TUM it is a page under `eduide.artemis.cit.tum.de`.
 
-Open `https://theia.artemis.cit.tum.de/` in your browser.
-
-![Landing page with login button](/img/student/getting-started/first-login-01-landing-login.png)
+![Start page of the installation](/img/student/getting-started/first-login-01-landing-login.png)
 
 ## 2) Sign in with your account
 
-Complete the login flow shown by your course setup.
+Use the login of your university or course.
+EduIDE does not create a separate account for you.
 
-![Sign-in form](/img/student/getting-started/first-login-02-sign-in-form.png#h520)
+![Sign-in form of an identity provider (TUM as an example)](/img/student/getting-started/first-login-02-sign-in-form.png#h520)
 
-## 3) Confirm you reached the launcher
+## 3) Confirm you reached the start page
 
-After login, you should see the IDE app tiles.
+After login you see two sections.
+**Your environments** lists environments you started before.
+It is empty on your first visit.
+**Start new** shows one tile per environment.
 
-![IDE launcher after login](/img/student/getting-started/first-login-03-launcher-after-login.png)
+![Start page after login with Your environments and Start new](/img/student/getting-started/first-login-03-launcher-after-login.png)
 
 ## Next step
 
 Continue with [First Start](./first-start.md).
-
-If your course starts from Artemis exercises, you can also use [Start from Artemis](./start-from-artemis.md).
+If your course starts from Artemis exercises, use [Start from Artemis](./start-from-artemis.md).

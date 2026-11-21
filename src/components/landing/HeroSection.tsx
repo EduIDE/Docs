@@ -20,7 +20,7 @@ export default function HeroSection() {
           The IDE built for <em>learning</em>,<br />not just coding
         </h1>
         <p className={styles.heroSub}>
-          A browser-based development environment designed for education — with AI assistance, zero setup, and seamless course integration.
+          A browser-based development environment designed for education, with zero setup and seamless course integration.
         </p>
         <div className={styles.heroActions}>
           <Button variant="primary" to="https://theia.artemis.cit.tum.de/" target="_blank">
@@ -39,7 +39,7 @@ export default function HeroSection() {
           loop
           muted
           playsInline
-          aria-label="edu ide — browser-based IDE demo"
+          aria-label="edu ide - browser-based IDE demo"
           className={styles.heroImage}
         />
       </div>

@@ -13,7 +13,7 @@ export default function Home() {
   return (
     <Layout
       title="EduIDE"
-      description="A browser-based development environment designed for education. With AI assistance, zero setup, and seamless course integration."
+      description="A browser-based development environment designed for education, with zero setup and seamless course integration."
     >
       <main className={styles.page}>
         <HeroSection />
@@ -33,24 +33,13 @@ export default function Home() {
         <FeatureShowcase
           label="Submission"
           title="Submit without leaving the IDE"
-          description={<>The integrated submission extension connects directly to <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Students commit and submit their work in one step — no file uploads, no copy-paste, no switching tabs.</>}
+          description={<>The integrated submission extension connects directly to <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Students commit and submit their work in one step - no file uploads, no copy-paste, no switching tabs.</>}
           mediaSrc="/videos/scorpio.webm"
           mediaPoster="/img/marketing/page.png"
           mediaAlt="Submission demo"
           mediaType="video"
           reverse
           accentColor="linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)"
-        />
-        <hr className={styles.sectionDivider} />
-        <FeatureShowcase
-          label="AI assistance"
-          title="An AI-powered terminal that teaches."
-          description={<>No more decoding cryptic logs. When a build fails, the AI terminal assistant provides instant explanations and guided fixes. It helps students master syntax and understand build outputs in real-time.<br /><small style={{ color: 'var(--ifm-color-emphasis-500)', marginTop: '0.4rem', display: 'block' }}>This is an upstream contribution to Eclipse Theia and requires student-side LLM configuration.</small></>}
-          mediaSrc="/videos/terminal-assistant.webm"
-          mediaPoster="/img/marketing/page.png"
-          mediaAlt="Terminal AI assistant demo"
-          mediaType="video"
-          accentColor="linear-gradient(135deg, #14b8a6 0%, #0f766e 100%)"
         />
         <hr className={styles.sectionDivider} />
         <LanguagesSection />

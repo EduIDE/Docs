@@ -1,175 +1,71 @@
 ---
 title: API Specification
-description: Service API overview based on the EduIDE Cloud OpenAPI specification.
+description: The spec-first REST API v1 of the EduIDE control plane service.
 ---
 
 # API Specification
 
-This page summarizes the current EduIDE Cloud service API from the OpenAPI specification in `theia-cloud/documentation/openapi.json`.
+The service of the control plane serves a REST API under `/api/v1` on the service host. The landing page uses it, and so can your integration.
 
-The API is centered on lifecycle management for app definitions, workspaces, and sessions. The service is not a generic backend for all platform functionality. Its primary job is to expose the control-plane operations that create and manage the resources the operator later reconciles inside Kubernetes.
+The OpenAPI 3.1 file is the source of truth: [`api/openapi/v1.yaml`](https://github.com/EduIDE/EduIDE-control-plane/blob/main/api/openapi/v1.yaml). Server stubs and the TypeScript client are generated from it, so this repository keeps no hand-written copy. Open the file in any OpenAPI viewer for field-level detail. The reasons for the design are in [ADR 0010](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0010-rest-api-spec-first.md).
 
-## API Scope
+## Rules
 
-At a high level, the API covers five areas:
+- **Authentication.** Every endpoint except `GET /status` needs an OIDC bearer token of the deployment's realm. The owner of a session or workspace is the verified user of the token, never a field of the request.
+- **Errors.** Errors are RFC 9457 Problem Details with a stable `code` such as `capacity-exhausted`, `session-limit-reached`, `unknown-key` or `rate-limited`. Switch on the code, not on the text.
+- **No polling.** Progress and changes arrive as Server-Sent Events.
+- **Versioning.** Within `v1` only additive changes are allowed: new endpoints, optional fields, new enum values and new error codes. Clients must tolerate unknown values. A breaking change needs a `v2` in parallel and an ADR.
 
-- service health and connectivity
-- app definition discovery and scaling
-- workspace creation, listing, and deletion
-- session launch, listing, stopping, and activity reporting
-- selected session-level runtime configuration and performance access
-
-## Base Paths
-
-The currently exposed paths in the spec are:
+## Endpoints
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `GET` | `/service/{appId}` | Ping the service |
-| `POST` | `/service` | Launch a session and create a workspace if needed |
-| `GET` | `/service/appdefinition/{appId}` | List available app definitions |
-| `PATCH` | `/service/admin/appdefinition/{appDefinitionName}` | Update app definition scaling properties |
-| `GET` | `/service/admin/{appId}` | Admin ping |
-| `GET` | `/service/workspace/{appId}/{user}` | List workspaces of a user |
-| `POST` | `/service/workspace` | Create a workspace |
-| `DELETE` | `/service/workspace` | Delete a workspace |
-| `GET` | `/service/session/{appId}/{user}` | List sessions of a user |
-| `POST` | `/service/session` | Start a new session for an existing workspace |
-| `DELETE` | `/service/session` | Stop a session |
-| `PATCH` | `/service/session` | Report session activity |
-| `GET` | `/service/session/performance/{appId}/{sessionName}` | Get performance metrics for a session |
-| `POST` | `/service/session/{session}/config` | Set a runtime config value in a session |
+| `GET` | `/status` | Public health summary, no token, cached for 15 seconds |
+| `GET` | `/templates` | Templates of the deployment, each with `listed`, allowed persistence and allowed launch keys |
+| `GET` | `/templates/events` | Event stream of the template list |
+| `GET` | `/sessions` | Sessions of the calling user |
+| `POST` | `/sessions` | Launch a session |
+| `GET` `DELETE` | `/sessions/{name}` | Read or stop a session |
+| `GET` | `/sessions/{name}/events` | Event stream of the start progress |
+| `GET` | `/workspaces` | Saved workspaces of the calling user |
+| `POST` | `/workspaces` | Create a saved workspace (get-or-create) |
+| `DELETE` | `/workspaces/{name}` | Delete a workspace and its files, stopping a running session first |
+| `GET` | `/me/overview` | Workspaces and sessions merged for the "Your environments" view |
+| `GET` | `/me/overview/events` | Event stream of the overview |
+| `GET` | `/admin/...` | Read-only admin API, see below |
 
-## Authentication Model
+There is no performance endpoint and no endpoint that changes configuration. Admins change templates and pools through the installation chart.
 
-The spec declares an OAuth-based security scheme and applies it to the main service endpoints. In practice, the important architectural point is that callers are expected to identify both the platform instance and the user context when interacting with workspace and session resources.
+## Launching a session
 
-Most request models therefore include:
+`POST /sessions` takes a `LaunchRequest`:
 
-- `appId`: identifies the EduIDE Cloud instance the request targets
-- `user`: identifies the user on whose behalf the operation runs, where relevant
+| Field | Meaning |
+| --- | --- |
+| `template` | Name of the template, required |
+| `persistence` | `none` (temporary workspace) or `volume` (saved workspace), within what the template allows |
+| `workspace` | Start on an existing workspace of the user, implies `volume` |
+| `data` | Launch data, only keys on the template allowlist, at most 8 KiB in total |
+| `display` | Non-secret `title` and `source` shown in the overview |
 
-## Core Workflows
+The launch is idempotent. A repeated request returns the existing session with `200`, a new one returns `201`. The key is template plus workspace, or for a temporary session template plus a hash of the launch data. A user may have `sessionsPerUser` sessions at once (default 3). Beyond that the answer is `session-limit-reached` with the list of running sessions. Launches are rate limited per user.
 
-### Launch flow
+Send a `traceparent` header to join the launch to your trace.
 
-The most important entry point is `POST /service`.
+After `201`, open `GET /sessions/{name}/events`. The `phase` moves from `Pending` through `Starting` to `Ready`, and `url` is set with `Ready`. `startStrategy` tells whether a warm instance served the launch (`warm-ready`, `warm-starting`) or the pod started cold. See [Session Prewarming](./session-prewarming). A launch that fails ends in `Failed` with an `errorCode`.
 
-This endpoint accepts a `LaunchRequest` and is the high-level "just give me a working IDE session" operation. According to the OpenAPI model, the request can describe:
+Which keys a template accepts is in `Template.injectableKeys`. An unknown key answers `400` with `unknown-key`. See [External Session Launch](./external-integration#allowlist).
 
-- the target `appId`
-- the requesting `user`
-- the `appDefinition` to launch
-- an optional `workspaceName`
-- an optional human-readable `label`
-- whether the session should be `ephemeral`
-- a launch `timeout`
-- additional `env` values, described by the `EnvironmentVars` model: `fromMap` holds direct key/value pairs, `fromConfigMaps` lists the names of existing ConfigMaps, and `fromSecrets` lists the names of existing Secrets. See [External Session Launch](./external-integration) for the end-to-end integration flow.
+## Sessions, workspaces and the overview
 
-The response is a plain string containing the launched session URL.
+`Session` carries `lastActivity`, `stopsAt` and `stopReason` (`idle` or `max`). `Workspace` carries `lastUsed`, `expiresAt` and `deletesAt`. The overview lists workspaces without a running session as not running next to the running sessions, so a client needs only this one call. See [Session Lifecycle](./session-lifecycle).
 
-This endpoint is useful when the caller does not want to orchestrate workspace creation and session creation as separate steps.
+A user may have `workspaces.perUser` saved workspaces (default 20). Beyond that the API answers `workspace-limit-reached`.
 
-### Workspace management
+## Admin API and public status
 
-Workspace APIs are the explicit lifecycle endpoints for persistent user context:
+The read-only admin API under `/api/v1/admin/` powers the admin panel of the landing page. It answers 404 until the deployment configures an OIDC role for it, and 403 for users without the role. It shows owners only as a hash and launch data only as key names. The admin side is described in the [admin guide](/admins/intro). `GET /status` feeds the public status page and holds no user, session or host data.
 
-- `GET /service/workspace/{appId}/{user}`
-- `POST /service/workspace`
-- `DELETE /service/workspace`
+## Generated code
 
-`WorkspaceCreationRequest` currently contains:
-
-- `appId`
-- `user`
-- optional `appDefinition`
-- optional `label`
-
-Architecturally, these endpoints operate on the durable side of the platform model. They describe what a user can return to later, even when no live session is currently running.
-
-### Session management
-
-Session APIs operate on the live runtime layer:
-
-- `GET /service/session/{appId}/{user}`
-- `POST /service/session`
-- `DELETE /service/session`
-- `PATCH /service/session`
-- `GET /service/session/performance/{appId}/{sessionName}`
-
-Important request types include:
-
-- `SessionStartRequest`
-  - `appId`
-  - `user`
-  - `appDefinition`
-  - optional `workspaceName`
-  - optional `timeout`
-  - optional `env`
-- `SessionStopRequest`
-  - `appId`
-  - `user`
-  - `sessionName`
-- `SessionActivityRequest`
-  - `appId`
-  - `sessionName`
-
-This separation between workspace APIs and session APIs reflects the platform architecture described in the previous page: workspaces are durable context, sessions are live runtimes.
-
-### App definition management
-
-Two endpoints expose app definition functionality:
-
-- `GET /service/appdefinition/{appId}`
-- `PATCH /service/admin/appdefinition/{appDefinitionName}`
-
-The scaling endpoints under `/service/admin/appdefinition` are off by default and answer with 404 until `THEIA_CLOUD_ADMIN_API_ENABLED=true`. The Keycloak-protected ping `GET /service/admin/{appId}` is not affected.
-
-The admin update operation uses `AppDefinitionUpdateRequest`, which currently exposes:
-
-- `appId`
-- optional `minInstances`
-- optional `maxInstances`
-
-This is particularly important because it exposes one of the platform’s operational control points: adjusting prewarmed or allowed capacity for a launchable session type without changing the entire deployment setup.
-
-### Session configuration endpoint
-
-The OpenAPI spec also contains:
-
-- `POST /service/session/{session}/config`
-
-This endpoint sets a config value inside a running session if the required config-store extension is present in the Theia application. The spec documents it as a session-level runtime configuration endpoint rather than a general-purpose storage API.
-
-This is one of the clearest examples of the service exposing a control-plane operation that affects a live runtime rather than only creating or deleting top-level resources.
-
-## Response Shapes
-
-The current API uses a fairly pragmatic mix of response types:
-
-- plain `String` responses for launch and session-start URLs
-- `Boolean` responses for several ping, stop, delete, and activity operations
-- JSON resource lists for workspace and session listings
-- structured JSON responses for app definitions and performance metrics
-
-That means the API is optimized more for direct platform control operations than for an especially uniform REST style.
-
-## What This Means for Integrators
-
-If you are integrating against the service, the main distinction to keep in mind is:
-
-- use `/service` when you want a high-level launch operation
-- use `/service/workspace` when you are managing durable user context
-- use `/service/session` when you are managing live runtime instances
-- use `/service/appdefinition` when you need launchable session types or scaling-related control
-
-In other words, the API is modeled around platform lifecycle stages rather than around frontend pages.
-
-## Source of Truth
-
-The current docs page is derived from the generated service spec and related generated API markdown in the Theia Cloud codebase:
-
-- `theia-cloud/documentation/openapi.json`
-- `theia-cloud/documentation/api/README.md`
-
-If you need endpoint-level detail beyond this overview, those generated artifacts are the most direct reference.
+`make generate` produces the Go server in `internal/httpapi/api.gen.go` and the TypeScript client in `clients/typescript`. Never edit generated files. CI runs `oasdiff` to catch breaking changes.

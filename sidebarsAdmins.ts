@@ -19,8 +19,8 @@ const sidebars: SidebarsConfig = {
       items: [
         'platform/provisioning',
         'platform/access-control',
-        'platform/app-definitions',
-        'platform/storage-and-quotas',
+        'platform/templates-and-pools',
+        'platform/storage-and-workspaces',
       ],
     },
     {
@@ -30,7 +30,6 @@ const sidebars: SidebarsConfig = {
         'operations/monitoring-basics',
         'operations/incident-response',
         'operations/session-management',
-        'operations/garbage-collection',
       ],
     },
     {
@@ -38,7 +37,7 @@ const sidebars: SidebarsConfig = {
       label: 'Security',
       items: [
         'security/session-hardening',
-        'security/admin-api-tokens',
+        'security/admin-access',
         'security/audit-and-compliance',
       ],
     },

@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Course Evaluation',
       items: [
+        'course-evaluation/why-eduide',
         'course-evaluation/course-fit',
         'course-evaluation/evaluating-eduide-in-a-pilot',
         'course-evaluation/customizable-features',
@@ -29,7 +30,14 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Running a Course',
-      items: ['course-operations/course-setup', 'course-operations/cohort-management'],
+      items: [
+        'course-operations/whats-new-in-3-0',
+        'course-operations/course-setup',
+        'course-operations/lecturer-choices',
+        'course-operations/first-lab-checklist',
+        'course-operations/privacy-and-data',
+        'course-operations/cohort-management',
+      ],
     },
     {
       type: 'category',

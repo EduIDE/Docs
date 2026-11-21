@@ -7,56 +7,97 @@ sidebar_label: EduIDE
 
 ## Overview
 
-The **EduIDE** repository manages the Docker builds for custom Eclipse Theia IDE instances. These images are pre-configured with the specific tools, plugins, and settings required for student exercises on the Artemis platform. Once built, these images are deployed to Kubernetes clusters via [Theia Deployment](/developer/projects/eduide-deployment).
+The **EduIDE** repository builds the IDE and the images that students use. The IDE is an [Eclipse Theia](https://theia-ide.org/) browser application. There is no desktop (Electron) build. The control plane starts these images as session pods, see [EduIDE Control Plane](/developer/projects/eduide-control-plane).
 
-## Key Features
+## Images and editions
 
-- **Customized IDEs**: Tailored environments for Java 17, Java 25, C, JavaScript and Python.
-- **Optimized Build Process**: Uses multi-stage Docker builds to ensure small and efficient production images.
-- **Security-First**: Configured to run as a non-root `theia` user for better container security in cloud environments.
-- **Plugin Integration**: Includes pre-installed VS Code extensions and Theia plugins (such as the [EduIDE LSP Extension](/developer/projects/eduide-lsp-extension) and [EduIDE Data Bridge](/developer/projects/eduide-data-bridge)) necessary for the educational ecosystem.
+The images stack in three layers:
 
-## Published Images
+```
+base                    Theia, Scorpio, eduide-session
+ |- base-standalone     adds a git credential cache (cache --timeout=10800)
+ |   '- <lang>-standalone
+ '- base-artemis        adds the Artemis extension
+     '- <lang>-artemis
+```
 
-The build publishes `base` and nine IDE images: `java-17`, `java-17-templates`, `java-25`, `java-25-templates`, `thm-java-25`, `c`, `c-templates`, `javascript` and `python`, all under `ghcr.io/eduide/eduide/`. The `rust`, `haskell` and `ocaml` images are no longer published ([#210](https://github.com/EduIDE/EduIDE/pull/210)); their directories stay, so they still build locally with `docker-compose.images.yml`. EduIDE 1.5.0 is the first release without them; 1.4.0 is the last with them.
+Every language ships in two **editions**, published as `ghcr.io/eduide/eduide/<lang>-<edition>`:
 
-The Java 25 images download Maven from Maven Central and still check the pinned SHA-512 ([#205](https://github.com/EduIDE/EduIDE/pull/205)).
+- **`artemis`** carries the Artemis extension (with Iris) for exercises launched from Artemis.
+- **`standalone`** has no Artemis extension. Students type their git credentials once, and the cache forgets them after three hours.
 
-## Bundled Extensions
+Both editions carry Scorpio and `eduide-session`, the same toolchain and the same starter templates.
 
-`images/base-ide/package.json.patch` pins the extensions every image ships. EduIDE 1.5.0 bundles:
+| Language | Images |
+| --- | --- |
+| Java 17 | `java-17-artemis`, `java-17-standalone` |
+| Java 25 | `java-25-artemis`, `java-25-standalone` |
+| Python | `python-artemis`, `python-standalone` |
+| JavaScript | `javascript-artemis`, `javascript-standalone` |
+| C | `c-artemis`, `c-standalone` |
+| Rust | `rust-artemis`, `rust-standalone` |
+| Go | `go-artemis`, `go-standalone` |
 
-| Extension | Version | Source |
-|---|---|---|
-| EduIDE Data Bridge | v0.0.17 | GitHub release |
-| Scorpio (`aet-tum.artemis-scorpio`) | 2.1.1 | Open VSX |
-| Theia Cloud session monitor | v1.2.2 | EduIDE-Cloud GitHub release |
-| Artemis extension (`aet-tum.iris-thaumantias`) | 1.2.6 | Open VSX |
+The matrix of the `images` job in `.github/workflows/build.yml` is the source of truth for what is published. Haskell, OCaml and Swift are no longer published, and there are no per-university images. A university with its own needs derives an image `FROM` an edition image, see [EduIDE Image Mannheim](/developer/projects/eduide-image-mannheim).
 
-EduIDE 1.4.0 still bundles data bridge v0.0.14, Scorpio 2.0.0 and Artemis extension 1.2.0, and no session monitor.
+Each language has one edition-agnostic `images/<lang>/ToolDockerfile` that takes the edition image as `BASE_IMAGE` and is built twice. The images run on Ubuntu 26.04 and build Theia once in `base`, so adding a language never rebuilds the IDE.
+
+In the installation chart, a template names an image. The artemis editions are usually unlisted templates that only Artemis links start. The standalone editions are listed and show as start tiles. See [Architecture](/developer/platform/architecture#domain-objects).
+
+## The `eduide-session` extension
+
+The base image ships the `eduide-session` extension, built from the [EduIDE-control-plane](https://github.com/EduIDE/EduIDE-control-plane) repository at the commit in the build argument `EDUIDE_SESSION_COMMIT` of `images/base-ide/BaseDockerfile`. It replaces the old data injection and session monitor extensions. The IDE contacts the agent in the pod on the loopback interface, receives the launch data and sends activity heartbeats. See [Session Prewarming](/developer/platform/session-prewarming#launch-data-reaches-the-ide).
+
+`scripts/check-required-plugins.sh` runs in every `ToolDockerfile` and fails the build if a language patch removes `scorpio` or `eduide-session`.
+
+## Project templates
+
+A template is a starter project that Scorpio copies into an empty workspace. Templates live in `images/<lang>/templates/<id>/`, and the folder name is the id. Each has a `template.json` with `label`, `description` and `order`. The optional `"needsNetwork": true` marks a template whose tasks download on first use. A folder without `template.json` is ignored.
+
+| Image | Template ids |
+| --- | --- |
+| `java-17-*`, `java-25-*` | `maven`, `gradle` |
+| `c-*` | `make`, `bazel` |
+| `python-*` | `python` |
+| `javascript-*` | `node`, `web` |
+| `rust-*` | `cargo` |
+| `go-*` | `go` |
+
+`*` is the edition. A launch asks for a template with the key `TEMPLATE`. Scorpio copies `/home/theia/templates/<id>` into the workspace only if the workspace is empty and no `GIT_URI` is set.
+
+Every language image writes `/opt/eduide/template.json` with its templates and installed tools. CI copies it into the OCI annotation `io.eduide.template`, which the operator reads to fill the template information of the landing page.
+
+## HTML preview
+
+Live Preview does not work in the cloud. The images use Theia's mini browser. Each `ToolDockerfile` sets `THEIA_WEBVIEW_EXTERNAL_ENDPOINT` and `THEIA_MINI_BROWSER_HOST_PATTERN` to `webview.{{hostname}}`, so webviews and previews share the fixed webview host that the gateway routes. Environment variables do not travel from the base image, so every `ToolDockerfile` repeats them. Locally, open the IDE through `localhost` (for example `http://localhost:3103`), not `127.0.0.1`, so the browser resolves `webview.localhost`.
+
+## Features in the IDE
+
+- **Workspace mode.** The status bar shows "Saved workspace" or "Temporary workspace". The IDE compares the device of the workspace folder with the device of `/`.
+- **Back to start page.** File > "Back to Start Page" returns to the landing page of the installation. The session keeps running.
+- **Experience levels.** Beginner, Advanced and Expert decide how much of the IDE a student sees. An exercise sets the starting level in `.vscode/eduide.json`. See [Customizable Features](/instructor/course-evaluation/customizable-features#experience-levels).
+- **Image version.** **Help > About** shows the container image and the build revision.
 
 ## Security
 
-- **Loopback only.** The Theia server has no authentication of its own, so every image binds it to `127.0.0.1:3000`. Only containers in the same pod reach it, which in a normal session means the oauth2-proxy sidecar ([#195](https://github.com/EduIDE/EduIDE/pull/195)). Any other container added to the pod bypasses the login. The exception is `thm-java-25`: its Dockerfile still starts Theia with `--hostname=0.0.0.0` in 1.5.0, so with that image only the NetworkPolicies keep other pods off port 3000. `docker-compose.images.yml` binds to `0.0.0.0` for local testing only; never carry that into Kubernetes.
-- **No SCANOSS.** `@theia/scanoss`, which sent hashes of code snippets to scanoss.com, is removed ([#206](https://github.com/EduIDE/EduIDE/pull/206)).
-- **Insecure host warning.** Theia's warning about a potentially insecure webview host pattern is on again.
+The Theia server has no authentication of its own, so every image binds it to `127.0.0.1:3000`. Only containers in the same pod reach it, which in a session is the agent. The agent accepts only requests with a valid instance token. Never widen that bind. The compose file overrides the hostname for local testing only. Never carry that into Kubernetes.
 
-These ship from EduIDE 1.5.0.
+## CI checks
 
-## Experience Levels
+- `build.yml` builds `base`, both edition bases and then the language images. The release tooling reads the image names from the matrix of the job `images`, so keep that job name and the flat entries.
+- The `smoke` job runs `scripts/smoke-test-image.sh <image> <edition>` on every image. It checks that the IDE answers on port 3000, that the required extensions are present, that the toolchain runs and that the Test task of every template passes without network. Templates marked `needsNetwork` run with network.
+- The `Extension tests` workflow runs the unit tests of `theia-extensions/*` on pull requests.
 
-The `customization` extension offers three levels, **Beginner**, **Advanced** and **Expert**, that decide how much of the IDE a student sees. Expert is the unmodified IDE. A student switches level from the status bar, the **Experience Levels** menu or the command palette, without a reload. An exercise can set the starting level in `.vscode/eduide.json`; see [Customizable Features](/instructor/course-evaluation/customizable-features#experience-levels) and the repository's [`docs/experience-levels-configuration.md`](https://github.com/EduIDE/EduIDE/blob/main/docs/experience-levels-configuration.md).
+## Local build
 
-## Image Version in the IDE
+```bash
+docker compose -f docker-compose.images.yml up --build java-17-standalone
+```
 
-**Help > About** shows the container image and the build revision the session runs, for example `eduide/eduide/java-17:1.5.0`. Images built by hand show `unknown`.
+The IDE answers on `http://127.0.0.1:3103/`. Each service publishes its own port on `127.0.0.1`. Pull requests publish images with the tag `pr-<number>`, see [Deploying Pull Requests](/developer/guides/deploying-pull-requests).
 
-## Tech Stack
+To add a language, copy `images/java-17` and follow the [walkthrough](https://github.com/EduIDE/EduIDE/blob/main/docs/how-to-build-ide-variants.md).
 
-- **Docker**: Containerization and image management.
-- **Node.js**: The underlying runtime for the Theia application.
-- **Eclipse Theia**: The core IDE framework used as the base for these images.
-
-## Repository Link
+## Repository
 
 [EduIDE/EduIDE](https://github.com/EduIDE/EduIDE)

@@ -1,60 +1,33 @@
 ---
 title: Provisioning
-description: Bootstrap guide for deploying a new EduIDE environment from cluster prerequisites to first launch.
+description: The path from an empty cluster to the first launched session.
 ---
 
 # Provisioning
 
-This page covers the steps required to bootstrap a new EduIDE environment. It is intended for operators setting up production, staging, or test deployments. The steps must be followed in order because later charts depend on resources installed by earlier ones.
+A short map of the steps. Each step links to the page that explains it.
 
-:::note This page describes deployment automation, not installation
-If you are installing EduIDE at your own institution, you do not need any of
-this — start at [Cluster Prerequisites](../install/prerequisites.md). The
-pipeline below is how TUM drives its own installations; the charts are installed
-the same way either way.
-:::
-
-## How deployments work
-
-All EduIDE environments are deployed through GitHub Actions pipelines defined in
-the deployment repository. You do not run Helm commands manually in normal
-operation — you trigger or configure the pipeline. For a first install on a new
-cluster, or emergency manual intervention, see
-[Installing EduIDE](../install/installing.md).
-
-| Workflow | Trigger | Approval |
-|---|---|---|
-| `deploy.yml` | Reusable; called by the others | Inherited from the environment |
-| `deploy-e2e.yml` | Automatic, follows `main` | **None** — an approval gate would block it forever |
-| `deploy-staging.yml` | Manual dispatch | Yes |
-| `deploy-dispatch.yml` | Manual dispatch, any environment | Yes for `production` and `staging` |
-| `deploy-comment.yml` | `/deploy <env>` on a pull request | Yes for `production` and `staging` |
-| `bootstrap-cluster.yml` | Manual dispatch, once per cluster | Yes |
-| `rollback.yml` | Manual dispatch | Yes |
-
-`e2e-test` is the environment that follows `main` and is tested automatically;
-`staging` is the manual one, where a human puts something to look at before it
-goes near production. Approval is a property of the GitHub Environment, not of
-the workflow — which is why `e2e-test` deliberately has no required reviewers.
-
-The pre-restructure workflows `deploy-production.yml`, `deploy-pr.yml` and
-`deploy-theia.yml` no longer exist.
-
-## Where the rest of this page went
-
-Everything that used to follow — a seven-chart install order, `deployments/<domain>/`
-values paths, `deploy-production.yml`, and a secrets table — described the
-platform before the 2.0.0 restructure. Every chart it named has been deleted and
-every command it gave would fail.
-
-It has been replaced by pages that are kept in step with the charts:
-
-| For | See |
+| Step | Page |
 |---|---|
-| What must exist on the cluster first, with commands | [Cluster Prerequisites](../install/prerequisites.md) |
-| DNS, the wildcard requirement, and getting certificates | [Certificates and DNS](../install/certificates.md) |
-| Installing both charts | [Installing EduIDE](../install/installing.md) |
-| Adding a second or third installation | [Adding an Installation](../install/adding-an-installation.md) |
-| Identity provider setup | [Access Control](access-control.md) |
-| Moving to a new version | [Release and Version Policy](../maintenance/release-policy.md) |
-| Undoing a bad deploy | [Rollback](../maintenance/rollback.md) |
+| 1. Check the cluster: Envoy Gateway 1.8 or newer, cert-manager, an enforcing CNI | [Prerequisites](../install/prerequisites.md) |
+| 2. Reserve three hostnames and DNS records | [Hostnames and Certificates](../install/certificates.md) |
+| 3. Create the Keycloak clients and the admin role | [Access Control](access-control.md) |
+| 4. Install the CRDs, then the installation chart | [Installing EduIDE](../install/installing.md) |
+| 5. Choose templates and warm pools | [Templates and Pools](templates-and-pools.md) |
+| 6. Choose storage and retention for saved workspaces | [Storage and Workspaces](storage-and-workspaces.md) |
+| 7. Switch on monitoring and tracing | [Monitoring](../operations/monitoring-basics.md) |
+| 8. Run the checks and launch a session | [Installing EduIDE](../install/installing.md#verify) |
+
+## First launch
+
+Open `https://<service host>/`, sign in and pick a start tile.
+The landing page shows "Your environments" for existing sessions and workspaces, and "Start new" with one tile per listed template.
+With a warm pool the IDE opens within about two seconds. Without one, a cold start takes a few seconds to half a minute, mostly image pulls on a fresh node.
+Inside the IDE, File, "Back to Start Page" returns to the landing page.
+
+## Before an exam or a course start
+
+- Raise `minIdle` of the pools some time before the start, so the idle pods exist and their images are on the nodes.
+- Check capacity: sessions that find no room fail with `capacity-exhausted` after 45 seconds.
+- Check the public status page and the admin panel ([Admin Access](../security/admin-access.md)).
+- Do not upgrade during the event ([Upgrades](../maintenance/upgrades.md)).

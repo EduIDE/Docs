@@ -5,90 +5,102 @@ description: How the EduIDE repositories depend on each other and how a manual r
 
 # Releases and Dependencies
 
-Every released EduIDE repository is released by hand. Nothing publishes on a push to `main`. This page shows which repository pins which other repository, in which order to release, and how one release runs.
+Every released EduIDE repository is released by hand. No release happens on a push to `main`. A push builds and publishes `main` and preview images, nothing else. This page shows which repository pins which other repository, in which order to release, and how one release runs.
 
 ## Dependency graph
 
-An arrow points from the consumer to the repository whose release it pins. Dashed arrows are pins that are dormant or not released yet.
+An arrow points from the consumer to the repository whose release it pins.
 
 ```mermaid
 flowchart LR
   scorpio["scorpio<br/>Open VSX + vsix"]
-  bridge["EduIDE-data-bridge<br/>vsix"]
-  cloud["EduIDE-Cloud<br/>3 images + monitor vsix"]
-  landing["EduIDE-Landing-Page<br/>image"]
+  cp["EduIDE-control-plane<br/>images, 3 charts, client"]
   ide["EduIDE<br/>IDE images"]
-  gc["workspace-garbage-collector<br/>chart + image"]
-  cache["EduIDE-shared-cache<br/>chart + image"]
-  pool["EduIDE-pool-scaler<br/>image"]
-  lsp["EduIDE-lsp-extension<br/>dormant"]
-  helm["EduIDE-Helm<br/>eduide + eduide-cluster charts"]
+  helm["EduIDE-Helm<br/>installation chart"]
   mannheim["EduIDE-image-mannheim<br/>image"]
   deploy["EduIDE-deployment<br/>environments"]
 
   ide -- "scorpio" --> scorpio
-  ide -- "data-bridge" --> bridge
-  ide -- "theia-cloud-monitor" --> cloud
-  ide -. "no-ls images (not built)" .-> lsp
-  helm -- "appVersion" --> ide
-  helm -- "versions.cloud" --> cloud
-  helm -- "versions.landingPage" --> landing
-  helm -- "chart dependency" --> cache
-  helm -- "chart dependency + image tag" --> gc
-  helm -. "versions.poolScaler (not released yet)" .-> pool
+  ide -- "eduide-session (commit in BaseDockerfile)" --> cp
+  helm -- "chart dependencies" --> cp
+  helm -- "appVersion = IDE images" --> ide
   mannheim -- "EDUIDE_VERSION" --> ide
   deploy -- "chartVersion" --> helm
 ```
 
-All repositories also use the org `.github` repository through moving refs (`@v1`, `@main`). These edges are omitted.
+All repositories also use the org `.github` repository through moving refs (`@v1`, `@main`).
 
-## What each repository publishes and pins
+## The control plane release
 
-| Repository | Publishes | Tag format | Pins from other EduIDE repositories (where) |
-|---|---|---|---|
-| EduIDE-data-bridge | vsix release asset | `vX.Y.Z` | none |
-| scorpio | Open VSX extension, vsix release asset | `vX.Y.Z` | none |
-| EduIDE-Cloud | `operator`, `service`, `conversion-webhook` images, monitor vsix | `vX.Y.Z` | none |
-| EduIDE-Landing-Page | image | `vX.Y.Z` | none |
-| workspace-garbage-collector | Helm chart (OCI), `garbage-collector` image | `vX.Y.Z` (until 0.2.0: `theia-workspace-garbage-collector-X.Y.Z`) | none |
-| EduIDE-shared-cache | Helm chart (OCI), `gradle-cache` image | `vX.Y.Z` (until 0.5.3: `eduide-shared-cache-X.Y.Z`) | none |
-| EduIDE-pool-scaler | image | `vX.Y.Z` | none |
-| EduIDE | IDE images (`base` plus the language images) | `vX.Y.Z` | scorpio, data-bridge and the Cloud monitor vsix (`images/base-ide/package.json.patch`, `theiaPlugins`) |
-| EduIDE-image-mannheim | image | `vX.Y.Z` | EduIDE (`Dockerfile`, `ARG EDUIDE_VERSION`) |
-| EduIDE-Helm | charts `eduide` and `eduide-cluster` (OCI) | `vX.Y.Z` (chart version) | EduIDE (`Chart.yaml` `appVersion`), EduIDE-Cloud (`values.yaml` `versions.cloud`), Landing-Page (`versions.landingPage`), shared-cache and garbage-collector (`Chart.yaml` `dependencies`, plus the garbage-collector image tag in `values.yaml`) |
-| eduide-keycloak-theme | JAR and checksum release assets | `vX.Y.Z` | none |
-| EduIDE-deployment | not released | none | EduIDE-Helm (`environments/*/env.yaml`, `spec.platform.chartVersion`) |
+One tag `vX.Y.Z` versions everything in EduIDE-control-plane:
+
+| Artifact | Where |
+| --- | --- |
+| Images `operator`, `service`, `authz`, `agent`, `pool-scaler`, `landing-page` | `ghcr.io/eduide/eduide-control-plane/<name>:X.Y.Z` |
+| Charts for the CRDs, the control plane and the landing page | OCI registry |
+| OpenAPI spec | `api/openapi/v1.yaml`, semantic spec version |
+| TypeScript client `@eduide/control-plane-client` | `clients/typescript` (no workflow publishes it to npm yet) |
+
+The control plane has its own version line. The release in the current EduIDE 3.0.0 candidate is 0.2.2. The installation chart pins it.
+
+The checklist is in [`docs/development/release.md`](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/development/release.md) and the `release` skill of the repository. In short:
+
+1. Pick the version. A breaking REST change is a new API version, not just a new tag.
+2. `make generate`, `make verify-generate`, `make lint`, `make test` and `make e2e` pass. Wait for a green `ci-ok` of the push run on the release commit on `main`, because CI does not run on the tag.
+3. Update `CHANGELOG.md`. Set the chart `version` and `appVersion` and the client version to the release version.
+4. Ask the maintainer, then create the tag `vX.Y.Z` on a commit of `main`. Both workflows stop unless the tag matches and its commit is on `main`. Never force-push a tag.
+5. `images.yml` builds, scans and pushes the images, and `release.yml` pushes the charts. Watch them and act on failures.
+6. Verify on a local kind cluster with the isolated `KUBECONFIG`.
+
+Upgrade order for operators: the cluster chart first per cluster (additive only), then the installation chart per deployment. State it in the release notes. Never roll a productive deployment during an exam period.
+
+## The IDE images release
+
+EduIDE releases the images with `release.yml`, run by hand with the version (`gh workflow run release.yml -f version=3.0.0`). It creates a draft GitHub Release from the `CHANGELOG.md` section, builds all images with the version as tag, checks that every image exists for amd64 and arm64 and then publishes the release.
+
+The base image builds `eduide-session` from the control plane repository at the commit in `EDUIDE_SESSION_COMMIT` of `images/base-ide/BaseDockerfile`. Move that commit to the control plane release commit before you release the images.
+
+## The installation chart
+
+The installation chart in EduIDE-Helm installs one deployment per namespace. It depends on the control plane charts and the landing page chart, and its `appVersion` pins the IDE images. Chart version and IDE image version are the same number, for example 3.0.0. A bare install without overrides pins every image, so nothing floats. See the chart reference in [Installing](/admins/install/installing) for how admins install it.
+
+EduIDE-deployment pins the chart version of each environment in `environments/*/env.yaml`.
 
 ## Release order
 
 A repository releases after everything it pins.
 
-1. Leaves: scorpio, data-bridge, EduIDE-Cloud, Landing-Page, shared-cache, garbage-collector, pool-scaler.
-2. EduIDE, because it pins the extensions and the Cloud monitor.
-3. EduIDE-Helm and EduIDE-image-mannheim, because they pin the EduIDE images and the leaves.
+1. Leaves: scorpio and EduIDE-control-plane.
+2. EduIDE, because it pins Scorpio and the control plane commit.
+3. EduIDE-Helm and EduIDE-image-mannheim, because they pin the control plane charts and the IDE images.
 4. Deployment pull requests that move `chartVersion` in EduIDE-deployment.
 
-Skip every step that has no unreleased changes.
+Skip every step that has no unreleased changes. A release of a leaf usually needs a new release of EduIDE, EduIDE-Helm and then a deployment pull request, because each pins the one before it.
 
-## How a release runs
+## What each repository publishes
 
-Each released repository has a release skill at `.claude/skills/release/SKILL.md`. Run it from Claude Code in that repository.
+| Repository | Publishes | Tag format |
+| --- | --- | --- |
+| EduIDE-control-plane | Images, charts, spec and client | `vX.Y.Z` |
+| scorpio | Open VSX extension, vsix release asset | `vX.Y.Z` |
+| EduIDE | IDE images (`base`, both edition bases, the language images) | `vX.Y.Z` |
+| EduIDE-image-mannheim | Image | `vX.Y.Z` |
+| EduIDE-Helm | The installation chart `eduide` and the cluster chart `eduide-cluster` (OCI) | `vX.Y.Z` (chart version) |
+| EduIDE-shared-cache | Helm chart (OCI), `gradle-cache` image (released on its own) | `vX.Y.Z` |
+| eduide-keycloak-theme | JAR and checksum release assets | `vX.Y.Z` |
+| EduIDE-deployment | Not released | none |
 
-1. The skill finds the last release and the changes since then.
-2. It proposes a version (semver from the changes, `-rc.N` for prereleases) and asks you to confirm or change it.
-3. It checks every pin on other EduIDE repositories. A pin must point at the latest release of its repository. If that repository has unreleased changes on `main`, the skill asks whether to release it first and then follows that repository's release skill.
-4. It writes the release notes into `CHANGELOG.md` and opens a release pull request with the changelog, the agreed pin bumps and, where a `Chart.yaml` states the version (EduIDE-Helm, workspace-garbage-collector, EduIDE-shared-cache), the version bump. Every other repository stamps the version at build time.
-5. After the pull request is merged, `release.yml` is dispatched with the version.
+Use strict semver: a breaking change is a major release. Tags are `vX.Y.Z`, with `-rc.N` for release candidates. Release candidates never go to Open VSX.
 
-`release.yml` runs these jobs in order:
+## How a release runs in the other repositories
 
-1. `release` calls the reusable `release.yml` of the org `.github` repository. It validates the version (format, newer than the last release, no existing tag, stable versions only from `main`, version files where a repository has them) and creates a **draft** GitHub Release with the notes from the `CHANGELOG.md` section. A draft has no tag yet.
-2. The repository's own jobs build and publish the artifacts (images, charts, vsix files, Open VSX) and attach release assets to the draft.
-3. `verify` checks that every artifact exists.
-4. `publish-release` calls the reusable `release-publish.yml`, which publishes the draft. Only now the tag appears.
+Each released repository has a release skill at `.claude/skills/release/SKILL.md`. Run it from Claude Code in that repository. The skill finds the changes since the last release, proposes a version, checks that every pin on another EduIDE repository points at its latest release, writes the changelog and opens a release pull request. After the merge, `release.yml` is dispatched with the version.
 
-A failed run therefore leaves a draft and no tag. Fix the cause and use "Re-run failed jobs": the draft is reused. A new dispatch of the same version replaces the leftover draft, but fails where a version cannot be pushed twice (charts, Open VSX). If the multi-arch merge of an image fails, use "Re-run all jobs", because the shared image build names its per-architecture digests per attempt.
-
-Release candidates (`-rc.N`) publish GitHub release assets and images only, never to Open VSX.
+The shared `release.yml` creates a **draft** GitHub Release first, the repository's own jobs publish the artifacts, a `verify` job checks that every artifact exists, and only then the draft is published and the tag appears. A failed run leaves a draft and no tag. Fix the cause and use "Re-run failed jobs".
 
 A tag or Release created with `GITHUB_TOKEN` does not trigger other workflows. This is why the publish jobs run from `release.yml` and not from `on: release`.
+
+## CI checks every repository shares
+
+- **Action pinning.** The control plane pins actions by commit SHA. The shared Renovate preset pins digests going forward.
+- **Release inputs through `env:`.** Release workflows pass `inputs.version` to scripts through an environment variable, not by string interpolation into the shell.
