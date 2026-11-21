@@ -41,7 +41,7 @@ One tag `vX.Y.Z` versions everything in EduIDE-control-plane:
 | OpenAPI spec | `api/openapi/v1.yaml`, semantic spec version |
 | TypeScript client `@eduide/control-plane-client` | `clients/typescript` (no workflow publishes it to npm yet) |
 
-The control plane has its own version line. The release for EduIDE 3.0.0 is 0.2.1. The installation chart pins it.
+The control plane has its own version line. The release in the current EduIDE 3.0.0 candidate is 0.2.2. The installation chart pins it.
 
 The checklist is in [`docs/development/release.md`](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/development/release.md) and the `release` skill of the repository. In short:
 

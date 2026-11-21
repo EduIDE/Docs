@@ -16,10 +16,10 @@ export EDUIDE_CHART=oci://ghcr.io/eduide/charts/eduide
 export EDUIDE_VERSION=3.0.0
 export EDUIDE_CLUSTER_CHART=oci://ghcr.io/eduide/charts/eduide-cluster
 export EDUIDE_CRDS_CHART=oci://ghcr.io/eduide/eduide-control-plane/charts/eduide-control-plane-crds
-export EDUIDE_CRDS_VERSION=0.2.1
+export EDUIDE_CRDS_VERSION=0.2.2
 ```
 
-Pass a prerelease such as `3.0.0-rc.10` explicitly in `EDUIDE_VERSION`, because `helm` skips prereleases otherwise.
+Pass a prerelease such as `3.0.0-rc.11` explicitly in `EDUIDE_VERSION`, because `helm` skips prereleases otherwise.
 :::
 
 ## 1. Cluster chart (once per cluster)
