@@ -35,6 +35,7 @@ const sidebars: SidebarsConfig = {
         'course-operations/course-setup',
         'course-operations/lecturer-choices',
         'course-operations/open-in-eduide-links',
+        'course-operations/run-and-debug-configurations',
         'course-operations/first-lab-checklist',
         'course-operations/privacy-and-data',
         'course-operations/cohort-management',

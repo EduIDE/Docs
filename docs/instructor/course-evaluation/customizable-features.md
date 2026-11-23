@@ -58,6 +58,7 @@ The editing experience can be prepared in advance through settings, extensions, 
 ### Run and Debug Experience
 
 Run and debug profiles can be prepared for the course ahead of time. This is especially useful when exercises have a standard execution flow that students should not have to configure from scratch.
+See [Run and Debug Configurations](../course-operations/run-and-debug-configurations.md) for the files and examples, and for how an exercise sets the level of each task.
 
 ### Experience Levels
 
@@ -74,9 +75,9 @@ Students can switch level at any time from the status bar or the **Experience Le
 
 The tasks offered by the **Run** button in the toolbar follow the level:
 
-- **Beginner** offers Run, and Test where the template has tests (the C templates have none, and the Web template offers Start and Build instead of Run and Test).
-- **Advanced** adds Build, and for some languages Lint, Vet, Clippy and Valgrind.
-- **Expert** offers the full task list.
+- **Beginner** offers Run, which builds and runs the program (Start in the Web template).
+- **Advanced** adds Lint for Python, Vet for Go, Clippy for Rust and Valgrind for C.
+- **Expert** offers the full task list, including Build and Test.
 
 An exercise can choose the level students start at. Put a file named `.vscode/eduide.json` into the exercise template:
 

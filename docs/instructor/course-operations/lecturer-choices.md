@@ -49,6 +49,11 @@ Older links that carry the token or a repository URL with credentials in the que
 Put `.vscode/eduide.json` into the exercise template to set the starting experience level.
 See [Customizable Features](../course-evaluation/customizable-features.md).
 
+## Run and debug entries
+
+Put `.vscode/tasks.json` and `.vscode/launch.json` into the exercise template to fill the Run and Debug buttons.
+See [Run and Debug Configurations](run-and-debug-configurations.md).
+
 ## What you cannot choose
 
 - The set of languages is fixed by the published images. A university can build its own image from an edition image. Ask the platform team.
