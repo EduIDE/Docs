@@ -73,11 +73,13 @@ EduIDE can show students more or less of the IDE. There are three levels:
 Levels exist for every language: Java, C, Python, JavaScript, Rust and Go.
 Students can switch level at any time from the status bar or the **Experience Levels** menu, and the change applies immediately, without reloading.
 
-The tasks offered by the **Run** button in the toolbar follow the level:
+The tasks offered by the **Run** button in the toolbar follow the level. In the starter templates:
 
 - **Beginner** offers Run, which builds and runs the program (Start in the Web template).
 - **Advanced** adds Lint for Python, Vet for Go, Clippy for Rust and Valgrind for C.
 - **Expert** offers the full task list, including Build and Test.
+
+An exercise brings its own `tasks.json` and can set the level of each task, so its list can differ. See [Run and Debug Configurations](../course-operations/run-and-debug-configurations.md).
 
 An exercise can choose the level students start at. Put a file named `.vscode/eduide.json` into the exercise template:
 
