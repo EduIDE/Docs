@@ -25,16 +25,19 @@ The page builds the link and a badge for your README, all in your browser.
 3. The repository is cloned into the workspace root, so its `.vscode` settings, tasks and launch configurations apply.
 4. The environment list shows it under the title you chose, or under the repository name.
 
-With a saved workspace, each student gets one workspace per repository.
+With a saved workspace, each student gets one workspace per template and repository.
 Opening the link again reopens that workspace with the student's changes and does not clone again.
+A temporary session also belongs to one student, template and repository, so a link to another repository starts another session.
+
+If the repository has a Gradle wrapper, the IDE asks before it runs the build to warm it up, because that runs the repository's own build code.
 
 ## Rules for the repository
 
 | Rule | Why |
 |---|---|
 | `https` only | The installation refuses any other scheme |
-| Hosted on an allowed Git host (today `github.com`, `gitlab.com`, `codeberg.org`) | Each installation keeps a list of hosts it clones from. Ask the platform team to add your host |
-| Public | A link must never carry a password or token. Students can still clone a private repository with the **Clone Repository** button in Source Control, which asks for a username and token |
+| Hosted on an allowed Git host (today `github.com`, `gitlab.com`, `codeberg.org`) | Each installation keeps a list of hosts it clones from (`allowedHosts`, see [Templates and Pools](/admins/platform/templates-and-pools)). Ask the platform team to add your host, for example your own GitLab, Gitea or Forgejo server. A link to another host shows an error that names the host and starts nothing |
+| Public | A link must never carry a password or token. For private repositories, see [below](#private-repositories) |
 | No query or fragment in the URL | The installation refuses them |
 
 ## Link parameters
@@ -54,6 +57,28 @@ https://<installation>/?appDef=<template>&gitUri=<repository URL, URL-encoded>&t
 
 A branch or tag (`gitRef`) is not supported yet: the clone uses the default branch.
 
+## Push changes
+
+Students push from the Source Control view or with `git push` in a terminal.
+Git asks for a username and a password.
+GitHub, GitLab and most Gitea and Forgejo servers do not accept the account password over HTTPS, so the student enters an **access token** as the password:
+
+| Host | Where to create the token | Permission |
+|---|---|---|
+| GitHub | Settings > Developer settings > Personal access tokens > Fine-grained tokens. Limit it to the one repository | Contents: Read and write |
+| GitLab | User settings > Access tokens | `write_repository` |
+| Gitea, Forgejo | Settings > Applications > Generate new token | repository: Read and Write |
+
+On GitHub, an outside collaborator of an organization repository cannot use a fine-grained token for it; such a student creates a classic token (Personal access tokens > Tokens (classic)) with the `repo` scope.
+A student who may not push to the repository pushes to a fork: fork it on the Git host, then run `git remote add fork <fork URL>` and `git push fork`.
+
+## Private repositories
+
+A link cannot open a private repository, because it never carries credentials.
+Instead, the student starts an environment with an **Empty project** and clicks **Clone Repository** in the Source Control view.
+EduIDE asks for the repository URL and, when the host asks for a login, for a username and an access token (see [Push changes](#push-changes); a token with write permission also covers the later push).
+The repository is cloned into the workspace root, so its settings and tasks apply, and in the standalone templates the token stays in memory for three hours, so pushes do not ask again.
+
 ## The badge
 
 The badge image is hosted with this documentation at `https://eduide.github.io/Docs/img/open-in-eduide.svg`.
@@ -67,3 +92,8 @@ The badge image is hosted with this documentation at `https://eduide.github.io/D
 - The generator knows the installations and templates listed above. A new language or installation appears here once the documentation is updated.
 - A link to a host that is not allowed is refused only when a student opens it, not when you build it by hand. The generator checks the host for you.
 - Anyone who logs in to the installation can open the link. It grants no access to the repository beyond what the repository itself allows.
+
+## Browser extension
+
+The "Open in EduIDE" browser extension adds an **Open in EduIDE** button to GitHub repository pages and builds the link for you.
+A button for GitLab and Gitea pages is tracked in [EduIDE-Browser-Extension#2](https://github.com/EduIDE/EduIDE-Browser-Extension/pull/2).
