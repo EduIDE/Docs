@@ -49,7 +49,7 @@ node scripts/record-showcase/record.mjs       # log in by hand in the window it 
 node scripts/record-showcase/encode.mjs       # needs ffmpeg
 ```
 
-They use the installed Google Chrome, start and delete environments under your account, and never type a password.
+They use the installed Google Chrome, start environments under your account and delete them again, and never type a password. They refuse to run while the account already has environments, because the cleanup deletes every environment of the account.
 `LANDING=https://<installation>/` records against another installation.
 
 ## Deployment
