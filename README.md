@@ -39,6 +39,19 @@ bash scripts/check-docs.sh
 `npm test` checks the link builder behind the "Open a Repository from a Link" page (Node 22.18 or newer, which runs TypeScript directly).
 `scripts/check-docs.sh` checks that every page is in a sidebar and every relative link resolves.
 
+## Start page videos
+
+The videos on the start page are recorded twice, once for light and once for dark mode, against the production installation.
+`static/videos/<name>-<mode>.webm` and the posters `static/img/marketing/<name>-<mode>.jpg` come from these scripts:
+
+```bash
+node scripts/record-showcase/record.mjs       # log in by hand in the window it opens, then wait
+node scripts/record-showcase/encode.mjs       # needs ffmpeg
+```
+
+They use the installed Google Chrome, start and delete environments under your account, and never type a password.
+`LANDING=https://<installation>/` records against another installation.
+
 ## Deployment
 
 Using SSH:
