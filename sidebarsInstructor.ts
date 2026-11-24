@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
         'course-operations/whats-new-in-3-0',
         'course-operations/course-setup',
         'course-operations/lecturer-choices',
+        'course-operations/open-in-eduide-links',
         'course-operations/first-lab-checklist',
         'course-operations/privacy-and-data',
         'course-operations/cohort-management',

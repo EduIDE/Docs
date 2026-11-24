@@ -64,15 +64,18 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #8bb4ff;
-  --ifm-color-primary-dark: #5893ff;
-  --ifm-color-primary-darker: #3f82ff;
-  --ifm-color-primary-darkest: #0c61ff;
-  --ifm-color-primary-light: #bed5ff;
-  --ifm-color-primary-lighter: #d8e5ff;
-  --ifm-color-primary-lightest: #ffffff;
+  --ifm-color-primary: #3a7a78;
+  --ifm-color-primary-dark: #346e6c;
+  --ifm-color-primary-darker: #316866;
+  --ifm-color-primary-darkest: #285553;
+  --ifm-color-primary-light: #408684;
+  --ifm-color-primary-lighter: #438c8a;
+  --ifm-color-primary-lightest: #4c9f9c;
   --ifm-code-font-size: 95%;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* Infima leaves the light background transparent, so a browser in dark mode showed dark text on its dark canvas. */
+  --ifm-background-color: #ffffff;
+  --ifm-background-surface-color: #ffffff;
 
   /* Landing page design tokens */
   --landing-teal: #4E9F9C;
@@ -115,15 +118,16 @@
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #8bb4ff;
-  --ifm-color-primary-dark: #5893ff;
-  --ifm-color-primary-darker: #3f82ff;
-  --ifm-color-primary-darkest: #0c61ff;
-  --ifm-color-primary-light: #bed5ff;
-  --ifm-color-primary-lighter: #d8e5ff;
-  --ifm-color-primary-lightest: #ffffff;
+  --ifm-color-primary: #6db5b2;
+  --ifm-color-primary-dark: #57aaa7;
+  --ifm-color-primary-darker: #4fa19e;
+  --ifm-color-primary-darkest: #418482;
+  --ifm-color-primary-light: #83c0bd;
+  --ifm-color-primary-lighter: #8cc4c2;
+  --ifm-color-primary-lightest: #addad8;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
   --ifm-background-color: #2a2a40;
+  --ifm-background-surface-color: #232336;
 
   --landing-teal: #6db5b2;
   --landing-teal-light: rgba(78, 159, 156, 0.15);
