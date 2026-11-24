@@ -34,6 +34,11 @@ The platform is a new control plane with new custom resources (`IDETemplate`, `I
 It replaces the earlier Java stack, the separate login proxies per session, the data bridge, the workspace garbage collector and error reporting through Sentry.
 See the [administrator guide](/admins/intro) for installation, migration and upgrades.
 
+## After 3.0.0: Git accounts
+
+Git accounts are not released yet. Installations that enable them let students connect a GitHub or GitLab account once, open private repositories from a link and push from a session.
+See [Open a Git Repository](./open-a-git-repository.md), the [student guide](/student/getting-started/connect-git-account) and the [administrator guide](/admins/platform/git-accounts).
+
 ## What stays the same
 
 - Grading, feedback and course management stay in Artemis.

@@ -13,6 +13,7 @@ Check them before the semester.
 
 - **Login.** Students sign in through the login of your institution. The platform uses a user id from it to show each student only their own environments.
 - **Workspaces.** Files live in the student's environment. Only the owner can open it. A temporary workspace is deleted when the session ends. A saved workspace is deleted after the retention time.
+- **Git accounts.** If your installation offers them, students may connect a GitHub or GitLab account. The token stays in the control plane, encrypted, and never enters the session. See [Open a Git Repository](./open-a-git-repository.md).
 - **Artemis tokens and repository links.** They reach the session only, are deleted with it and do not appear in logs.
 - **Logs and traces.** They hold a pseudonymous user id and the session id, not names or e-mail addresses. The installation decides how long it keeps traces; ask the platform team.
 

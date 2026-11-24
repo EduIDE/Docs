@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
         'getting-started/languages-and-templates',
         'getting-started/workspaces',
         'getting-started/your-environments',
+        'getting-started/connect-git-account',
         'getting-started/workspace-tour',
         'getting-started/session-timeout',
       ],
