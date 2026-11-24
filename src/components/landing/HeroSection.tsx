@@ -1,10 +1,9 @@
-import useBaseUrl from '@docusaurus/useBaseUrl';
 import Button from './Button';
+import { useThemedVideo } from './useThemedVideo';
 import styles from './HeroSection.module.css';
 
 export default function HeroSection() {
-  const heroVideoSrc = useBaseUrl('/videos/artemis-theia-e2e.webm');
-  const heroVideoPoster = useBaseUrl('/img/marketing/page.png');
+  const { src: heroVideoSrc, poster: heroVideoPoster } = useThemedVideo('hero');
   return (
     <section className={styles.hero} aria-labelledby="hero-heading">
       {/* Decorative background elements */}
@@ -33,6 +32,7 @@ export default function HeroSection() {
       </div>
       <div className={styles.heroImageWrap}>
         <video
+          key={heroVideoSrc}
           src={heroVideoSrc}
           poster={heroVideoPoster}
           autoPlay

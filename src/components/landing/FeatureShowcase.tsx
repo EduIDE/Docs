@@ -1,6 +1,7 @@
 import React from 'react';
 import useBaseUrl from '@docusaurus/useBaseUrl';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
+import { useThemedVideo } from './useThemedVideo';
 import styles from './FeatureShowcase.module.css';
 
 interface FeatureShowcaseProps {
@@ -13,6 +14,8 @@ interface FeatureShowcaseProps {
   mediaPoster?: string;
   mediaAlt?: string;
   mediaType?: 'img' | 'gif' | 'video';
+  /** Name of a video recorded per color mode, see useThemedVideo. Takes precedence over mediaSrc. */
+  videoName?: string;
   reverse?: boolean;
   accentColor?: string;
 }
@@ -30,6 +33,16 @@ function useDeferredSrc(src: string | undefined): string | undefined {
     return () => window.removeEventListener('load', handler);
   }, [src]);
   return ready ? src : undefined;
+}
+
+function ThemedVideo({ name, alt }: { name: string; alt?: string }) {
+  const { src, poster } = useThemedVideo(name);
+  const deferredSrc = useDeferredSrc(src);
+  return (
+    <div className={`${styles.mediaCol} ${styles.hasVideo}`}>
+      <video key={src} src={deferredSrc} poster={poster} autoPlay loop muted playsInline aria-label={alt} />
+    </div>
+  );
 }
 
 function MediaArea({
@@ -82,6 +95,7 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
   mediaPoster,
   mediaAlt,
   mediaType = 'img',
+  videoName,
   reverse = false,
   accentColor,
 }) {
@@ -102,6 +116,9 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
             </a>
           )}
         </div>
+        {videoName ? (
+          <ThemedVideo name={videoName} alt={mediaAlt} />
+        ) : (
         <MediaArea
           mediaSrc={mediaSrc ? resolvedMediaSrc : undefined}
           mediaPoster={mediaPoster ? resolvedMediaPoster : undefined}
@@ -109,6 +126,7 @@ const FeatureShowcase = React.memo<FeatureShowcaseProps>(function FeatureShowcas
           mediaType={mediaType}
           accentColor={accentColor}
         />
+        )}
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 import Layout from '@theme/Layout';
+import Link from '@docusaurus/Link';
 import HeroSection from '../components/landing/HeroSection';
 import StudentFeatures from '../components/landing/StudentFeatures';
 import InstructorSection from '../components/landing/InstructorSection';
@@ -23,23 +24,20 @@ export default function Home() {
           label="Run tasks"
           title="One click to build, test, and run"
           description="Pre-configured tasks let students run, build, and test their code without memorizing commands. Instructors define the workflow once and students only need to click on Run."
-          mediaSrc="/videos/run-button.webm"
-          mediaPoster="/img/marketing/page.png"
+          videoName="run-button"
           mediaAlt="Run button demo"
           mediaType="video"
           accentColor="linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)"
         />
         <hr className={styles.sectionDivider} />
         <FeatureShowcase
-          label="Submission"
-          title="Submit without leaving the IDE"
-          description={<>The integrated submission extension connects directly to <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Students commit and submit their work in one step - no file uploads, no copy-paste, no switching tabs.</>}
-          mediaSrc="/videos/scorpio.webm"
-          mediaPoster="/img/marketing/page.png"
-          mediaAlt="Submission demo"
+          label="Open from a link"
+          title="One link, the whole repository"
+          description={<>Put a link or a badge in your README and students land in an IDE with your repository already cloned, its tasks and settings included. Private repositories work with the Clone Repository button in Source Control. <Link to="/instructor/course-operations/open-in-eduide-links">Build a link</Link>.</>}
+          videoName="open-from-link"
+          mediaAlt="Opening a repository from a link"
           mediaType="video"
           reverse
-          accentColor="linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)"
         />
         <hr className={styles.sectionDivider} />
         <LanguagesSection />
