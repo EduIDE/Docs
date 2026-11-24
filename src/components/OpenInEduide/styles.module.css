@@ -1,0 +1,62 @@
+.generator {
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: var(--ifm-global-radius);
+  padding: 1rem;
+  margin-bottom: var(--ifm-leading);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.grid label {
+  font-weight: var(--ifm-font-weight-semibold);
+  padding-top: 0.35rem;
+}
+
+.grid input,
+.grid select {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  color: inherit;
+  background: var(--ifm-background-color);
+  border: 1px solid var(--ifm-color-emphasis-400);
+  border-radius: var(--ifm-global-radius);
+}
+
+.help,
+.error {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.help {
+  color: var(--ifm-color-emphasis-700);
+}
+
+.error {
+  color: var(--ifm-color-danger-dark);
+}
+
+.result {
+  margin-top: 1rem;
+}
+
+.caption {
+  margin: 0.75rem 0 0.25rem;
+  font-weight: var(--ifm-font-weight-semibold);
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .grid label {
+    padding-top: 0;
+  }
+}

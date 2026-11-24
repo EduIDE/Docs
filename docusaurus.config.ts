@@ -79,8 +79,8 @@ const config: Config = {
     image: 'img/logo.svg',
     colorMode: {
       defaultMode: 'light',
-      disableSwitch: true,
-      respectPrefersColorScheme: false,
+      disableSwitch: false,
+      respectPrefersColorScheme: true,
     },
     navbar: {
       title: 'EduIDE',

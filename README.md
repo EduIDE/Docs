@@ -29,6 +29,16 @@ npm run build
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
+## Test
+
+```bash
+npm test
+bash scripts/check-docs.sh
+```
+
+`npm test` checks the link builder behind the "Open a Repository from a Link" page (Node 22.18 or newer, which runs TypeScript directly).
+`scripts/check-docs.sh` checks that every page is in a sidebar and every relative link resolves.
+
 ## Deployment
 
 Using SSH:
