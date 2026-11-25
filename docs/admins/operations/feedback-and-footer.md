@@ -30,14 +30,14 @@ eduide-control-plane:
   config:
     feedback:
       enabled: true
-      receiverURL: https://feedback.example.org
+      receiverURL: https://feedback.example.org/v1/feedback
       keySecret: {name: eduide-feedback-key, key: key}
 ```
 
 | Value | Meaning |
 |---|---|
 | `enabled` | Default `false`. |
-| `receiverURL` | The central receiver that creates the issues. |
+| `receiverURL` | The full address of the central receiver, including the path `/v1/feedback`. It must be `https`. The service posts to this address exactly, so without the path every send fails. |
 | `keySecret` | Secret with the key of your installation. Only the service pod reads it. |
 
 The chart does not render if `enabled` is `true` and `receiverURL` or `keySecret.name` is missing.
@@ -45,22 +45,22 @@ The chart does not render if `enabled` is `true` and `receiverURL` or `keySecret
 ### What it changes
 
 - The service answers on `/api/v1/feedback`. With the toggle off, this route answers 404.
-- The operator gives the agent in new session pods the feedback address. Running sessions do not change.
+- The operator gives the agent the feedback address and sets the dialog visible. This applies to session pods created after the change. Warm pool pods keep the old setting until the pools are recreated, and running sessions do not change.
 - The agent accepts feedback on its loopback interface and passes it to the service.
 - The IDE shows **Help -> Send Feedback**, the command and the status bar item.
 
 ### The central receiver
 
-The receiver runs only at TUM.
-Installations do not run their own. Ask the EduIDE maintainers for the `receiverURL` and the key of your installation.
+The receiver is a separate chart, `eduide-feedback-receiver` (top-level `enabled`, default `false`, and `installationKeysSecret`). It runs only at TUM.
+Installations do not run it. Ask the EduIDE maintainers for the `receiverURL` and the key of your installation.
 The receiver creates the issues in a private triage repository. Maintainers move useful ones to `EduIDE/EduIDE`.
 
 ### Privacy
 
 - No identity leaves your installation. The service uses the session owner only to rate limit, and sends neither name nor user id.
-- The context is the installation hostname, version, app definition and browser. Never the URL, the session id or code.
+- The IDE sends the version and the browser family (for example Firefox or Chrome). The service adds the installation hostname and the app definition. Never the URL, the session id or code.
 - The service removes tokens, e-mail addresses and matriculation numbers from the text.
-- Each user can send 5 messages per hour. More get `429`.
+- Limit: 5 messages per hour per user and per service replica (kept in memory). More get `429`.
 - The service logs no text and no user, only the pseudonymous id that appears in traces.
 
 Tell your users about the dialog in your privacy notice.

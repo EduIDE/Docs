@@ -52,16 +52,15 @@ Choose bug or feature, write a title and a description, and decide how to send i
 
 Anonymous feedback sends this technical context:
 
-- The hostname of your installation
 - The EduIDE version
-- The app definition (the template you started)
-- Your browser
+- Your browser family, for example Firefox or Chrome
+- The hostname of your installation and the app definition (the template you started), added by the server
 
 It never sends your name, your user id, your session id or your code.
 Do not write personal data into the text yourself. The system removes tokens, e-mail addresses and matriculation numbers, but it cannot find everything.
-You can send up to 5 messages per hour.
+You can send about 5 messages per hour.
 If sending fails, the dialog keeps your text.
 
 ## Ask a question
 
-Ask questions in the GitHub Discussions of the `EduIDE/EduIDE` repository, or ask your course contact.
+Ask questions in the [EduIDE GitHub Discussions](https://github.com/orgs/EduIDE/discussions), or ask your course contact.

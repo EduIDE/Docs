@@ -90,7 +90,7 @@ Live Preview does not work in the cloud. The images use Theia's mini browser. Ea
 | `installation` | Hostname of the installation |
 | `version` | EduIDE version |
 | `app-definition` | The template that was started |
-| `browser` | Browser and version |
+| `browser` | Browser |
 
 Example: `https://github.com/EduIDE/EduIDE/issues/new?template=bug_report.yml&installation=eduide.example.org&version=3.0.0`.
 Never put the session URL into a link. It can hold credentials.
