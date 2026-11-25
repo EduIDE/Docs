@@ -31,6 +31,7 @@ const sidebars: SidebarsConfig = {
         'operations/monitoring-basics',
         'operations/incident-response',
         'operations/session-management',
+        'operations/feedback-and-footer',
       ],
     },
     {
