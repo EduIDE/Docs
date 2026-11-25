@@ -9,6 +9,14 @@ This page is for the **standalone edition**, the environments you start from a t
 In the Artemis edition, Artemis handles your repository and login, and you do not need any of this.
 See [Artemis or Standalone?](../getting-started/artemis-or-standalone.md) if you are not sure which one you use.
 
+:::info Does your start page offer Connect?
+From the EduIDE release that ships Git accounts, some installations let you connect your GitHub or GitLab account once.
+Then you do not need a token: open your private repository from a link and push without typing anything.
+Look for the **Git accounts** section on the start page.
+If it lists your Git host, read [Connect Your GitHub or GitLab Account](./connect-git-account.md) instead of this page.
+Stay here when the section is missing, or when your host is not in it. The token way below always works.
+:::
+
 ## What you need
 
 - A repository on GitHub, gitlab.com, the LRZ GitLab (`gitlab.lrz.de`) or another Git host.

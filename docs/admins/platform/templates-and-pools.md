@@ -77,7 +77,7 @@ The scale subresource maps to `targetIdle`. The operator caps it at `maxInstance
 ## Launch data and allowed hosts
 
 Users and Artemis pass launch data such as a repository URL or an Artemis token. Each template lists the keys it accepts (`injectableKeys`), with a format check per key.
-Unknown keys answer HTTP 400. Repository and Artemis URLs must be `https` and their host must appear in `config.allowedHosts`.
+Unknown keys answer HTTP 400. Repository and Artemis URLs must be `https` and their host must appear in `config.allowedHosts`. A host that is a [Git account](./git-accounts.md) provider needs no entry for repository links.
 Add every Git and Artemis host your users need, and nothing else.
 `gitUriAllowCredentials: true` lets the repository URL carry user info, which Artemis uses to pass the student's token.
 Set it only for templates that Artemis opens. See [Session Hardening](../security/session-hardening.md).

@@ -21,7 +21,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Learning',
-      items: ['learning/assignment-workflow', 'learning/submission-checklist', 'learning/private-repositories', 'learning/troubleshooting', 'learning/privacy', 'learning/get-help'],
+      items: ['learning/assignment-workflow', 'learning/submission-checklist', 'learning/private-repositories', 'learning/connect-git-account', 'learning/troubleshooting', 'learning/privacy', 'learning/get-help'],
     },
   ],
 };

@@ -18,7 +18,8 @@ description: Common problems when you start or use EduIDE, and what to do.
 | The session stopped | See [When Your Session Ends](../getting-started/session-timeout.md). |
 | The exercise did not clone | The workspace already has files, or your Artemis does not pass the repository yet. See [Start from Artemis](../getting-started/start-from-artemis.md). |
 | Git does not accept your password, or says "Authentication failed" | Use an access token instead of your password. See [Private Git Repositories](./private-repositories.md#if-something-goes-wrong). |
-| A private repository from a link does not clone | Links open public repositories only. Start with **Empty project** and use **Clone Repository** in the Source Control view. See [Private Git Repositories](./private-repositories.md). |
+| A private repository from a link does not clone | Without Git accounts, links open public repositories only. If your start page has a **Git accounts** section, connect your account, see [Connect Your GitHub or GitLab Account](./connect-git-account.md). Otherwise start with **Empty project** and use **Clone Repository** in the Source Control view. See [Private Git Repositories](./private-repositories.md). |
+| Git prints `fatal: remote error: ...` | The message names the cause. See [Connect Your GitHub or GitLab Account](./connect-git-account.md#troubleshooting). |
 | A push is rejected | This is a Git problem, for example the wrong branch or a conflict. Treat it as you would on your own computer. |
 | A menu or the terminal is missing | Raise the experience level in the status bar. See the [Workspace Tour](../getting-started/workspace-tour.md). |
 | Nobody in the course can start an IDE | Check the status page linked in the footer of the start page, then tell your tutor. |

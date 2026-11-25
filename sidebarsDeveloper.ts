@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
         'platform/session-lifecycle',
         'platform/api-specification',
         'platform/external-integration',
+        'platform/git-accounts',
       ],
     },
     {
