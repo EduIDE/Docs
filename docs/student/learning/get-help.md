@@ -36,30 +36,8 @@ For a security problem, do not open an issue. Use the [security advisory form](h
 
 ## Send feedback from the IDE
 
-Some installations let you send a bug report or a feature request from inside the IDE.
-This works only if your installation turned it on. If **Send Feedback** is missing, use **Help -> Report Issue** instead.
-
-Open the dialog in one of these ways:
-
-- **Help -> Send Feedback**
-- The command palette: **Send Feedback**
-- The **Send Feedback** item in the status bar
-
-Choose bug or feature, write a title and a description, and decide how to send it:
-
-- **Send anonymously.** You must agree first: your feedback may become public on GitHub, without your name, after the maintainers reviewed it.
-- **Use my GitHub account.** The IDE opens the issue form in your browser. You send it there under your own name.
-
-Anonymous feedback sends this technical context:
-
-- The EduIDE version
-- Your browser family, for example Firefox or Chrome
-- The hostname of your installation and the app definition (the template you started), added by the server
-
-It never sends your name, your user id, your session id or your code.
-Do not write personal data into the text yourself. The system removes tokens, e-mail addresses and matriculation numbers, but it cannot find everything.
-You can send about 5 messages per hour.
-If sending fails, the dialog keeps your text.
+Some installations let you send a bug report or a feature request from inside the IDE, also anonymously.
+See [Send Feedback](./send-feedback.md) for how it works and what it sends.
 
 ## Ask a question
 
