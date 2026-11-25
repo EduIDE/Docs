@@ -172,7 +172,7 @@ The landing page has no secret, so the shared client must be public (**Client au
 Envoy Gateway still requires a secret: `eduide-oidc` must hold a non-empty `client-secret`, which Keycloak does not check for a public client.
 A separate confidential gateway client, for example `eduide-gateway`, makes Keycloak check it. It is optional, see [Separate gateway client](keycloak.md#separate-gateway-client).
 
-The tokens must carry the claim named in `oidc.userClaim` (default `preferred_username`), plus `name` and `email`. The default client scopes of Keycloak add them.
+The tokens must carry the claim named in `oidc.userClaim` (default `preferred_username`), plus `name` and `email`. The default client scopes of Keycloak add them; [mappers on the client](keycloak.md#6-mappers-on-the-client) keep the tokens smaller.
 Some identity providers speak only TLS curves that Envoy does not offer for upstream TLS.
 The chart has an optional TLS bridge for that case (`oidcBridge.enabled` and `oidc.providerBackendRefs`); check its `values.yaml`.
 

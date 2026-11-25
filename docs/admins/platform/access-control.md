@@ -38,7 +38,7 @@ The admin API is off until you configure a role. Without it every admin route an
 
 1. Create the role in Keycloak. Realm role: Realm roles, Create role, name `eduide-admin`. Client role: Clients, the landing page client, Roles, Create role, name `eduide-admin`.
 2. Assign it to users, or to a group and add users to the group.
-3. Make it appear in the access token. A realm role is in `realm_access.roles` by default. A client role is in `resource_access.<client>.roles` once the client scope `roles` is assigned to the landing page client with the "client roles" mapper enabled for access tokens. Decode a token to check.
+3. Make it appear in the access token. A realm role is in `realm_access.roles` by default. A client role is in `resource_access.<client>.roles` once the client scope `roles` is assigned to the landing page client with the "client roles" mapper enabled for access tokens, or once the client has its own "User Client Role" mapper ([lean tokens](../install/keycloak.md#6-mappers-on-the-client)). Decode a token to check.
 4. Set it in the values:
 
 ```yaml

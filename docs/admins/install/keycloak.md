@@ -1,6 +1,6 @@
 ---
 title: Setting Up Keycloak
-description: Step by step with screenshots - the realm, the eduide client, its redirect URIs, the admin role, a group, a user and the token check.
+description: An import file for the quick way, and step by step with screenshots - the realm, the eduide client, its redirect URIs, the admin role, a group, a user, lean token mappers and the token check.
 ---
 
 # Setting Up Keycloak
@@ -17,6 +17,29 @@ What the deployment takes from Keycloak:
 | Realm `eduide` | `oidc.issuerURL: https://<keycloak host>/realms/eduide` and the landing page `keycloak.realm` |
 | Client `eduide` | `oidc.clientIDs: [eduide]`, `oidc.gatewayClientID: eduide` and the landing page `keycloak.clientId` |
 | Client role `eduide-admin` | `oidc.admin: {rolePath: resource_access.eduide.roles, role: eduide-admin}` |
+
+## Quick setup with an import file
+
+If you do not want to click through steps 2 to 4 and 6, import the client instead.
+[eduide-keycloak-import.json](./eduide-keycloak-import.json) holds the client `eduide` with its redirect URIs and mappers, the role `eduide-admin` and the group `eduide-admins` with that role.
+
+1. Create the realm ([step 1](#1-create-the-realm)).
+2. Download the file and replace `eduide.example.org` and `instance.eduide.example.org` with your hosts.
+3. Open **Realm settings**, **Action**, **Partial import** and choose the file. Keep all three resources and **Fail import**.
+
+![Partial import dialog with the import file loaded: 1 group, 1 client and 1 client role selected, Fail import if a resource exists](/img/admins/keycloak/partial-import.png)
+
+4. Click **Import**. Keycloak lists the three added records.
+
+![Partial import result: client role eduide-admin, client eduide and group eduide-admins added](/img/admins/keycloak/partial-import-result.png)
+
+Then continue with [users](#5-add-users), [the token check](#7-check-the-token) and [the values](#8-fill-in-the-values).
+
+:::warning Shared client
+Several installations can share one client in one realm.
+Do not import over an existing client with **Overwrite**: it replaces the client, and the other installations lose their redirect URIs.
+Add your hosts to the existing client by hand instead.
+:::
 
 ## 1. Create the realm
 
@@ -71,6 +94,7 @@ Open the client `eduide`, tab **Roles**, click **Create role** and name it `edui
 
 A realm role works as well.
 It ends up in `realm_access.roles`, and `oidc.admin.rolePath` must say so.
+With the [mappers on the client](#6-mappers-on-the-client) it then needs a mapper of the type User Realm Role instead of User Client Role.
 
 ## 4. Give the role to a group
 
@@ -100,29 +124,63 @@ Set a password in the tab **Credentials** of the new user.
 The username becomes the owner of the user's sessions and workspaces (claim `preferred_username`, value `oidc.userClaim`).
 Do not rename users while they have workspaces.
 
-## 6. Mappers
+## 6. Mappers on the client
 
-EduIDE needs no mapper of its own.
-The default client scopes of a new client already put everything into the tokens:
+EduIDE reads only a few claims.
+Put them into the dedicated scope of the client and drop the realm-wide default scopes, so the tokens stay small:
 
-| Claim | From the default scope |
+| Token | Claims EduIDE reads |
 |---|---|
-| `preferred_username`, `name` | `profile` |
-| `email` | `email` |
-| `resource_access.eduide.roles` | `roles`, mapper `client roles` |
-| `realm_access.roles` | `roles`, mapper `realm roles` |
+| Access token (landing page, `/api/v1`) | `azp`, `preferred_username`, `name`, `email`, `resource_access.eduide.roles` |
+| ID token (landing page, gateway cookie `eduide-id`) | `aud`, `preferred_username`, `email` |
 
-The mapper `client roles` must add the roles to the access token.
-That is its default. Check it under **Client scopes**, `roles`, tab **Mappers**, `client roles`.
+Open the client `eduide`, tab **Client scopes**, and the scope `eduide-dedicated`.
+Click **Configure a new mapper** (later **Add mapper**, **By configuration**) and create four mappers:
 
-![Mapper client roles of the client scope roles: token claim name resource_access.${client_id}.roles, Add to access token on](/img/admins/keycloak/client-roles-mapper.png)
+| Mapper type | Name | Settings | ID token | Access token | Userinfo |
+|---|---|---|---|---|---|
+| User Property | `username` | Property `username`, token claim name `preferred_username` | On | On | Off |
+| User Property | `email` | Property `email`, token claim name `email` | On | On | Off |
+| User's full name | `full name` | - | Off | On | Off |
+| User Client Role | `client roles` | Client ID `eduide`, multivalued, token claim name `resource_access.${client_id}.roles` | Off | On | Off |
+
+![Mapper username of the type User Property: property username, token claim name preferred_username, ID token and access token on, userinfo off](/img/admins/keycloak/mapper-username.png)
+
+![Mapper client roles of the type User Client Role: client ID eduide, multivalued, token claim name for the client roles under resource_access, only the access token on](/img/admins/keycloak/mapper-client-roles.png)
+
+**Add predefined mapper** (later **Add mapper**, **From predefined mappers**) is a shortcut.
+Select `username`, `email`, `full name` and `client roles` and click **Add**.
+Then open `client roles` and set **Client ID** to `eduide`. Without it the roles of every client, for example `account`, land in the token.
+The predefined mappers also fill the userinfo and put `name` into the ID token. That costs a few bytes and does no harm.
+
+The dedicated scope then holds the four mappers.
+
+![Mappers tab of eduide-dedicated with full name, email, username and client roles](/img/admins/keycloak/dedicated-mappers.png)
+
+Back in the tab **Client scopes** of the client, change the assigned scopes:
+
+| Scope | Assigned type | Why |
+|---|---|---|
+| `basic` | Default | Adds `sub`. Keycloak needs it. |
+| `profile`, `email` | Optional | The gateway asks for `openid profile email`. Without the two scopes Keycloak refuses its sign-in with `invalid_scope`. As optional scopes they reach only the gateway's tokens. |
+| `acr`, `roles`, `web-origins` | Remove | The mappers above replace `roles`. Keycloak answers CORS from the web origins of the client, not from `web-origins`. |
+
+Leave the other optional scopes alone. Nobody asks for them.
+
+![Client scopes of eduide: eduide-dedicated, basic as Default, email and profile as Optional, no acr, roles or web-origins](/img/admins/keycloak/client-scopes-lean.png)
+
+On a local Keycloak 26 this shrinks the access token of the landing page from about 1400 to 1000 bytes for a user with one role.
+Users with many roles gain more, because only the roles of `eduide` remain.
+
+If you skip this step, the default scopes add the same claims and EduIDE works as well.
+The admin role then sits in `resource_access.eduide.roles` through the scope `roles`.
 
 ## 7. Check the token
 
 Keycloak shows the tokens of a user without a sign-in.
 Open the client `eduide`, tab **Client scopes**, sub tab **Evaluate**, choose the user and open **Generated access token**.
 
-![Generated access token of demo.admin: azp eduide, resource_access.eduide.roles with eduide-admin, preferred_username, name and email](/img/admins/keycloak/evaluate-access-token.png)
+![Generated access token of demo.admin with only sub, azp eduide, resource_access.eduide.roles with eduide-admin, name, preferred_username and email](/img/admins/keycloak/evaluate-access-token.png)
 
 Check:
 
@@ -130,7 +188,7 @@ Check:
 - `resource_access.eduide.roles` contains `eduide-admin` for admins.
 - `preferred_username`, `name` and `email` are present.
 
-**Generated ID token** must show `aud` `eduide`. authz checks the ID token of the gateway against `oidc.gatewayClientID`.
+**Generated ID token** must show `aud` `eduide`, `preferred_username` and `email`. authz checks the ID token of the gateway against `oidc.gatewayClientID` and reads the owner from it.
 
 ## 8. Fill in the values
 
@@ -148,7 +206,7 @@ Then set the values from the table at the top and continue with [Installing EduI
 A second, confidential client for the gateway lets Keycloak check the gateway's secret.
 It is optional.
 
-1. Create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**.
+1. Create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. For small tokens give it the mappers `username` and `email` and the same scope setup as `eduide`.
 2. Give it the valid redirect URI `https://instance.eduide.example.org/oauth2/callback` and no web origin.
 3. Copy the secret from its tab **Credentials** into a file and create `eduide-oidc` from it, as above.
 4. Remove the instance redirect URI from the client `eduide`.
