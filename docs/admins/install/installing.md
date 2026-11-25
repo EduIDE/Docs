@@ -13,10 +13,10 @@ This page is the only place that names the charts. All other pages use these var
 
 ```bash
 export EDUIDE_CHART=oci://ghcr.io/eduide/charts/eduide
-export EDUIDE_VERSION=3.0.0
+export EDUIDE_VERSION=3.0.2
 export EDUIDE_CLUSTER_CHART=oci://ghcr.io/eduide/charts/eduide-cluster
 export EDUIDE_CRDS_CHART=oci://ghcr.io/eduide/eduide-control-plane/charts/eduide-control-plane-crds
-export EDUIDE_CRDS_VERSION=0.2.2
+export EDUIDE_CRDS_VERSION=0.2.4
 ```
 
 Pass a prerelease such as `3.0.0-rc.11` explicitly in `EDUIDE_VERSION`, because `helm` skips prereleases otherwise.
@@ -50,7 +50,7 @@ Or use a separate cluster.
 kubectl create namespace eduide-<deployment>
 ```
 
-Create the Keycloak clients first ([below](#keycloak)). Then store the secret of the gateway client in the namespace.
+Set up Keycloak first ([Setting Up Keycloak](keycloak.md)). Then store the secret of the gateway client in the namespace.
 Create it from a file or a pipe. Never print it and never put it in a values file in Git.
 
 ```bash
@@ -84,7 +84,7 @@ certManager:
 
 images:
   registry: ghcr.io/eduide
-  tag: 3.0.0
+  tag: 3.0.1
 
 templates:
   java-17-standalone:
@@ -160,18 +160,19 @@ Unknown keys in the control plane configuration make the binaries fail on start,
 
 ### Keycloak
 
-One client in the realm of the deployment is enough, for example `eduide`.
-It serves the landing page and the gateway:
+[Setting Up Keycloak](keycloak.md) walks through the realm, the client, the admin role and the token check with screenshots.
+In short, one public client in the realm of the deployment, for example `eduide`, serves the landing page and the gateway:
 
 | Use | Settings |
 |---|---|
 | Landing page | Valid redirect URI `https://<service host>/*`, web origin `https://<service host>`. The client id goes into `oidc.clientIDs` and the landing page `keycloak.clientId`. |
-| Gateway | Valid redirect URI `https://<instance host>/oauth2/callback`, and a client secret (the one stored in `eduide-oidc`). The client id is `oidc.gatewayClientID` and the audience `authz` checks. |
+| Gateway | Valid redirect URI `https://<instance host>/oauth2/callback`. The client id is `oidc.gatewayClientID` and the audience `authz` checks. |
 
-A separate confidential gateway client, for example `eduide-gateway`, is possible but not required.
-In that case it needs the redirect URI and the secret, and the landing page client stays a public client.
+The landing page has no secret, so the shared client must be public (**Client authentication** off).
+Envoy Gateway still requires a secret: `eduide-oidc` must hold a non-empty `client-secret`, which Keycloak does not check for a public client.
+A separate confidential gateway client, for example `eduide-gateway`, makes Keycloak check it. It is optional, see [Separate gateway client](keycloak.md#separate-gateway-client).
 
-The tokens must carry the claim named in `oidc.userClaim` (default `preferred_username`), plus `name` and `email`.
+The tokens must carry the claim named in `oidc.userClaim` (default `preferred_username`), plus `name` and `email`. The default client scopes of Keycloak add them; [mappers on the client](keycloak.md#6-mappers-on-the-client) keep the tokens smaller.
 Some identity providers speak only TLS curves that Envoy does not offer for upstream TLS.
 The chart has an optional TLS bridge for that case (`oidcBridge.enabled` and `oidc.providerBackendRefs`); check its `values.yaml`.
 

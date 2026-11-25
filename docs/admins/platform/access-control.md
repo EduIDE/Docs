@@ -24,20 +24,21 @@ One client (for example `eduide`) can serve both uses:
 | Use | Purpose |
 |---|---|
 | Landing page | Sign-in of the landing page, tokens for `/api/v1`. The client id is in `oidc.clientIDs` |
-| Gateway | Sign-in at the gateway for session URLs. The client id is `oidc.gatewayClientID`, with a secret in the namespace |
+| Gateway | Sign-in at the gateway for session URLs. The client id is `oidc.gatewayClientID`, with a secret in the namespace that Keycloak checks only for a confidential client |
 
-A separate confidential gateway client is possible but not required.
+A shared client is public, because the landing page has no secret. A separate confidential gateway client is possible but not required.
 
-Redirect URIs and the secret are in [Installing EduIDE](../install/installing.md#keycloak).
+Redirect URIs, the secret and screenshots of every step are in [Setting Up Keycloak](../install/keycloak.md).
 The claim in `oidc.userClaim` (default `preferred_username`) is the owner name. If it differs from what a user sees in the identity provider, sessions show 403 for their owner, see the [authz runbook](../operations/incident-response.md#authz-errors).
 
 ## Admin role
 
 The admin API is off until you configure a role. Without it every admin route answers 404. With it, users without the role get 403.
+[Setting Up Keycloak](../install/keycloak.md#3-create-the-admin-role) shows the steps with screenshots.
 
 1. Create the role in Keycloak. Realm role: Realm roles, Create role, name `eduide-admin`. Client role: Clients, the landing page client, Roles, Create role, name `eduide-admin`.
 2. Assign it to users, or to a group and add users to the group.
-3. Make it appear in the access token. A realm role is in `realm_access.roles` by default. A client role is in `resource_access.<client>.roles` once the client scope `roles` is assigned to the landing page client with the "client roles" mapper enabled for access tokens. Decode a token to check.
+3. Make it appear in the access token. A realm role is in `realm_access.roles` by default. A client role is in `resource_access.<client>.roles` once the client scope `roles` is assigned to the landing page client with the "client roles" mapper enabled for access tokens, or once the client has its own "User Client Role" mapper ([lean tokens](../install/keycloak.md#6-mappers-on-the-client)). Decode a token to check.
 4. Set it in the values:
 
 ```yaml
