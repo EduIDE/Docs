@@ -9,6 +9,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'install/prerequisites',
         'install/certificates',
+        'install/keycloak',
         'install/installing',
         'install/adding-an-installation',
       ],

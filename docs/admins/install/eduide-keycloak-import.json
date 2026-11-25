@@ -1,0 +1,101 @@
+{
+  "clients": [
+    {
+      "clientId": "eduide",
+      "name": "EduIDE",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "https://eduide.example.org",
+      "redirectUris": [
+        "https://eduide.example.org/*",
+        "https://instance.eduide.example.org/oauth2/callback"
+      ],
+      "webOrigins": ["https://eduide.example.org"],
+      "attributes": {
+        "post.logout.redirect.uris": "https://eduide.example.org/*"
+      },
+      "defaultClientScopes": ["basic"],
+      "optionalClientScopes": ["profile", "email"],
+      "protocolMappers": [
+        {
+          "name": "username",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "username",
+            "claim.name": "preferred_username",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "full name",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-full-name-mapper",
+          "config": {
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "client roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "config": {
+            "usermodel.clientRoleMapping.clientId": "eduide",
+            "claim.name": "resource_access.${client_id}.roles",
+            "jsonType.label": "String",
+            "multivalued": "true",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "false",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "roles": {
+    "client": {
+      "eduide": [
+        {
+          "name": "eduide-admin",
+          "description": "Read-only access to the EduIDE admin panel and admin API"
+        }
+      ]
+    }
+  },
+  "groups": [
+    {
+      "name": "eduide-admins",
+      "path": "/eduide-admins",
+      "clientRoles": {
+        "eduide": ["eduide-admin"]
+      }
+    }
+  ]
+}
