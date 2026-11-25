@@ -10,6 +10,7 @@ const sidebars: SidebarsConfig = {
         'getting-started/first-login',
         'getting-started/first-start',
         'getting-started/start-from-artemis',
+        'getting-started/artemis-or-standalone',
         'getting-started/languages-and-templates',
         'getting-started/workspaces',
         'getting-started/your-environments',
@@ -20,7 +21,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Learning',
-      items: ['learning/assignment-workflow', 'learning/submission-checklist', 'learning/troubleshooting', 'learning/privacy', 'learning/get-help'],
+      items: ['learning/assignment-workflow', 'learning/submission-checklist', 'learning/private-repositories', 'learning/troubleshooting', 'learning/privacy', 'learning/get-help'],
     },
   ],
 };

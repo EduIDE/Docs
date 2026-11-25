@@ -38,6 +38,7 @@ EduIDE is not tied to one institution. Your university or course runs its own in
 |---|---|
 | Your course uses Artemis | [Start from Artemis](./getting-started/start-from-artemis.md) |
 | Your tutor sent you a link to EduIDE | Open it, sign in, and the environment starts. See [First Login](./getting-started/first-login.md) |
+| You want to work with your own GitHub or GitLab repository | [Private Git Repositories](./learning/private-repositories.md) |
 | You want to explore or practise | Open the start page of your installation, sign in and pick a tile. See [First Start](./getting-started/first-start.md) |
 | You want to continue earlier work | [Your Environments](./getting-started/your-environments.md) |
 
@@ -45,11 +46,11 @@ EduIDE is not tied to one institution. Your university or course runs its own in
 
 1. [First Login](./getting-started/first-login.md)
 2. [First Start](./getting-started/first-start.md)
-3. [Start from Artemis](./getting-started/start-from-artemis.md)
+3. [Start from Artemis](./getting-started/start-from-artemis.md), [Artemis or Standalone?](./getting-started/artemis-or-standalone.md)
 4. [Languages and Starter Templates](./getting-started/languages-and-templates.md)
 5. [Saved and Temporary Workspaces](./getting-started/workspaces.md)
 6. [Your Environments](./getting-started/your-environments.md)
 7. [Workspace Tour](./getting-started/workspace-tour.md)
 8. [When Your Session Ends](./getting-started/session-timeout.md)
-9. [Assignment Workflow](./learning/assignment-workflow.md), [Submission Checklist](./learning/submission-checklist.md)
+9. [Assignment Workflow](./learning/assignment-workflow.md), [Submission Checklist](./learning/submission-checklist.md), [Private Git Repositories](./learning/private-repositories.md)
 10. [Troubleshooting](./learning/troubleshooting.md), [Privacy](./learning/privacy.md), [Get Help](./learning/get-help.md)

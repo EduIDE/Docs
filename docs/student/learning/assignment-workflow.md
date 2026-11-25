@@ -68,5 +68,7 @@ See [Languages and Starter Templates](../getting-started/languages-and-templates
 
 In the standalone edition (environments you start from a tile), the IDE remembers your Git credentials in memory for 3 hours.
 After that it forgets them and asks again on the next push.
+A new session also starts without them.
+See [Private Git Repositories](./private-repositories.md) for creating an access token and pushing.
 
 Then continue with the [Submission Checklist](./submission-checklist.md).

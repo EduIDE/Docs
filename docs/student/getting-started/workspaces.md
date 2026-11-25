@@ -37,3 +37,5 @@ Use a saved workspace for convenience, not as the only copy of anything that mat
 ## What is lost in both cases
 
 Terminals, running programs and debug sessions end when a session stops, also in a saved workspace.
+So does a Git login: Git asks for your access token again in the next session.
+See [Private Git Repositories](../learning/private-repositories.md).

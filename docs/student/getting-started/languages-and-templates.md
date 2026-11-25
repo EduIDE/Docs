@@ -28,6 +28,7 @@ You rarely choose between them, because the way you start decides:
 - **Standalone edition.** It opens from a tile on the start page. It has no Artemis view. Git credentials you enter are kept in memory for 3 hours.
 
 Both editions have the same toolchain and the same starter templates.
+See [Artemis or Standalone?](./artemis-or-standalone.md) for the differences, and [Private Git Repositories](../learning/private-repositories.md) for working with your own repository.
 
 ## Starter templates
 
