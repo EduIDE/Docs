@@ -33,7 +33,8 @@ Keep it in your password manager until you paste it into EduIDE.
 2. Open **Developer settings**, then **Personal access tokens**, then **Fine-grained tokens**.
 3. Click **Generate new token**.
 4. Give it a name, for example "EduIDE course", and an expiration date, for example the end of the semester.
-5. Under **Repository access**, choose **Only select repositories** and pick your repository.
+5. Under **Resource owner**, keep your own account for your own repository, or pick the organization that owns the repository.
+   Then, under **Repository access**, choose **Only select repositories** and pick your repository.
 6. Under **Permissions**, set **Contents** to **Read and write**.
 7. Click **Generate token** and copy it.
 
@@ -140,7 +141,9 @@ Anyone who has it can read and change your code.
 - Paste the token only into the EduIDE prompts for username and token or password.
 - Never put the token into the repository address, for example `https://name:token@github.com/...`. The address is saved in the repository settings and in the terminal history, and in a saved workspace it stays there.
 - Never commit the token, and never put it into a file, a chat, a forum post, a screenshot or an issue.
-- Give the token only the rights it needs: one repository, read and write of the content, nothing else.
+- Give the token only the rights it needs: read and write of the content, nothing else.
+  On GitHub, limit it to one repository.
+  A GitLab personal access token covers all projects you can reach; a project access token from your team covers one project only.
 - Set an expiration date, for example the end of the semester.
 - Delete the token on the website of your Git host when you no longer need it, or right away if you think someone else saw it. Then create a new one.
 

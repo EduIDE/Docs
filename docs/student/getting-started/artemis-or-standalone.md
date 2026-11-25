@@ -13,7 +13,7 @@ How you start it decides which one you get.
 | How you start it | **Open online IDE** on an Artemis exercise | A tile on the start page, or a link from your tutor |
 | What it is for | Artemis exercises | Practice, projects, your own Git repositories |
 | Where your code comes from | Artemis clones the exercise for you | A starter template, a link, or a repository you clone yourself |
-| Git login | Artemis handles it. You never create a token | You log in with an access token from your Git host |
+| Git login | Artemis handles it. You never create a token | When your Git host asks for a login, for example to clone a private repository or to push, you enter an access token. Without a repository, you need none |
 | How you hand in | Push to Artemis, see the [Submission Checklist](../learning/submission-checklist.md) | Push to your own Git repository |
 | Artemis view and Iris | Yes | No |
 
