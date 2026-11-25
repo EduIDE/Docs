@@ -21,7 +21,7 @@ Without the salt nobody can map a pseudonym back to a name. Keep the salt (`user
 | Workspace files | PVC (saved workspaces) | Retention after last use, default 14 days, plus 24 hours grace |
 | Files of temporary workspaces | Pod filesystem | Until the session ends |
 | Launch data (repository URL, token) | Secret owned by the session | Deleted with the session. Memory only in the agent |
-| Git account (encrypted token, login, id, name, no-reply e-mail) | Secret per user and provider, only with [Git accounts](../platform/git-accounts.md) | Until disconnect, or after the inactivity period (default 90 days) |
+| Git account (encrypted token, login, id, name, no-reply e-mail) | Secret per user and provider, only with [Git accounts](../platform/git-accounts.md) | Until disconnect, or after the inactivity period (default 90 days). A use in a session restarts the period |
 | Logs | stdout of the components | Whatever your log stack keeps. Set it |
 | Metrics | Prometheus | Your Prometheus retention. No user labels |
 | Traces | Jaeger or your OTLP target | Your target retention |
@@ -56,5 +56,5 @@ Every quarter:
 
 ## Questions from users
 
-- Delete my data: delete the user's workspaces (`kubectl delete ideworkspace`) and sessions. The identity provider holds the account.
-- What do you know about me: the owner name on objects, and pseudonymous ids in logs and traces for the retention of those systems.
+- Delete my data: delete the user's workspaces (`kubectl delete ideworkspace`) and sessions. The identity provider holds the account. Deleting it does not remove a connected Git account. Ask the user to disconnect it on the landing page, which revokes the token at the host and deletes the Secret. Otherwise the sweep deletes it after the inactivity period, or you delete it, see [Git accounts](../platform/git-accounts.md#revoke-all-accounts).
+- What do you know about me: the owner name on objects, with Git accounts the login, id, name and no-reply e-mail of the connected account, and pseudonymous ids in logs and traces for the retention of those systems.

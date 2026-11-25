@@ -59,8 +59,10 @@ With two clients, this fails twice. The gateway client is confidential, so a cod
 
 A shared client is the simple setup that some pages of this guide describe.
 Do not use it when you enable Git accounts.
-To split an existing installation, create the confidential gateway client in the realm, store its secret in the Secret that `oidc.clientSecretName` names, set `oidc.gatewayClientID` to its id and roll out. The landing page client and `oidc.clientIDs` stay as they are.
-Keycloak setup is in [Installing EduIDE](../install/installing.md#keycloak).
+The Keycloak guide on this site describes a shared client as possible until its update lands. Git accounts need the two-client setup.
+To split an existing installation, create the confidential gateway client in the realm, store its secret in the Secret that `oidc.clientSecretName` names, set `oidc.gatewayClientID` to its id and roll out.
+Then remove the redirect URIs on the instance host and the webview host, and the web origins of those hosts, from the existing public client. Otherwise script in a session can still get a token that the API accepts. The landing page client and `oidc.clientIDs` stay as they are.
+Keycloak setup is in the [Keycloak guide](../install/keycloak.md).
 
 ## Step 1: GitHub
 
@@ -364,8 +366,9 @@ After a leak of the token store or the key:
 
 1. Delete the OAuth application at the provider, or use its function to revoke all tokens of users. This ends every token for that application.
 2. Delete the stored accounts with the command above.
-3. Register a new application, update the client ID and the Secret, and roll out.
-4. Tell students to connect again.
+3. If the encryption key leaked, replace it now, before students connect again. Otherwise new accounts use the key that the attacker knows. Delete the key Secret and create it again as in [Encryption key](#encryption-key), then restart the service. The service reads the key once at start.
+4. Register a new application, update the client ID and the Secret, and roll out.
+5. Tell students to connect again.
 
 ### Read the logs
 
