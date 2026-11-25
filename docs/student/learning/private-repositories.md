@@ -5,7 +5,7 @@ description: Clone, commit and push a private GitHub or GitLab repository in the
 
 # Private Git Repositories
 
-This page is for the **standalone edition**, the environments you start from a tile on the start page.
+This page is for the **standalone edition**, the sessions you start from a tile on the landing page.
 In the Artemis edition, Artemis handles your repository and login, and you do not need any of this.
 See [Artemis or Standalone?](../getting-started/artemis-or-standalone.md) if you are not sure which one you use.
 
@@ -13,7 +13,7 @@ See [Artemis or Standalone?](../getting-started/artemis-or-standalone.md) if you
 
 - A repository on GitHub, gitlab.com, the LRZ GitLab (`gitlab.lrz.de`) or another Git host.
 - An **access token** for that host.
-- A standalone environment with an empty workspace. Pick **Empty project** when you start it.
+- A standalone session with an empty project folder. Pick **Empty project** when you start it.
 
 ## Why a token and not your password
 
@@ -79,21 +79,21 @@ Then any non-empty username works, for example your GitLab username.
 
 ## Step 2: Clone the repository
 
-1. Start a standalone environment with **Empty project**.
+1. Start a standalone session with **Empty project**.
 2. Open the **Source Control** view on the left.
 3. Click **Clone Repository**.
 4. Paste the `https` address of your repository, for example `https://github.com/owner/repository.git`, and press Enter.
    Copy it from the **Code** or **Clone** button of the repository page. Use the address that starts with `https://`.
 5. If the repository is private, EduIDE asks for **Username for the repository** and then **Access token**. Enter your username and paste your token.
 
-EduIDE clones the repository into your workspace, and you see "Cloned ... into the workspace."
+EduIDE clones the repository into your project folder, and you see "Cloned ... into the workspace."
 The button only works in an empty workspace.
-If the workspace already has files, EduIDE says so and clones nothing.
+If the project folder already has files, EduIDE says so and clones nothing.
 
 :::tip A link opens public repositories only
 A link from your tutor can clone a public repository for you.
 For a private repository, the clone fails with a message that the host "did not accept the access".
-Start a standalone environment with **Empty project** instead and use **Clone Repository** as described above.
+Start a standalone session with **Empty project** instead and use **Clone Repository** as described above.
 :::
 
 ## Step 3: Commit and push
@@ -120,18 +120,18 @@ Without `--global`, Git saves this in the repository, so it stays in a saved wor
 - EduIDE keeps your token **in memory, in this one session only**.
 - It forgets the token after **3 hours**, or when the session ends, whichever comes first. Then Git asks again on the next push.
 - **Clone Repository** does not write the token to your files or to the repository.
-- Every new session starts without a token: a second environment, a restart after a break, and a saved workspace you start again.
+- Every new session starts without a token: a second session, a restart after a break, and a saved workspace you start again.
 
-What happens with your **files** depends on the workspace:
+What happens with your **files** depends on the start mode:
 
-| | Temporary workspace | Saved workspace |
+| | Temporary session | Saved workspace |
 |---|---|---|
 | Your files when the session ends | Deleted. Push before you stop | Kept |
 | Your token when the session ends | Gone | Gone. Enter it again on the next push |
-| Next time | Clone again | Click **Start** under **Your environments** |
+| Next time | Clone again | Click **Start** under **Your sessions** |
 
 Only what you push is safe.
-See [Saved and Temporary Workspaces](../getting-started/workspaces.md) and [When Your Session Ends](../getting-started/session-timeout.md).
+See [Saved Workspaces and Temporary Sessions](../getting-started/workspaces.md) and [When Your Session Ends](../getting-started/session-timeout.md).
 
 ## Keep your token safe
 
@@ -152,7 +152,7 @@ Anyone who has it can read and change your code.
 You can also use Git in the terminal, for example `git clone`, `git pull` and `git push`.
 The terminal is hidden at the Beginner level: raise the level in the status bar.
 
-To clone into the workspace itself instead of a subfolder, so that the settings and tasks of the repository apply, run in an empty workspace:
+To clone into the project folder itself instead of a subfolder, so that the settings and tasks of the repository apply, run in an empty project folder:
 
 ```bash
 git clone https://github.com/owner/repository.git .
@@ -163,7 +163,7 @@ Enter your username, then paste your token as the password.
 The token is not shown while you paste it.
 
 Use the `https` address.
-EduIDE does not set up SSH keys for you, and keys you create would stay in the environment.
+EduIDE does not set up SSH keys for you, and keys you create would stay in the session.
 
 ## If something goes wrong
 
@@ -171,9 +171,9 @@ EduIDE does not set up SSH keys for you, and keys you create would stay in the e
 |---|---|---|
 | "Could not clone ...: the access was not accepted." | Wrong username or token, or the token does not cover this repository | Check the username. Check that the token is not expired and includes the repository and write access. Create a new token if needed |
 | "Authentication failed", or an error with 401 or 403 when you push | Git sent a token that is wrong, expired or lacks write access, or you may only read the repository | Create a token with write access (GitHub: **Contents: Read and write**, GitLab: `write_repository`). Ask the owner for write access, or push to your own fork |
-| "Could not clone ...: ... did not accept the access." after a link | Links open public repositories only | Start a standalone environment with **Empty project** and use **Clone Repository** with your username and token |
+| "Could not clone ...: ... did not accept the access." after a link | Links open public repositories only | Start a standalone session with **Empty project** and use **Clone Repository** with your username and token |
 | "Repositories from ... cannot be opened here." | Links work only for hosts your installation trusts | Ask your tutor. Inside the IDE, **Clone Repository** works with other hosts too |
-| "The workspace is not empty, so nothing was cloned." | **Clone Repository** clones only into an empty workspace | Start a new environment with **Empty project**, or move the files listed in the message away |
+| "The workspace is not empty, so nothing was cloned." | **Clone Repository** clones only into an empty project folder | Start a new session with **Empty project**, or move the files listed in the message away |
 | Git asks for the token again | The 3 hours are over, or this is a new session | Paste the token again |
 | "Enter an https or http URL" | You pasted an SSH address such as `git@github.com:...` | Use the address that starts with `https://` |
 

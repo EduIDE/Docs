@@ -11,7 +11,7 @@ The **EduIDE Deployment** repository is the central hub for the infrastructure-a
 
 ## Key Features
 
-- **Automated CI/CD**: Seamless deployment pipelines using GitHub Actions for various branches and environments.
+- **Automated CI/CD**: Seamless deployment pipelines using GitHub Actions for various branches and installations.
 - **Environment Management**: One directory per installation under
   `environments/`, split into `env.yaml` (how it is deployed) and `values.yaml`
   (how the chart is configured).
@@ -19,8 +19,8 @@ The **EduIDE Deployment** repository is the central hub for the infrastructure-a
   [EduIDE-Helm](https://github.com/EduIDE/EduIDE-Helm) and are pulled from the
   OCI registry. The installation chart installs one deployment per namespace.
   See [Releases and Dependencies](/developer/guides/releases-and-dependencies).
-- **GitOps Workflow**: Deployments are managed through Git with approval gates. Only `e2e` follows `main` automatically; staging and every other environment are deployed by hand with the `Deploy environment` workflow.
-- **Authentication Integration**: Per environment, the OIDC realm and clients that the gateway uses for the login.
+- **GitOps Workflow**: Deployments are managed through Git with approval gates. Only `e2e` follows `main` automatically; staging and every other installation are deployed by hand with the `Deploy environment` workflow.
+- **Authentication Integration**: Per installation, the OIDC realm and clients that the gateway uses for the login.
 
 ## Technical Details
 

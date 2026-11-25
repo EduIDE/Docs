@@ -15,8 +15,8 @@ A session moves through `Pending`, `Starting` and `Ready`, or ends in `Failed` w
 
 A session ends in four ways:
 
-- **Inactivity.** After the template's `idle` time without activity (default 60 minutes), the operator deletes the session. At the `warning` time (default 50 minutes) it sends a warning that the IDE shows with the action "I am still here".
-- **Maximum lifetime.** A session that reaches `max` (default 24 hours) ends regardless of activity.
+- **Idle timeout.** After the template's `idle` time without activity (default 60 minutes), the operator deletes the session. At the `warning` time (default 50 minutes) it sends a warning that the IDE shows with the action "I am still here".
+- **Maximum session duration.** A session that reaches `max` (default 24 hours) ends regardless of activity.
 - **The user** stops the session from the landing page or with `DELETE /sessions/{name}`.
 - **A failure.** A Ready session whose pod failed (for example by eviction) becomes `Failed`.
 
@@ -36,7 +36,7 @@ A heartbeat also clears a pending idle warning, so a reloaded IDE shows no stale
 
 ## What happens at the end
 
-The operator removes access first. The session leaves `Ready`, `authz` denies at once, and the operator then discards the pod. Open WebSockets end with it. A temporary workspace is gone with the pod. A saved workspace stays on its volume.
+The operator removes access first. The session leaves `Ready`, `authz` denies at once, and the operator then discards the pod. Open WebSockets end with it. A temporary session is gone with the pod. A saved workspace stays on its volume.
 
 The launch data Secret belongs to the session and goes with it.
 

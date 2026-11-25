@@ -24,7 +24,7 @@ Every session pod has an agent sidecar. The IDE itself listens only on `127.0.0.
 | Local, `127.0.0.1:8082` | The `eduide-session` extension in the same pod | Loopback only |
 
 The instance token is 32 random bytes per pod. Admins and the operator can read it in the route and in the Secret ([ADR 0006](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/adr/0006-agent-sidecar.md)). Limit who has Kubernetes access to the namespace.
-The agent strips the gateway login cookies and moves IDE cookies below the instance path, so one IDE cannot overwrite the cookies of another.
+The agent strips the gateway login cookies and moves IDE cookies below the session path, so one IDE cannot overwrite the cookies of another.
 
 ## 3. Network isolation
 

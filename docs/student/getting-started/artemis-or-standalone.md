@@ -1,23 +1,23 @@
 ---
 title: Artemis or Standalone?
-description: The two kinds of EduIDE environment, how to tell them apart, and what each one does with Git.
+description: The two editions of EduIDE, how to tell them apart, and what each one does with Git.
 ---
 
 # Artemis or Standalone?
 
-Every EduIDE environment is one of two editions.
+Every EduIDE template is one of two editions.
 How you start it decides which one you get.
 
 | | Artemis edition | Standalone edition |
 |---|---|---|
-| How you start it | **Open online IDE** on an Artemis exercise | A tile on the start page, or a link from your tutor |
+| How you start it | **Open online IDE** on an Artemis exercise | A tile on the landing page, or a link from your tutor |
 | What it is for | Artemis exercises | Practice, projects, your own Git repositories |
-| Where your code comes from | Artemis clones the exercise for you | A starter template, a link, or a repository you clone yourself |
+| Where your code comes from | Artemis clones the exercise for you | A starter project, a link, or a repository you clone yourself |
 | Git login | Artemis handles it. You never create a token | When your Git host asks for a login, for example to clone a private repository or to push, you enter an access token. Without a repository, you need none |
 | How you hand in | Push to Artemis, see the [Submission Checklist](../learning/submission-checklist.md) | Push to your own Git repository |
 | Artemis view and Iris | Yes | No |
 
-Both editions have the same languages, tools and starter templates.
+Both editions have the same languages, tools and starter projects.
 
 ## How to tell which one you are in
 
@@ -32,11 +32,11 @@ Both editions have the same languages, tools and starter templates.
 
 ## Saved or temporary: a second, separate choice
 
-Independent of the edition, each environment has a **saved** or a **temporary** workspace.
+Independent of the edition, each session starts as a **saved workspace** or a **temporary session**.
 The status bar shows which one.
 
-- **Temporary workspace**: all files are deleted when the session ends.
+- **Temporary session**: all files are deleted when the session ends.
 - **Saved workspace**: your files stay, and you continue later.
 
 In both cases, anything that only lives in the running session is gone when it ends: open terminals, running programs and Git logins.
-See [Saved and Temporary Workspaces](./workspaces.md).
+See [Saved Workspaces and Temporary Sessions](./workspaces.md).

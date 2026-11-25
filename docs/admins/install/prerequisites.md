@@ -14,7 +14,7 @@ Check `kubectl config current-context` before you run anything. Never install in
 | cert-manager | With Gateway API support enabled, so the Gateway annotations issue certificates. |
 | CNI | Enforces NetworkPolicies. See below. |
 | OIDC provider | One realm per deployment. [Keycloak](keycloak.md) is the worked example. |
-| Storage | A StorageClass for saved workspaces. Optional if you only offer temporary workspaces. |
+| Storage | A StorageClass for saved workspaces. Optional if you only offer temporary sessions. |
 | Prometheus | Optional. Needed for the pool scaler, the admin panel figures and the alerts. |
 | Jaeger or another OTLP collector | Optional. Needed for launch traces. |
 | DNS and certificates | Three hostnames, see [Hostnames and Certificates](certificates.md). |

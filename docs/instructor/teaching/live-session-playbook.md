@@ -38,15 +38,15 @@ branch, nothing committed, or a conflict. Treat it as you would in any other
 environment.
 
 **"My session closed."** It stopped after 60 minutes without input (the default),
-or reached its maximum run time. The IDE warned after 50 minutes.
+or reached its maximum session duration. The IDE warned after 50 minutes.
 Students who listen to a lecture with the IDE open but untouched are the usual
-case. If the workspace is saved, **Start** on the entry under **Your environments**
-on the start page (or starting the exercise from Artemis again) gives the files
+case. If the workspace is saved, **Start** on the entry under **Your sessions**
+on the landing page (or starting the exercise from Artemis again) gives the files
 back. If it is temporary, the unpushed files are gone.
 
 **"I lost my work."** Distinguish immediately: pushed work is in Artemis and is
 safe. Unpushed work in a saved workspace lives in the workspace and is almost
-certainly still there when they reopen. In a temporary workspace it is lost
+certainly still there when they reopen. In a temporary session it is lost
 when the session ends. Work that was never saved in the editor is gone, exactly
 as it would be locally.
 
@@ -57,7 +57,7 @@ If several people report the same failure at once, stop diagnosing individuals.
 1. Try it yourself. If it fails for you too, it is the platform.
 2. Tell the room what you know in one sentence, and give them something to do
    that does not need the IDE.
-3. Contact the platform team with: which environment, what time it started, and
+3. Contact the admins with: which template, what time it started, and
    what the error says. "It's broken" costs a round trip.
 
 **Have a fallback.** For an assessed session, decide in advance what happens if
@@ -70,7 +70,7 @@ cluster; that is the trade for not having 200 local setups to debug.
 - Tell students to commit and push before they leave. That is what Artemis
   grades and what survives everything.
 - If something went wrong, report it even if it resolved itself. Use the GitHub
-  issues of `EduIDE/EduIDE-control-plane` for the start page and session handling,
+  issues of `EduIDE/EduIDE-control-plane` for the landing page and session handling,
   `EduIDE/EduIDE` for the IDE itself, and GitHub Discussions for questions. Issues are public, so leave out
   personal data and Artemis links. A transient failure nobody reports is one
   nobody fixes.

@@ -13,7 +13,7 @@ const steps: Step[] = [
   {
     title: "Course setup in Artemis",
     description:
-      <>Define the environment once within <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Every student gets an identical, pre-configured workspace with no need for manual replication.</>,
+      <>Pick the template once in <a href="https://artemis.tum.de/" target="_blank" rel="noopener noreferrer">Artemis</a>. Every student gets an identical, pre-configured IDE with no need for manual replication.</>,
   },
   {
     title: "Automated grading pipeline",

@@ -11,7 +11,7 @@ These basics hold in every repository of the EduIDE organization. A repository's
 
 - Work on a branch and open a pull request against `main`. Nothing is pushed to `main` directly.
 - Keep a pull request to one change. CI must pass before it is merged.
-- Describe what you tested. A pull request in the control plane repository also builds images tagged `pr-<number>` that you can deploy to a test environment, see [Deploying Pull Requests](/developer/guides/deploying-pull-requests).
+- Describe what you tested. A pull request in the control plane repository also builds images tagged `pr-<number>` that you can deploy to a test installation, see [Deploying Pull Requests](/developer/guides/deploying-pull-requests).
 - Do not put secrets, tokens or exploit details into a commit, an issue or a pull request. The repositories are public. Describe a security fix by what it protects, and tell admins what they must do.
 
 ## Commits

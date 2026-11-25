@@ -13,7 +13,7 @@ Every deployment uses three hostnames. Each has its own certificate for exactly 
 | `hosts.instance` | `instance.eduide.example.org` | All IDE sessions, as `https://<instance host>/<instance id>/` |
 | `hosts.webview` | `webview.instance.eduide.example.org` | Webviews of all sessions. Fixed name: `webview.` plus the instance host |
 
-The three names must differ. The session routes catch every path on the instance and webview host, so the service host cannot be shared with them.
+The three names must differ. The session routes catch every path on the installation and webview host, so the service host cannot be shared with them.
 The instance host and the webview host should be subdomains of the service host, because the service sends `Strict-Transport-Security` with `includeSubDomains`.
 If they are not, see the HSTS setting in [Installing EduIDE](installing.md#hsts).
 

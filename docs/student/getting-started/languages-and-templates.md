@@ -1,9 +1,9 @@
 ---
-title: Languages and Starter Templates
-description: Which languages EduIDE offers, what a starter template contains, and how formatting and spell checking work.
+title: Languages and Starter Projects
+description: Which languages EduIDE offers, what a starter project contains, and how formatting and spell checking work.
 ---
 
-# Languages and Starter Templates
+# Languages and Starter Projects
 
 ## Languages
 
@@ -24,25 +24,25 @@ Your installation may show only some of them.
 Each language comes in two editions.
 You rarely choose between them, because the way you start decides:
 
-- **Artemis edition.** It opens from an Artemis exercise through **Open online IDE**. It includes the Artemis view and Iris, the Artemis assistant. It does not appear as a tile on the start page.
-- **Standalone edition.** It opens from a tile on the start page. It has no Artemis view. Git credentials you enter are kept in memory for 3 hours.
+- **Artemis edition.** It opens from an Artemis exercise through **Open online IDE**. It includes the Artemis view and Iris, the Artemis assistant. It does not appear as a tile on the landing page.
+- **Standalone edition.** It opens from a tile on the landing page. It has no Artemis view. Git credentials you enter are kept in memory for 3 hours.
 
-Both editions have the same toolchain and the same starter templates.
+Both editions have the same toolchain and the same starter projects.
 See [Artemis or Standalone?](./artemis-or-standalone.md) for the differences, and [Private Git Repositories](../learning/private-repositories.md) for working with your own repository.
 
-## Starter templates
+## Starter projects
 
-When you start a language yourself from a tile, you can pick a starter template.
-It puts a small example project into your workspace, with tasks that run and test it.
-A template only fills an empty workspace.
+When you start a language yourself from a tile, you can pick a starter project.
+It puts a small example project into your project folder, with tasks that run and test it.
+A starter project only fills an empty project folder.
 If you pick one in a saved workspace that already has files, EduIDE does not replace them.
-If the session also clones a repository, the template is not applied, even in an empty workspace.
+If the session also clones a repository, the starter project is not applied, even in an empty project folder.
 
 Without a repository, each starter project has its own saved workspace.
 Picking **Node.js**, **Web** or **Empty project** gives three separate workspaces, and picking the same one again resumes it.
-With the next release, the entry under **Your environments** carries the name of the project template, for example "Web" or "Node.js".
+With the next release, the entry under **Your sessions** carries the name of the starter project, for example "Web" or "Node.js".
 
-| Language | Templates |
+| Language | Starter projects |
 |---|---|
 | Java 17, Java 25 | Maven, Gradle |
 | C | Make, Bazel |
@@ -76,4 +76,4 @@ The old **Live Preview** extension is no longer part of EduIDE. The preview does
 
 ## Next step
 
-Continue with the [Workspace Tour](./workspace-tour.md).
+Continue with the [IDE Tour](./workspace-tour.md).

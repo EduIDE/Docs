@@ -5,7 +5,7 @@ description: Looking at, stopping and cleaning up sessions and workspaces with k
 
 # Session Management
 
-Sessions and workspaces are Kubernetes objects. Users manage their own on the landing page: Start opens or resumes an environment, Delete stops it and deletes its files. Admins look at everything with `kubectl` and the admin panel.
+Sessions and workspaces are Kubernetes objects. Users manage their own on the landing page: Start opens or resumes a session, Delete stops it and deletes its files. Admins look at everything with `kubectl` and the admin panel.
 
 ## Admin panel
 
@@ -36,7 +36,7 @@ Kubernetes keeps events for about an hour.
 ## Timeouts
 
 A template sets three timeouts, default idle 60 minutes, warning 50 minutes, maximum 24 hours. Users get a warning in the IDE before the idle end. When one fires, the operator ends the session and deletes the pod.
-A temporary workspace is lost at that moment. A saved workspace stays.
+A temporary session is lost at that moment. A saved workspace stays.
 
 ## Stopping a session
 
@@ -56,7 +56,7 @@ kubectl -n <ns> get pods -l eduide.github.io/component=session
 kubectl -n <ns> get pods -l eduide.github.io/state=idle
 ```
 
-Idle pods belong to a pool and carry no user data. Claimed pods belong to a session. Never delete session pods by hand to free capacity.
+Idle instances belong to a pool and carry no user data. Claimed pods belong to a session. Never delete session pods by hand to free capacity.
 Lower the pool or delete the session instead.
 
 ## Workspaces

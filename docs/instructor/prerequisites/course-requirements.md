@@ -10,7 +10,7 @@ Before adopting EduIDE for a course, a few conditions should be true.
 ## Good prerequisites
 
 - the course has a defined toolchain
-- exercise environments can be standardized
+- exercise setups can be standardized
 - browser-based development is acceptable for the course format
 - staff are willing to work with a managed shared environment
 - the course team can run a realistic pilot before broad rollout
@@ -27,7 +27,7 @@ This does not automatically mean the course should adopt EduIDE, but it does mea
 ## Questions instructors should answer
 
 - Which languages and tools are required?
-- Which exercises need persistence between sessions? Temporary workspaces lose their files at the end of a session, so ask the platform team which environments offer saved workspaces.
+- Which exercises need persistence between sessions? Temporary sessions lose their files at the end of a session, so ask the admins which templates offer saved workspaces.
 - How important is local IDE freedom?
 - Do students need access to capabilities that a managed environment may restrict?
 - Is the course willing to adapt some workflows to gain consistency?

@@ -52,7 +52,7 @@ const features: Feature[] = [
   {
     iconColor: "teal",
     icon: <IconServer />,
-    title: "Consistent environments",
+    title: "Consistent IDEs",
     description:
       "Every student runs identical toolchains. What works for you works for the grader - every single time.",
   },

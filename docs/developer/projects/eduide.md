@@ -26,7 +26,7 @@ Every language ships in two **editions**, published as `ghcr.io/eduide/eduide/<l
 - **`artemis`** carries the Artemis extension (with Iris) for exercises launched from Artemis.
 - **`standalone`** has no Artemis extension. Students type their git credentials once, and the cache forgets them after three hours.
 
-Both editions carry Scorpio and `eduide-session`, the same toolchain and the same starter templates.
+Both editions carry Scorpio and `eduide-session`, the same toolchain and the same starter projects.
 
 | Language | Images |
 | --- | --- |
@@ -50,11 +50,11 @@ The base image ships the `eduide-session` extension, built from the [EduIDE-cont
 
 `scripts/check-required-plugins.sh` runs in every `ToolDockerfile` and fails the build if a language patch removes `scorpio` or `eduide-session`.
 
-## Project templates
+## Starter projects
 
-A template is a starter project that Scorpio copies into an empty workspace. Templates live in `images/<lang>/templates/<id>/`, and the folder name is the id. Each has a `template.json` with `label`, `description` and `order`. The optional `"needsNetwork": true` marks a template whose tasks download on first use. A folder without `template.json` is ignored.
+A starter project is an example project that Scorpio copies into an empty project folder. Starter projects live in `images/<lang>/templates/<id>/`, and the folder name is the id. Each has a `template.json` with `label`, `description` and `order`. The optional `"needsNetwork": true` marks a starter project whose tasks download on first use. A folder without `template.json` is ignored.
 
-| Image | Template ids |
+| Image | Starter project ids |
 | --- | --- |
 | `java-17-*`, `java-25-*` | `maven`, `gradle` |
 | `c-*` | `make`, `bazel` |
@@ -63,9 +63,9 @@ A template is a starter project that Scorpio copies into an empty workspace. Tem
 | `rust-*` | `cargo` |
 | `go-*` | `go` |
 
-`*` is the edition. A launch asks for a template with the key `TEMPLATE`. Scorpio copies `/home/theia/templates/<id>` into the workspace only if the workspace is empty and no `GIT_URI` is set.
+`*` is the edition. A launch asks for a starter project with the key `TEMPLATE`. Scorpio copies `/home/theia/templates/<id>` into the project folder only if it is empty and no `GIT_URI` is set.
 
-Every language image writes `/opt/eduide/template.json` with its templates and installed tools. CI copies it into the OCI annotation `io.eduide.template`, which the operator reads to fill the template information of the landing page.
+Every language image writes `/opt/eduide/template.json` with its starter projects and installed tools. CI copies it into the OCI annotation `io.eduide.template`, which the operator reads to fill the template information of the landing page.
 
 ## HTML preview
 
@@ -73,8 +73,8 @@ Live Preview does not work in the cloud. The images use Theia's mini browser. Ea
 
 ## Features in the IDE
 
-- **Workspace mode.** The status bar shows "Saved workspace" or "Temporary workspace". The IDE compares the device of the workspace folder with the device of `/`.
-- **Back to start page.** File > "Back to Start Page" returns to the landing page of the installation. The session keeps running.
+- **Start mode.** The status bar shows "Saved workspace" or "Temporary session". The IDE compares the device of the workspace folder with the device of `/`.
+- **Back to landing page.** File > "Back to Landing Page" returns to the landing page of the installation. The session keeps running.
 - **Experience levels.** Beginner, Advanced and Expert decide how much of the IDE a student sees. An exercise sets the starting level in `.vscode/eduide.json`. See [Customizable Features](/instructor/course-evaluation/customizable-features#experience-levels).
 - **Image version.** **Help > About** shows the container image and the build revision.
 
@@ -85,7 +85,7 @@ The Theia server has no authentication of its own, so every image binds it to `1
 ## CI checks
 
 - `build.yml` builds `base`, both edition bases and then the language images. The release tooling reads the image names from the matrix of the job `images`, so keep that job name and the flat entries.
-- The `smoke` job runs `scripts/smoke-test-image.sh <image> <edition>` on every image. It checks that the IDE answers on port 3000, that the required extensions are present, that the toolchain runs and that the Test task of every template passes without network. Templates marked `needsNetwork` run with network.
+- The `smoke` job runs `scripts/smoke-test-image.sh <image> <edition>` on every image. It checks that the IDE answers on port 3000, that the required extensions are present, that the toolchain runs and that the Test task of every starter project passes without network. Starter projects marked `needsNetwork` run with network.
 - The `Extension tests` workflow runs the unit tests of `theia-extensions/*` on pull requests.
 
 ## Local build

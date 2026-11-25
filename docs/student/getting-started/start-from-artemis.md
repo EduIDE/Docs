@@ -36,9 +36,9 @@ Ask your tutor.
 EduIDE clones your repository into the empty workspace.
 A **Preparing your workspace** notification shows the steps.
 The notification never shows passwords or tokens.
-If your workspace already has files from a different repository, EduIDE keeps them and shows the warning "The exercise was not cloned because this workspace already contains files".
-Push or back up your work first, then start a new environment to get the exercise. Empty the workspace only when nothing in it is needed.
-If the workspace already holds the exercise repository, EduIDE keeps it and skips the clone without a warning.
+If your project folder already has files from a different repository, EduIDE keeps them and shows the warning "The exercise was not cloned because this workspace already contains files".
+Push or back up your work first, then start a new session to get the exercise. Empty the project folder only when nothing in it is needed.
+If the project folder already holds the exercise repository, EduIDE keeps it and skips the clone without a warning.
 
 In Java exercises with Gradle, Artemis sessions prepare Gradle in the background by themselves.
 
@@ -51,10 +51,10 @@ If you open the same session in a second tab, it shows the same files and does n
 
 Exercises from Artemis can use a saved workspace or a temporary one, depending on your installation.
 The status bar shows which.
-With a saved workspace, open the start page and click **Start** on your exercise under **Your environments**, or start the exercise from Artemis again.
-With a temporary workspace, starting again gives you a new session with only the work you pushed before.
+With a saved workspace, open the landing page and click **Start** on your exercise under **Your sessions**, or start the exercise from Artemis again.
+With a temporary session, starting again gives you a new session with only the work you pushed before.
 See [When Your Session Ends](./session-timeout.md).
 
 ## Next step
 
-When the IDE opens, continue with the [Workspace Tour](./workspace-tour.md).
+When the IDE opens, continue with the [IDE Tour](./workspace-tour.md).
