@@ -144,6 +144,7 @@ The installation chart lists every value with its default in its `values.yaml`. 
 | `...config.capacity.exhaustedAfter` | How long a session waits for room before it fails (default 45 s). |
 | `...config.telemetry.otlpEndpoint` | OTLP endpoint for traces. |
 | `...config.rateLimit.launchesPerMinute` | Launch rate per user (default 10). |
+| `...config.feedback.*` | Optional feedback dialog in the IDE (default off). See [Feedback and Footer Links](../operations/feedback-and-footer.md). |
 | `templates` | The templates this deployment offers. |
 
 Image prepull on every IDE node (`placement.prepull.enabled`) matters: a cold start without it can wait for image pulls for a long time.

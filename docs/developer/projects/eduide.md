@@ -76,7 +76,24 @@ Live Preview does not work in the cloud. The images use Theia's mini browser. Ea
 - **Workspace mode.** The status bar shows "Saved workspace" or "Temporary workspace". The IDE compares the device of the workspace folder with the device of `/`.
 - **Back to start page.** File > "Back to Start Page" returns to the landing page of the installation. The session keeps running.
 - **Experience levels.** Beginner, Advanced and Expert decide how much of the IDE a student sees. An exercise sets the starting level in `.vscode/eduide.json`. See [Customizable Features](/instructor/course-evaluation/customizable-features#experience-levels).
+- **Report Issue and feedback.** **Help > Report Issue** opens the bug form of `EduIDE/EduIDE` with `installation` (the hostname) and `version` filled in. On installations that turned feedback on (`eduide.feedbackEnabled` is true), **Help > Send Feedback**, the command palette and a status bar item open a dialog that sends through the `eduide.feedback.send` command of the `eduide-session` extension. See [Feedback and Footer Links](/admins/operations/feedback-and-footer).
 - **Image version.** **Help > About** shows the container image and the build revision.
+
+## Issue forms
+
+`EduIDE/EduIDE` has the issue forms `bug_report.yml` and `feature_request.yml`. Links prefill a form with query parameters named after the field ids:
+
+| Field id | Content |
+|---|---|
+| `description` | What happened, or what you want |
+| `steps` | Steps to reproduce (bug form only) |
+| `installation` | Hostname of the installation |
+| `version` | EduIDE version |
+| `app-definition` | The template that was started |
+| `browser` | Browser and version |
+
+Example: `https://github.com/EduIDE/EduIDE/issues/new?template=bug_report.yml&installation=eduide.example.org&version=3.0.0`.
+Never put the session URL into a link. It can hold credentials.
 
 ## Security
 
