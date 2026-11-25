@@ -12,9 +12,9 @@ EduIDE is most useful for courses where the browser-based environment is part of
 EduIDE is usually a strong fit when:
 
 - students struggle with local setup and environment drift
-- many learners need a consistent toolchain
+- many students need a consistent toolchain
 - exercises depend on non-trivial tooling that is hard to install locally
-- course staff want a predictable environment during labs, tutorials, or exams
+- instructors want a predictable environment during labs, tutorials, or exams
 - fast onboarding matters more than local IDE freedom
 - the course already uses or seriously evaluates Artemis as its learning management system
 

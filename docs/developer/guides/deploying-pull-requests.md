@@ -1,11 +1,11 @@
 ---
 title: Deploying Pull Requests
-description: How to deploy preview images and preview charts from pull requests to a test environment.
+description: How to deploy preview images and preview charts from pull requests to a test installation.
 ---
 
 # Deploying Pull Requests
 
-Pull requests in the EduIDE repositories publish preview artifacts on each commit. You test them by deploying them to a test environment. Previews are never published as `latest`.
+Pull requests in the EduIDE repositories publish preview artifacts on each commit. You test them by deploying them to a test installation. Previews are never published as `latest`.
 
 ## Preview artifacts
 
@@ -21,21 +21,21 @@ Pull requests in the EduIDE repositories publish preview artifacts on each commi
 
 A `pr-<number>` tag moves with each commit. A node that already has the image can run a stale one when the pull policy is `IfNotPresent`. For a test deployment, pin the image by digest (`pr-<number>@sha256:...`) or use an immutable tag such as `sha-<7>`.
 
-## Deploy to a test environment
+## Deploy to a test installation
 
 The EduIDE Deployment repository is the one place where preview artifacts from several repositories meet. Open Actions and run **Deploy environment** (`deploy-dispatch.yml`).
 
 | Input | Meaning |
 | --- | --- |
-| `environment` | The target, named after its host name. Use a test environment for previews. |
-| `chart_version` | Chart version of the installation chart. Blank uses the environment's own pin. |
+| `environment` | The target, named after its host name. Use a test installation for previews. |
+| `chart_version` | Chart version of the installation chart. Blank uses the installation's own pin. |
 | `control_plane_tag` | Tag for the control plane images. Blank uses the chart default. |
 | `ide_tag` | Tag for the IDE images. |
 | `landing_page_tag` | Tag for the landing page. |
 | `clean_install` | Purge the namespace first. Never allowed for production. |
 | `dry_run` | Render and diff only, apply nothing. |
 
-The input names follow the environment settings of the workflow. Check the workflow file in EduIDE Deployment for the exact names if they differ.
+The input names follow the settings of the workflow. Check the workflow file in EduIDE Deployment for the exact names if they differ.
 
 Leave an input blank to keep the chart's own version for that part. Never use one tag for everything: a pull request builds only the images of its own repository, and a tag that does not exist puts the other pods into `ImagePullBackOff`.
 
@@ -60,11 +60,11 @@ Set several inputs in one run to test pull requests of different repositories to
 2. Wait until the build has published the preview images or charts.
 3. Run `Deploy environment` with `dry_run` on.
 4. Open the diff in the run summary. The workflow ignores a failing `helm diff`, so a green dry run does not prove the diff worked. If the diff shows an error or is empty without reason, stop and fix the inputs. Otherwise run it again with `dry_run` off.
-5. Validate the result in the test environment, for example one warm and one cold start and a launch from an Artemis link.
+5. Validate the result in the test installation, for example one warm and one cold start and a launch from an Artemis link.
 
 ## Without the workflow
 
-You can also install a preview yourself on a test cluster that you own. Point the chart values at the `pr-<number>` image tags and install the preview chart version with `helm upgrade --install <release> "$EDUIDE_CHART" --version <preview version> ...`. The variable `EDUIDE_CHART` is defined in the chart reference of [Installing](/admins/install/installing). Use the isolated `KUBECONFIG` rule from [Local Development](/developer/guides/local-development) and deploy only to test environments.
+You can also install a preview yourself on a test cluster that you own. Point the chart values at the `pr-<number>` image tags and install the preview chart version with `helm upgrade --install <release> "$EDUIDE_CHART" --version <preview version> ...`. The variable `EDUIDE_CHART` is defined in the chart reference of [Installing](/admins/install/installing). Use the isolated `KUBECONFIG` rule from [Local Development](/developer/guides/local-development) and deploy only to test installations.
 
 ## Quick reference
 

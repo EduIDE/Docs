@@ -17,12 +17,12 @@ edit in EduIDE  ->  commit and push  ->  Artemis builds and tests  ->  result
        +----------------------------------------------------------------+
 ```
 
-The push is the only handoff. Everything before it is local to the workspace and
+The push is the only handoff. Everything before it is local to the session and
 invisible to Artemis; everything after it is Artemis's business.
 
 This has one practical consequence that dominates all others: **students who do
 not push get no feedback.** Not delayed feedback - none. The most common cause
-of "the system didn't tell me anything" is work that never left the workspace.
+of "the system didn't tell me anything" is work that never left the session.
 
 ## What to say in week one
 

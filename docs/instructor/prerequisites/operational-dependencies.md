@@ -9,11 +9,11 @@ Even if the course fit is good, adoption depends on platform operations.
 
 ## Dependencies instructors should know
 
-- Your university or a platform team runs an EduIDE installation. Someone must own it, including upgrades and incident response.
-- The platform team decides which templates are offered, how large the warm pools are, and the timeouts and retention.
+- Your university or its admins run an EduIDE installation. Someone must own it, including upgrades and incident response.
+- The admins decide which templates are offered, how large the pools are, and the timeouts and retention.
 - Login goes through your institution's identity provider, so its availability is part of the student experience.
 - Your Artemis server and repository host must be on the installation's list of trusted hosts.
-- Support responsibilities between course staff and platform operators must be clear before the first lab.
+- Support responsibilities between instructors and admins must be clear before the first lab.
 
 ## Why this matters
 

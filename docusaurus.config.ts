@@ -3,7 +3,7 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'edu ide - The IDE built for learning',
+  title: 'EduIDE - The IDE built for learning',
   tagline: 'A browser-based development environment designed for education',
   favicon: 'img/logo.svg',
 
@@ -149,6 +149,10 @@ const config: Config = {
         {
           title: 'More',
           items: [
+            {
+              label: 'Glossary',
+              to: '/glossary',
+            },
             {
               label: 'Imprint',
               to: '/imprint',

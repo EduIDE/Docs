@@ -32,7 +32,7 @@ Compare `claimed`, `podReady`, `agentReady` and `ready` with the creation time. 
 | Slow phase | Causes | Checks and fixes |
 |---|---|---|
 | Created to `claimed` | Operator not running or not leader, API server slow | `kubectl -n <ns> get lease eduide-operator`, operator logs, restart the operator |
-| `claimed` | No idle pod, conflicts | See [Pool is empty](#pool-is-empty) |
+| `claimed` | No idle instance, conflicts | See [Pool is empty](#pool-is-empty) |
 | `podReady` | Image pull, unschedulable pod, volume binding, slow IDE start | `kubectl -n <ns> describe pod ide-<instance>`, enable prepull, check the StorageClass |
 | `agentReady` | Agent not ready, claim call fails | `kubectl -n <ns> logs ide-<instance> -c agent`, NetworkPolicy from operator to port 8081 |
 | `ready` to usable IDE | Gateway not programmed, login redirect, IDE start | Check the HTTPRoute, see [Gateway backlog](#gateway-backlog) and [Authz errors](#authz-errors) |
@@ -67,7 +67,7 @@ kubectl -n <ns> get events --sort-by=.lastTimestamp | tail -30
 | Target too low for the burst | `idleReady` 0, `targetIdle` equals `minIdle` | Raise `minIdle` before an exam. Check that the pool scaler runs |
 | Pool scaler down or overridden | Annotation `scaler-override` on the `IDEPool`, no scaler pod | Restart the scaler or remove the annotation |
 | Capacity pressure | `eduide_capacity_pressure` is 1, pods unschedulable | Add nodes or quota. The operator keeps pools of that node pool at 0 idle and fails sessions with `capacity-exhausted` after 45 seconds |
-| Idle pods not ready | `idleStarting` high | Image pull slow or failing: check the registry and enable prepull. Agent not ready: check the agent log |
+| Idle instances not ready | `idleStarting` high | Image pull slow or failing: check the registry and enable prepull. Agent not ready: check the agent log |
 | `maxInstances` reached | `replicas` equals `maxInstances` | Raise `maxInstances` |
 | Session has a saved workspace | `startStrategy: cold` | Expected, saved workspaces always start cold |
 
@@ -75,7 +75,7 @@ Emergency scale without the scaler: `kubectl -n <ns> scale idepool <pool> --repl
 
 ## Authz errors
 
-Symptom: users get 403 or a redirect loop on `https://<instance host>/<instance>/`, or nobody reaches a new IDE.
+Symptom: users get 403 or a redirect loop on `https://<instance host>/<instance id>/`, or nobody reaches a new IDE.
 
 ```bash
 kubectl -n <ns> get pods -l app.kubernetes.io/component=authz
@@ -90,7 +90,7 @@ Log lines carry the decision reason and the trace id, never tokens or cookie val
 |---|---|---|
 | 403 for the owner right after launch | Session not yet `Ready` in the authz cache | Wait a second. If it stays, check RBAC and `/readyz` of authz |
 | 403 for the owner, session `Ready` | `spec.owner` differs from the token claim `oidc.userClaim` | Compare the claim in the token with `spec.owner`. Fix `userClaim` or the Keycloak mapper |
-| 403 for everyone | authz internal error (it fails closed) or the instance is being deleted | Read the authz logs, restart authz, check `oidc.issuerURL` and `oidc.gatewayClientID` |
+| 403 for everyone | authz internal error (it fails closed) or the session is being deleted | Read the authz logs, restart authz, check `oidc.issuerURL` and `oidc.gatewayClientID` |
 | 403 for a foreign user | Expected | None |
 | Redirect loop | Token invalid: wrong audience, issuer mismatch, clock skew | Check the gateway client id and the node time |
 | Redirect loop after login | Cookie not sent: wrong cookie domain or too large | Check the SecurityPolicy cookie domain covers the instance host |

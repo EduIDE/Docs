@@ -15,12 +15,12 @@ The control plane lives in [EduIDE-control-plane](https://github.com/EduIDE/EduI
 
 | Component | Role |
 | --- | --- |
-| **operator** | Reconciles the custom resources `IDETemplate`, `IDEPool`, `IDESession` and `IDEWorkspace`. Owns pods, services, routes, token Secrets and volumes. Claims prewarmed instances, enforces timeouts and capacity. One active replica. |
+| **operator** | Reconciles the custom resources `IDETemplate`, `IDEPool`, `IDESession` and `IDEWorkspace`. Owns pods, services, routes, token Secrets and volumes. Claims idle instances, enforces timeouts and capacity. One active replica. |
 | **service** | REST API `/api/v1` for the landing page and integrations. Verifies the OIDC token, validates launch data against the template allowlist and creates the session. Streams progress as Server-Sent Events. Creates no pods. |
 | **authz** | Envoy ext_authz service. Lets only the owner of a `Ready` session reach its IDE. Fails closed. |
 | **agent** | Sidecar in every session pod and the only door into it. Checks the instance token, holds the launch data in memory and reports activity. |
-| **pool scaler** | Sets how many idle IDEs each warm pool keeps ready. |
-| **landing page** | Start tiles, "Your environments" overview, public status page and the read-only admin panel. |
+| **pool scaler** | Sets how many idle instances each pool keeps ready. |
+| **landing page** | Start tiles, "Your sessions" overview, public status page and the read-only admin panel. |
 | **`eduide-session`** | IDE extension. Reads the launch data from the agent on the loopback interface and sends activity heartbeats. It replaces the old data injection and session monitor extensions. |
 
 External systems are Envoy Gateway (version 1.8 or newer), an OIDC provider such as Keycloak and the Kubernetes API. Artemis opens the landing page with a link, see [External Session Launch](./external-integration).
@@ -34,11 +34,11 @@ The API group is `eduide.github.io`, version `v1alpha1`.
 | Object | Role |
 | --- | --- |
 | `IDETemplate` | A kind of IDE: image, resources, timeouts, persistence, allowed launch keys. `listed: true` shows it as a start tile, `listed: false` hides it (reachable by name from Artemis links and the API). |
-| `IDEPool` | Optional warm pool of idle instances of one template. See [Session Prewarming](./session-prewarming). |
+| `IDEPool` | Optional pool of idle instances of one template. See [Session Prewarming](./session-prewarming). |
 | `IDEWorkspace` | A saved workspace: the files of one user on a volume. It is deleted a set time after last use (`retention`, 14 days by default, per deployment, template or workspace). |
 | `IDESession` | One running IDE of one user. Phases are `Pending`, `Starting`, `Ready` and `Failed`. |
 
-Persistence is `none` (temporary workspace, starts from scratch) or `volume` (saved workspace). The service writes intent as custom resources and the operator turns it into pods, routes and volumes.
+Persistence is `none` (temporary session, starts from scratch) or `volume` (saved workspace). The service writes intent as custom resources and the operator turns it into pods, routes and volumes.
 
 The full field list is in the [data model](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/architecture/data-model.md).
 
@@ -51,7 +51,7 @@ A deployment serves three host names:
 | Host | Serves |
 | --- | --- |
 | service (landing page) host | The landing page on `/` and the API on `/api/` |
-| instance host | One route per session, `https://<instance host>/<instance>/` with a random instance id |
+| instance host | One route per session, `https://<instance host>/<instance id>/` with a random instance id |
 | webview host | Webviews and the mini browser, one fixed name, by default `webview.<instance host>` |
 
 Each host needs one certificate for its own name. A session never needs a certificate of its own.

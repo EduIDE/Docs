@@ -50,23 +50,23 @@ Confirm that the program output matches the expected sorted order.
 
 ## Other languages
 
-For Python, JavaScript, C, Rust and Go, a starter template brings the tasks that run your project. The Java templates have tasks too.
+For Python, JavaScript, C, Rust and Go, a starter project brings the tasks that run your project. The Java starter projects have tasks too.
 In the Beginner level, the **Run** button in the toolbar starts them (the default task of the Web template is **Start**).
 In the Advanced and Expert levels, you can also pick a task from the **Terminal** menu.
 
 ## Help while you type
 
 The spell checker, Error Lens and, in Python, Ruff help you while you type.
-See [Languages and Starter Templates](../getting-started/languages-and-templates.md#what-every-language-includes).
+See [Languages and Starter Projects](../getting-started/languages-and-templates.md#what-every-language-includes).
 
 ## Preview an HTML page
 
 Open the `.html` file and click **Open Preview to the Side** in the editor toolbar.
-See [Languages and Starter Templates](../getting-started/languages-and-templates.md).
+See [Languages and Starter Projects](../getting-started/languages-and-templates.md).
 
 ## Git credentials
 
-In the standalone edition (environments you start from a tile), the IDE remembers your Git credentials in memory for 3 hours.
+In the standalone edition (sessions you start from a tile), the IDE remembers your Git credentials in memory for 3 hours.
 After that it forgets them and asks again on the next push.
 A new session also starts without them.
 See [Private Git Repositories](./private-repositories.md) for creating an access token and pushing.

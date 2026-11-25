@@ -1,4 +1,4 @@
-// Cuts the raw recordings at their marks and writes the start page videos and posters.
+// Cuts the raw recordings at their marks and writes the landing page videos and posters.
 //   node scripts/record-showcase/encode.mjs        (after record.mjs light and dark)
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";

@@ -13,7 +13,7 @@ EduIDE has real advantages and real constraints.
 - Some native or specialized tooling does not fit.
 - A browser IDE depends on the network and on the platform. Outages affect the whole course.
 - The environment is managed, so unrestricted machine access is not the default.
-- Sessions stop after 60 minutes without input (the default), and temporary workspaces lose their files then.
+- Sessions stop after 60 minutes without input (the default), and temporary sessions lose their files then.
 - Saved workspaces are deleted after a number of days without use (14 by default). They are not a backup.
 - Sessions with a saved workspace always start cold, so they start more slowly than a warm start.
 - The experience level resets to the starting level in every new session. `.vscode/eduide.json` sets the starting level, and students pick another level again.
@@ -23,7 +23,7 @@ EduIDE has real advantages and real constraints.
 
 ## Teaching implications
 
-- Students must push before a long break, because a temporary workspace keeps nothing.
+- Students must push before a long break, because a temporary session keeps nothing.
 - Some assignments may need adaptation.
 - Some students prefer local tools and will not be satisfied.
 - Operational incidents affect the course more than in a local-only setup.

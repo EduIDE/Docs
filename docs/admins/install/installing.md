@@ -179,7 +179,7 @@ The chart has an optional TLS bridge for that case (`oidcBridge.enabled` and `oi
 ### HSTS
 
 The service and the landing page send `Strict-Transport-Security: max-age=31536000; includeSubDomains`.
-If the instance and webview hosts are not subdomains of the service host, set `config.security.hstsIncludeSubdomains: false` for the service and `hstsIncludeSubdomains: false` in the landing page config.
+If the installation and webview hosts are not subdomains of the service host, set `config.security.hstsIncludeSubdomains: false` for the service and `hstsIncludeSubdomains: false` in the landing page config.
 
 ### Salt for pseudonymous ids
 

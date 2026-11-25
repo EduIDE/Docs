@@ -10,18 +10,18 @@ An instructor pilot can answer a lot of useful questions if it is scoped realist
 ## Things a pilot can validate well
 
 - whether students can start coding without local setup friction
-- whether the provided IDE environment is good enough for the course workflow
+- whether the provided IDE is good enough for the course workflow
 - whether assignments, tools, and compilers fit into the managed environment
-- whether staff can support learners more effectively with a shared environment
-- whether startup time, session timeouts and the saved or temporary workspace fit the course format
+- whether staff can support students more effectively with a shared environment
+- whether startup time, session timeouts and the choice of saved workspace or temporary session fit the course format
 - whether the Artemis link opens and clones the exercise on your Artemis version
 
 ## Questions worth testing directly
 
 - Can students reach a usable coding environment fast enough?
-- Does the provided environment reduce onboarding overhead?
+- Does the provided IDE reduce onboarding overhead?
 - Do the required languages and tools work inside the browser IDE?
-- Can tutors and instructors reproduce student issues more easily?
+- Can instructors and tutors reproduce student issues more easily?
 - Does the platform fit the course’s lab or exam workflow?
 
 ## What makes a pilot useful

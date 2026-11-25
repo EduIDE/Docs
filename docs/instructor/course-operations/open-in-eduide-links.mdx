@@ -7,7 +7,7 @@ import OpenInEduideGenerator from '@site/src/components/OpenInEduide';
 
 # Open a Repository from a Link
 
-A link can start EduIDE with a Git repository already cloned into the workspace.
+A link can start EduIDE with a Git repository already cloned into the project folder.
 Put it in a README, on a slide or in your course page, and students get the code with one click.
 This works without Artemis; for Artemis exercises, the Artemis button does the same thing.
 
@@ -20,10 +20,10 @@ The page builds the link and a badge for your README, all in your browser.
 
 ## What students see
 
-1. The link opens the start page of the installation.
-2. Students who are not logged in log in first, then the environment starts without another click.
-3. The repository is cloned into the workspace root, so its `.vscode` settings, tasks and launch configurations apply.
-4. The environment list shows it under the title you chose, or under the repository name.
+1. The link opens the landing page of the installation.
+2. Students who are not logged in log in first, then the session starts without another click.
+3. The repository is cloned into the project folder, so its `.vscode` settings, tasks and launch configurations apply.
+4. The session list shows it under the title you chose, or under the repository name.
 
 With a saved workspace, each student gets one workspace per template and repository.
 Opening the link again reopens that workspace with the student's changes and does not clone again.
@@ -36,13 +36,13 @@ If the repository has a Gradle wrapper, the IDE asks before it runs the build to
 | Rule | Why |
 |---|---|
 | `https` only | The installation refuses any other scheme |
-| Hosted on an allowed Git host (today `github.com`, `gitlab.com`, `codeberg.org`) | Each installation keeps a list of hosts it clones from (`allowedHosts`, see [Templates and Pools](/admins/platform/templates-and-pools)). Ask the platform team to add your host, for example your own GitLab, Gitea or Forgejo server. A link to another host shows an error that names the host and starts nothing |
+| Hosted on an allowed Git host (today `github.com`, `gitlab.com`, `codeberg.org`) | Each installation keeps a list of hosts it clones from (`allowedHosts`, see [Templates and Pools](/admins/platform/templates-and-pools)). Ask the admins to add your host, for example your own GitLab, Gitea or Forgejo server. A link to another host shows an error that names the host and starts nothing |
 | Public | A link must never carry a password or token. For private repositories, see [below](#private-repositories) |
 | No query or fragment in the URL | The installation refuses them |
 
 ## Link parameters
 
-The link is the start page of the installation with these query parameters:
+The link is the landing page of the installation with these query parameters:
 
 ```text
 https://<installation>/?appDef=<template>&gitUri=<repository URL, URL-encoded>&title=<title>&persistence=<volume|none>
@@ -52,7 +52,7 @@ https://<installation>/?appDef=<template>&gitUri=<repository URL, URL-encoded>&t
 |---|---|
 | `appDef` | The template, for example `java-17-standalone`. Use the standalone templates for links outside Artemis |
 | `gitUri` | The repository URL, URL-encoded |
-| `title` | Optional. The name in the student's environment list |
+| `title` | Optional. The name in the student's session list |
 | `persistence` | Optional. `volume` for a saved workspace, `none` for a temporary one. Ignored when the template does not offer it; without it the template default applies |
 
 A branch or tag (`gitRef`) is not supported yet: the clone uses the default branch.
@@ -75,7 +75,7 @@ A student who may not push to the repository pushes to a fork: fork it on the Gi
 ## Private repositories
 
 A link cannot open a private repository, because it never carries credentials.
-Instead, the student starts an environment with an **Empty project** and clicks **Clone Repository** in the Source Control view.
+Instead, the student starts a session with an **Empty project** and clicks **Clone Repository** in the Source Control view.
 EduIDE asks for the repository URL and, when the host asks for a login, for a username and an access token (see [Push changes](#push-changes); a token with write permission also covers the later push).
 The repository is cloned into the workspace root, so its settings and tasks apply, and in the standalone templates the token stays in memory for three hours, so pushes do not ask again.
 Point students to [Private Git Repositories](/student/learning/private-repositories), which explains tokens and the clone step for them.

@@ -14,6 +14,8 @@ It starts browser IDEs on Kubernetes, keeps the files of students and lets only 
 EduIDE is an independent product. Hosts, realms and node labels live in the values of each installation, not in the code. Where a page names a university, it is an example.
 :::
 
+Terms such as template, session and workspace are defined in the [glossary](/glossary).
+
 ## What lives here
 
 - Project overviews for the repositories in the EduIDE ecosystem

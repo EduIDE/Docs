@@ -209,7 +209,7 @@ It is optional.
 1. Create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. For small tokens give it the mappers `username` and `email` and the same scope setup as `eduide`.
 2. Give it the valid redirect URI `https://instance.eduide.example.org/oauth2/callback` and no web origin.
 3. Copy the secret from its tab **Credentials** into a file and create `eduide-oidc` from it, as above.
-4. Remove the instance redirect URI from the client `eduide`.
+4. Remove the redirect URI of the instance host from the client `eduide`.
 5. Set `oidc.gatewayClientID: eduide-gateway`. `oidc.clientIDs` and the landing page keep `eduide`.
 
 The admin role stays on the client `eduide`, because the admin API checks the access token of the landing page.
