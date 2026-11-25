@@ -21,6 +21,7 @@ Without the salt nobody can map a pseudonym back to a name. Keep the salt (`user
 | Workspace files | PVC (saved workspaces) | Retention after last use, default 14 days, plus 24 hours grace |
 | Files of temporary workspaces | Pod filesystem | Until the session ends |
 | Launch data (repository URL, token) | Secret owned by the session | Deleted with the session. Memory only in the agent |
+| Launch data (repository URL, token) | Secret owned by the session | Deleted with the session. Memory only in the agent |
 | Logs | stdout of the components | Whatever your log stack keeps. Set it |
 | Metrics | Prometheus | Your Prometheus retention. No user labels |
 | Traces | Jaeger or your OTLP target | Your target retention |
