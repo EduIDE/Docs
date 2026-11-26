@@ -43,7 +43,7 @@ Git accounts need an identity provider with **two clients**:
 
 | Client | Value in the chart | Type | Redirect URIs |
 |---|---|---|---|
-| Gateway | `oidc.gatewayClientID` | Confidential, standard flow only | Exact URIs on the instance host and the webview host, with no wildcard: `https://<instance host>/oauth2/callback` and `https://<webview host>/oauth2/callback` |
+| Gateway | `oidc.gatewayClientID` | Confidential, standard flow only | One exact URI on the instance host, with no wildcard: `https://<instance host>/oauth2/callback`. The webview host needs no entry: the gateway's callback exists only on the instance host |
 | Landing page and API | `oidc.clientIDs` | Public, standard flow only, PKCE method `S256` required | On the service host only (`https://<service host>/*`). None on the instance or webview host |
 
 Rules for both clients: direct access grants, implicit flow and service accounts are off, and the web origins are only the client's own hosts.
@@ -59,7 +59,7 @@ With two clients, this fails twice. The gateway client is confidential, so a cod
 
 A shared client is the setup of every existing installation, and the [Keycloak guide](../install/keycloak.md) describes it.
 Do not keep it when you enable Git accounts.
-That guide still calls the separate gateway client optional and does not list the webview host. This page goes first for Git accounts.
+That guide still calls the separate gateway client optional. This page goes first for Git accounts.
 
 :::danger The existing shared client stays public
 Every existing installation uses one client, commonly `eduide`, for the landing page and for the gateway.
@@ -77,13 +77,13 @@ The steps are ordered so that no login breaks at any point.
 This migration is not tested on a real installation yet.
 Do it on a test installation first.
 
-1. **Create the new gateway client.** In the realm, create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. Add the exact valid redirect URIs `https://<instance host>/oauth2/callback` and `https://<webview host>/oauth2/callback`. Give it the same mappers and claims as the existing client, see the [Keycloak guide](../install/keycloak.md). Nothing uses it yet. Verify: the existing landing page login and IDE login still work.
+1. **Create the new gateway client.** In the realm, create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. Add the exact valid redirect URI `https://<instance host>/oauth2/callback`. Give it the same mappers and claims as the existing client, see the [Keycloak guide](../install/keycloak.md). Nothing uses it yet. Verify: the existing landing page login and IDE login still work.
 2. **Store its secret.** Copy the secret from the tab **Credentials** of the new client into the Secret that `oidc.clientSecretName` names (`eduide-oidc`, key `client-secret`), see [Client secrets](#client-secrets) for how to create a Secret without printing it. The gateway still uses the public client, and Keycloak ignores the secret for it, so nothing changes yet. Verify: both logins still work.
 3. **Switch the gateway.** Set `oidc.gatewayClientID` to the new client. Keep `oidc.clientIDs` and the landing page on the existing public client. Deploy. Verify in a private browser window: sign in on the landing page, start a session and open the IDE, which signs in through the gateway.
-4. **Remove the old redirect URIs.** Only after step 3 works, remove the redirect URIs and web origins of the instance host and the webview host from the existing public client. Keep `https://<service host>/*` and its web origin. Do not touch **Client authentication**. Verify: sign in on the landing page again, and open a session that was already running.
+4. **Remove the old redirect URIs.** Only after step 3 works, remove the redirect URI and web origin of the instance host from the existing public client, and those of the webview host if your installation added them. Keep `https://<service host>/*` and its web origin. Do not touch **Client authentication**. Verify: sign in on the landing page again, and open a session that was already running.
 
 To go back, set `oidc.gatewayClientID` to the shared client and deploy.
-If step 4 is done, first restore the redirect URIs and web origins of the instance host and the webview host on the shared client.
+If step 4 is done, first restore the redirect URI and web origin of the instance host on the shared client.
 The Secret needs no change, because the public client ignores it.
 
 The landing page client and `oidc.clientIDs` stay as they are.
