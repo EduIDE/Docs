@@ -217,7 +217,7 @@ Follow the steps in this order.
 Every login keeps working after each step, because the shared client keeps its redirect URI until the gateway no longer uses it.
 
 1. Create the new client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. Give it the valid redirect URI `https://instance.eduide.example.org/oauth2/callback` and no web origin. For small tokens give it the mappers `username` and `email` and the same scope setup as `eduide`. Nothing uses the client yet. Check that Keycloak saved it.
-2. Copy the secret from its tab **Credentials** into a file and replace the Secret `eduide-oidc` from it, as in [step 8](#8-fill-in-the-values). Never put the secret into Git. Check that the Secret exists and its `client-secret` is not empty.
+2. Copy the secret from its tab **Credentials** into a file and replace the Secret `eduide-oidc` from it. `kubectl create secret` fails when the Secret exists, so apply a generated manifest instead: `kubectl -n eduide-<deployment> create secret generic eduide-oidc --from-file=client-secret=<path-to-file> --dry-run=client -o yaml | kubectl apply -f -`. Never put the secret into Git. Check that the Secret exists and its `client-secret` is not empty.
 3. Set `oidc.gatewayClientID: eduide-gateway` and deploy. `oidc.clientIDs` and the landing page keep `eduide`. Check in a private window: sign in on the landing page, start a session and open the IDE.
 4. Only after step 3 works, remove the redirect URI `https://instance.eduide.example.org/oauth2/callback` from the client `eduide`. Keep its entries for the landing page and leave **Client authentication** off. Check again in a private window: sign in, start a session, open the IDE.
 
