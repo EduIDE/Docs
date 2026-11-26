@@ -28,7 +28,7 @@ Older releases have none of these values, and the manual access token way of the
 ## Prerequisites
 
 - An EduIDE chart version with Git accounts, and IDE images from the same EduIDE release. The images must carry `eduide-session` 0.2.0 or later and Scorpio 3.5.0 or later. The release that ships Git accounts includes both. Without them, Git in a session does not reach the proxy.
-- Two Keycloak clients, one for the gateway and one for the landing page. This is a security requirement, see [Two Keycloak clients](#two-keycloak-clients).
+- Two Keycloak clients: a new confidential one for the gateway and the existing public one for the landing page. The existing client must stay public, see the warning below. This is a security requirement, see [Two Keycloak clients](#two-keycloak-clients).
 - The landing page is served on `hosts.service`. The redirect of the OAuth flow ends on `https://<hosts.service>/git/callback`, which is a route of the landing page. Only `/api/` on that host may route to the service.
 - A CNI that enforces NetworkPolicies. The proxy and the internal port of the service rely on them, see [Session Hardening](../security/session-hardening.md).
 - Outbound HTTPS from the cluster to each provider host: from the service (OAuth, account lookup, preflight) and from the `git-proxy` (Git traffic). The default egress of the `git-proxy` allows DNS, the internal port of the service and HTTPS to the internet without private and link-local ranges.
@@ -57,12 +57,36 @@ It reads the code from the redirect, exchanges it for a token and calls the API 
 It could then approve other private repositories for itself.
 With two clients, this fails twice. The gateway client is confidential, so a code exchange needs its secret, and only the gateway holds it. The landing page client has no redirect URI on the IDE hosts, so the script cannot read its code. The API also rejects the ID token of the gateway client, because the API accepts tokens of `oidc.clientIDs` only.
 
-A shared client is the simple setup that some pages of this guide describe.
-Do not use it when you enable Git accounts.
-The Keycloak guide on this site describes a shared client as possible until its update lands. Git accounts need the two-client setup.
-To split an existing installation, create the confidential gateway client in the realm, store its secret in the Secret that `oidc.clientSecretName` names, set `oidc.gatewayClientID` to its id and roll out.
-Then remove the redirect URIs on the instance host and the webview host, and the web origins of those hosts, from the existing public client. Otherwise script in a session can still get a token that the API accepts. The landing page client and `oidc.clientIDs` stay as they are.
-Keycloak setup is in the [Keycloak guide](../install/keycloak.md).
+A shared client is the setup of every existing installation, and the [Keycloak guide](../install/keycloak.md) describes it.
+Do not keep it when you enable Git accounts.
+That guide still calls the separate gateway client optional and does not list the webview host. This page goes first for Git accounts.
+
+:::danger The existing shared client stays public
+Every existing installation uses one client, commonly `eduide`, for the landing page and for the gateway.
+That client is **public**: **Client authentication** is off, and it must stay off.
+The landing page is a browser app and has no secret.
+If you switch **Client authentication** on for that client, every login on the landing page fails with `unauthorized_client`, and no student can start a session.
+This happened on two production installations on 2026-11-25, after someone read an error text as an instruction.
+Keycloak ignores the gateway's client secret for a public client, so that error never means "turn Client authentication on".
+The confidential client in this guide is a **new** one, for the gateway only.
+:::
+
+### Split an existing installation
+
+The steps are ordered so that no login breaks at any point.
+This migration is not tested on a real installation yet.
+Do it on a test installation first.
+
+1. **Create the new gateway client.** In the realm, create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. Add the exact valid redirect URIs `https://<instance host>/oauth2/callback` and `https://<webview host>/oauth2/callback`. Give it the same mappers and claims as the existing client, see the [Keycloak guide](../install/keycloak.md). Nothing uses it yet. Verify: the existing landing page login and IDE login still work.
+2. **Store its secret.** Copy the secret from the tab **Credentials** of the new client into the Secret that `oidc.clientSecretName` names (`eduide-oidc`, key `client-secret`), see [Client secrets](#client-secrets) for how to create a Secret without printing it. The gateway still uses the public client, and Keycloak ignores the secret for it, so nothing changes yet. Verify: both logins still work.
+3. **Switch the gateway.** Set `oidc.gatewayClientID` to the new client. Keep `oidc.clientIDs` and the landing page on the existing public client. Deploy. Verify in a private browser window: sign in on the landing page, start a session and open the IDE, which signs in through the gateway.
+4. **Remove the old redirect URIs.** Only after step 3 works, remove the redirect URIs and web origins of the instance host and the webview host from the existing public client. Keep `https://<service host>/*` and its web origin. Do not touch **Client authentication**. Verify: sign in on the landing page again, and open a session that was already running.
+
+To go back, set `oidc.gatewayClientID` to the shared client and deploy.
+If step 4 is done, first restore the redirect URIs and web origins of the instance host and the webview host on the shared client.
+The Secret needs no change, because the public client ignores it.
+
+The landing page client and `oidc.clientIDs` stay as they are.
 
 ## Step 1: GitHub
 
@@ -302,7 +326,7 @@ Then test with a student account that owns a private repository:
 3. In the terminal of the session, check that Git is rewired: `git config --global --get-regexp insteadof` shows a rule from `https://<git-host>/` to the local agent on port 8082.
 4. Commit, push, and check that the push arrives at the host.
 5. Run `git ls-remote https://<git-host>/<owner>/<other-private-repository>.git`. Expected: a refusal that says the account is used only for the repository of the session, or a message with an approval link when approvals are on. A refusal here is correct.
-6. If your Artemis VCS host is also a provider, start an Artemis exercise and push from it. This works: the clone URL of an Artemis launch carries the VCS token, so Git does not rewrite it and goes to the host directly, as before. A student who clones without that token goes through the proxy and needs a connected account for a private repository. The sources do not verify what Scorpio does with the credentials in a real IDE, so test it once.
+6. If your Artemis VCS host is also a provider, start an Artemis exercise and push from it. This works: the clone URL of an Artemis start carries the VCS token, so Git does not rewrite it and goes to the host directly, as before. A student who clones without that token goes through the proxy and needs a connected account for a private repository. The sources do not verify what Scorpio does with the credentials in a real IDE, so test it once.
 7. Look at the metric `eduide_gitproxy_requests_total` and the `git-proxy` log, see [Operating](#operating).
 
 ### When something fails
@@ -428,7 +452,7 @@ A longer clone or push during a rollout can break, and the student retries.
 | Request counts, bytes, durations | Prometheus, no user label | Your Prometheus retention |
 
 Tokens never appear in launch data, custom resource specs, logs, traces, metrics or status.
-The preflight before a launch sends one request to the provider host and never logs the URL or the credential.
+The preflight before a start sends one request to the provider host and never logs the URL or the credential.
 The login, id, name and no-reply e-mail of an account are personal data. Mention the feature in the privacy statement of your installation and agree it with your data protection office.
 Disconnect revokes the token at the host and deletes the Secret. The sweep runs hourly on every service replica.
 

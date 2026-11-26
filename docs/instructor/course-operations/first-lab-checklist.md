@@ -10,8 +10,8 @@ description: A short checklist before the first lab on EduIDE.
 - Confirm the languages and editions your installation offers.
 - Check that your Artemis includes pull request #14702 (not yet merged upstream). Without it, the exercise does not clone itself.
 - Ask for your Artemis server and repository host to be on the list of trusted hosts.
-- Decide: saved or temporary workspace, and the retention.
-- Tell the platform team the date, the time and the number of students.
+- Decide: saved workspace or temporary session, and the retention.
+- Tell the admins the date, the time and the number of students.
 
 ## A few days before
 

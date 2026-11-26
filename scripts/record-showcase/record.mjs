@@ -1,4 +1,4 @@
-// Records the start page showcase videos, in light and in dark mode.
+// Records the landing page showcase videos, in light and in dark mode.
 //
 //   node scripts/record-showcase/record.mjs     # log in by hand in the window it opens, then wait
 //   node scripts/record-showcase/encode.mjs     # trims, joins and writes static/videos and posters
@@ -30,8 +30,8 @@ await loginPage
   .first()
   .waitFor({ timeout: 600_000 });
 fs.mkdirSync(OUT, { recursive: true });
-// The recording deletes its environments at the end; refuse to run next to environments it did not start.
-// The environment list arrives over its own event stream, a moment after the tiles.
+// The recording deletes its sessions at the end; refuse to run next to sessions it did not start.
+// The session list arrives over its own event stream, a moment after the tiles.
 await loginPage.waitForTimeout(3000);
 if (
   await loginPage
@@ -42,7 +42,7 @@ if (
 ) {
   await browser.close();
   throw new Error(
-    `The account already has environments on ${LANDING}. Delete or keep them, but record with an account that has none.`,
+    `The account already has sessions on ${LANDING}. Delete or keep them, but record with an account that has none.`,
   );
 }
 await login.storageState({ path: STATE });
@@ -121,8 +121,8 @@ try {
       }
     }
 
-    // Deletes every environment of the account. Safe only because the run refuses to start while the account has any.
-    async function deleteRecordingEnvironments(page) {
+    // Deletes every session of the account. Safe only because the run refuses to start while the account has any.
+    async function deleteRecordingSessions(page) {
       await page.goto(LANDING);
       await page
         .getByRole("button", { name: /^Start / })
@@ -218,7 +218,7 @@ try {
     }
 
     try {
-      // Hero: start page -> Java 17 with Maven -> the IDE with the template.
+      // Hero: landing page -> Java 17 with Maven -> the IDE with the template.
       let ideUrl;
       await recorded("hero-1", async (page, mark) => {
         await page.goto(LANDING);
@@ -273,7 +273,7 @@ try {
       // Open from a link: the link starts Java 17 with the repository cloned into the workspace.
       const link = `${LANDING}?${new URLSearchParams({ appDef: "java-17-standalone", gitUri: CLONE_REPO, title: "vscode-remote-try-java" })}`;
       let linkUrl;
-      await scratch(deleteRecordingEnvironments);
+      await scratch(deleteRecordingSessions);
       await recorded("open-from-link-1", async (page, mark) => {
         await page.goto(link);
         await page.getByText("Request accepted").waitFor({ timeout: 60_000 });
@@ -306,10 +306,10 @@ try {
         await pause(page, 4000);
       });
     } finally {
-      // Also after a failed step, so no recording environment stays behind.
-      await scratch(deleteRecordingEnvironments).catch((e) =>
+      // Also after a failed step, so no recording session stays behind.
+      await scratch(deleteRecordingSessions).catch((e) =>
         console.error(
-          `cleanup failed, delete the environments by hand: ${e.message}`,
+          `cleanup failed, delete the sessions by hand: ${e.message}`,
         ),
       );
       await ctx.close();

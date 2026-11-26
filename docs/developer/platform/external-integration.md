@@ -18,7 +18,7 @@ There are two ways in:
 - **A link to the landing page.** The external system builds a URL. The browser logs the student in and the landing page launches the session. This is the integration for Artemis.
 - **A direct API call.** A system that holds a user's OIDC token calls `POST /sessions` of the [REST API](./api-specification).
 
-Both end in the same `IDESession`. The browser reaches the IDE at `https://<instance host>/<instance>/`.
+Both end in the same `IDESession`. The browser reaches the IDE at `https://<instance host>/<instance id>/`.
 
 ## The link contract
 
@@ -33,7 +33,7 @@ https://<landing host>/?appDef=<template>&artemisUrl=<Artemis URL>#artemisToken=
 | `artemisToken` | fragment | Artemis token of the student |
 | `gitUri` | fragment | Repository URL, with the student's VCS token as user info: `https://<user>:<vcs-token>@<artemis host>/git/...` |
 | `gitRef` | query | Optional branch or ref, sent as `GIT_REF` only if the template allows that key (the templates of the `eduide` chart do not) |
-| `title` | query | Optional title shown in "Your environments" |
+| `title` | query | Optional title shown in "Your sessions" |
 | `persistence` | query | Optional `none` or `volume`, if the template allows it |
 
 The token and the repository URL go in the **URL fragment**, which browsers do not send to servers. The service and the proxies in front of it never see the fragment.
@@ -97,9 +97,9 @@ The response is a `Session`. Follow `GET /sessions/{name}/events` until the phas
 
 A launch with the same template and workspace returns the same session. For a saved workspace, the workspace name derives from user, template and repository, so opening the same repository again returns to the same files. Scorpio never clears a workspace that already has content. If its repository differs from `GIT_URI`, it skips the clone and warns the student.
 
-## Project templates
+## Starter projects
 
-Without a repository, a launch can ask for a starter project with the key `TEMPLATE`, for example `maven`, `gradle`, `python`, `cargo` or `go`. The ids come from the images, see [EduIDE](/developer/projects/eduide#project-templates). If `GIT_URI` is set, it wins.
+Without a repository, a launch can ask for a starter project with the key `TEMPLATE`, for example `maven`, `gradle`, `python`, `cargo` or `go`. The ids come from the images, see [EduIDE](/developer/projects/eduide#starter-projects). If `GIT_URI` is set, it wins.
 
 ## How the values reach the IDE
 

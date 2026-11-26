@@ -9,7 +9,7 @@ Every session has a workspace. A template allows one or both persistence modes:
 
 | Mode (`persistence`) | Name for users | Storage | Start |
 |---|---|---|---|
-| `none` | Temporary workspace | The container filesystem. Gone when the session ends | Warm or cold |
+| `none` | Temporary session | The container filesystem. Gone when the session ends | Warm or cold |
 | `volume` | Saved workspace | A PersistentVolumeClaim, owned by an `IDEWorkspace` | Always cold |
 
 The default mode is `none`. A user who opens a saved workspace again gets the same files.

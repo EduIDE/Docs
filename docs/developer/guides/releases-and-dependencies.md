@@ -52,7 +52,7 @@ The checklist is in [`docs/development/release.md`](https://github.com/EduIDE/Ed
 5. `images.yml` builds, scans and pushes the images, and `release.yml` pushes the charts. Watch them and act on failures.
 6. Verify on a local kind cluster with the isolated `KUBECONFIG`.
 
-Upgrade order for operators: the cluster chart first per cluster (additive only), then the installation chart per deployment. State it in the release notes. Never roll a productive deployment during an exam period.
+Upgrade order for admins: the cluster chart first per cluster (additive only), then the installation chart per deployment. State it in the release notes. Never roll a productive deployment during an exam period.
 
 ## The IDE images release
 

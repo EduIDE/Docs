@@ -64,7 +64,7 @@
 
 /* You can override the default Infima variables here. */
 :root {
-  /* Same accent as the EduIDE start page (EduIDE-control-plane landing-page/src/App.css). */
+  /* Same accent as the EduIDE landing page (EduIDE-control-plane landing-page/src/App.css). */
   --ifm-color-primary: #2f6fde;
   --ifm-color-primary-dark: #2a64c8;
   --ifm-color-primary-darker: #285ebd;
@@ -117,7 +117,7 @@
   }
 }
 
-/* Dark mode uses the palette of the EduIDE start page (EduIDE-control-plane landing-page/src/App.css). */
+/* Dark mode uses the palette of the EduIDE landing page (EduIDE-control-plane landing-page/src/App.css). */
 [data-theme='dark'] {
   --ifm-color-primary: #5b93f0;
   --ifm-color-primary-dark: #4383ee;

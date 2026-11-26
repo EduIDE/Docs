@@ -44,7 +44,7 @@ const cards: OssCard[] = [
     icon: <IconSourceControl />,
     title: "Open source",
     description:
-      "The platform is open source and freely available. Institutions can fork the repository to customize the environment or audit the security and data practices directly.",
+      "The platform is open source and freely available. Institutions can fork the repository to customize the IDE or audit the security and data practices directly.",
   },
   {
     iconColor: "orange",

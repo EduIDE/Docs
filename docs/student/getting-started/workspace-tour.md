@@ -1,9 +1,9 @@
 ---
-title: Workspace Tour
+title: IDE Tour
 description: Quick orientation of the EduIDE layout.
 ---
 
-# Workspace Tour
+# IDE Tour
 
 This is the minimal layout you need to start working.
 
@@ -20,16 +20,16 @@ This is the minimal layout you need to start working.
 
 The status bar at the bottom right shows where your files live:
 
-- **Temporary workspace** (warning colour): files are lost when the session ends
+- **Temporary session** (warning colour): files are lost when the session ends
 - **Saved workspace**: files stay and come back when you resume
 
-Read [Saved and Temporary Workspaces](./workspaces.md) and [When Your Session Ends](./session-timeout.md) to know what stays.
+Read [Saved Workspaces and Temporary Sessions](./workspaces.md) and [When Your Session Ends](./session-timeout.md) to know what stays.
 
-## Back to the start page
+## Back to the landing page
 
-Choose **File -> Back to Start Page** to return to the start page.
-Your session keeps running, and you find it under **Your environments**.
-See [Your Environments](./your-environments.md).
+Choose **File -> Back to Landing Page** to return to the landing page.
+Your session keeps running, and you find it under **Your sessions**.
+See [Your Sessions](./your-environments.md).
 
 ## If something is missing
 
@@ -57,9 +57,9 @@ Open the terminal and run:
 pwd
 ```
 
-You should see your workspace path (usually `/home/project`).
+You should see your project folder path (usually `/home/project`).
 
-![Terminal showing the workspace path after pwd](/img/student/getting-started/workspace-tour-03-terminal-pwd.png)
+![Terminal showing the project folder path after pwd](/img/student/getting-started/workspace-tour-03-terminal-pwd.png)
 
 ## Next step
 

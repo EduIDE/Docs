@@ -19,7 +19,7 @@ Without the salt nobody can map a pseudonym back to a name. Keep the salt (`user
 |---|---|---|
 | Owner name on sessions and workspaces | Object spec in Kubernetes | While the object exists. Sessions go when they end, workspaces after their retention |
 | Workspace files | PVC (saved workspaces) | Retention after last use, default 14 days, plus 24 hours grace |
-| Files of temporary workspaces | Pod filesystem | Until the session ends |
+| Files of temporary sessions | Pod filesystem | Until the session ends |
 | Launch data (repository URL, token) | Secret owned by the session | Deleted with the session. Memory only in the agent |
 | Git account (encrypted token, login, id, name, no-reply e-mail) | Secret per user and provider, only with [Git accounts](../platform/git-accounts.md) | Until disconnect, or after the inactivity period (default 90 days). A use in a session restarts the period |
 | Logs | stdout of the components | Whatever your log stack keeps. Set it |
@@ -32,7 +32,7 @@ Without the salt nobody can map a pseudonym back to a name. Keep the salt (`user
 
 Spans carry the session name, template, persistence, start strategy, pool, node pool, instance id, error code and the pseudonymous `eduide.user_id`.
 They do not carry names, e-mail addresses, tokens, repository URLs or launch data values. The control plane runs a test that searches logs and spans for a planted token.
-Jaeger is not public. Give access only to operators.
+Jaeger is not public. Give access only to admins.
 
 ## Recommended retention
 

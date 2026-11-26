@@ -15,8 +15,8 @@ Both read their entries from the exercise itself, so you set them up once in the
 
 Both files go into the `.vscode` folder at the root of the repository students work in.
 In Artemis, put them into the template repository of the exercise, next to `.vscode/eduide.json` if you use one.
-Artemis copies them into every student repository, and EduIDE clones that repository into the workspace.
-EduIDE reads the files when the workspace opens and again whenever they appear or change, so it does not matter that the clone finishes after the IDE has started.
+Artemis copies them into every student repository, and EduIDE clones that repository into the project folder.
+EduIDE reads the files when the IDE opens and again whenever they appear or change, so it does not matter that the clone finishes after the IDE has started.
 A button without entries hides itself.
 
 ## The Run button: `tasks.json`
@@ -111,8 +111,8 @@ The JavaScript image ships `tsx`, which runs TypeScript without a build step.
 
 ### Other languages
 
-The starter templates of every image contain a working `tasks.json` and `launch.json`.
-Copy them as a starting point: start a session with the language from the start page, pick the matching template and open the `.vscode` folder.
+The starter projects of every image contain a working `tasks.json` and `launch.json`.
+Copy them as a starting point: start a session with the language from the landing page, pick the matching starter project and open the `.vscode` folder.
 The debugger for a language is only available in the image of that language.
 
 ## Common mistakes

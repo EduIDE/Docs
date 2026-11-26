@@ -42,7 +42,7 @@ The full list is the [metrics contract](https://github.com/EduIDE/EduIDE-control
 | `eduide_session_failures_total{template,code}` | Failed sessions by error code |
 | `eduide_claim_total{template,result}` | Claims: `claimed`, `conflict`, `empty` |
 | `eduide_pool_instances{pool,state}`, `eduide_pool_target_idle{pool}` | Idle and claimed instances, the scaler's target |
-| `eduide_capacity_pressure{node_pool}`, `eduide_capacity_evictions_total` | A pod cannot be placed, idle pods deleted to make room |
+| `eduide_capacity_pressure{node_pool}`, `eduide_capacity_evictions_total` | A pod cannot be placed, idle instances deleted to make room |
 | `eduide_sessions{template,phase}`, `eduide_workspaces{phase}` | Counts by phase |
 | `eduide_launch_total{template,result}` | Launches: `created`, `existing`, `rejected` |
 | `eduide_api_requests_total`, `eduide_api_request_seconds` | API load and latency |

@@ -30,7 +30,7 @@ The OpenAPI 3.1 file is the source of truth: [`api/openapi/v1.yaml`](https://git
 | `GET` | `/workspaces` | Saved workspaces of the calling user |
 | `POST` | `/workspaces` | Create a saved workspace (get-or-create) |
 | `DELETE` | `/workspaces/{name}` | Delete a workspace and its files, stopping a running session first |
-| `GET` | `/me/overview` | Workspaces and sessions merged for the "Your environments" view |
+| `GET` | `/me/overview` | Workspaces and sessions merged for the "Your sessions" view |
 | `GET` | `/me/overview/events` | Event stream of the overview |
 | `GET` | `/admin/...` | Read-only admin API, see below |
 
@@ -43,7 +43,7 @@ There is no performance endpoint and no endpoint that changes configuration. Adm
 | Field | Meaning |
 | --- | --- |
 | `template` | Name of the template, required |
-| `persistence` | `none` (temporary workspace) or `volume` (saved workspace), within what the template allows |
+| `persistence` | `none` (temporary session) or `volume` (saved workspace), within what the template allows |
 | `workspace` | Start on an existing workspace of the user, implies `volume` |
 | `data` | Launch data, only keys on the template allowlist, at most 8 KiB in total |
 | `display` | Non-secret `title` and `source` shown in the overview |

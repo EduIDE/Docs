@@ -1,12 +1,12 @@
 ---
 title: Templates and Pools
-description: Which IDEs a deployment offers, how templates are defined in the chart values, and how warm pools keep start times short.
+description: Which IDEs a deployment offers, how templates are defined in the chart values, and how pools keep start times short.
 ---
 
 # Templates and Pools
 
-A template (`IDETemplate`) is a kind of IDE: image, resources, port, environment, timeouts, persistence and the allowlist for launch data.
-A pool (`IDEPool`) keeps idle, prewarmed instances of one template, so a launch claims one instead of starting a pod.
+A template (`IDETemplate`) is a kind of IDE: image, resources, port, environment variables, timeouts, persistence and the allowlist for launch data.
+A pool (`IDEPool`) keeps idle instances of one template, so a launch claims one instead of starting a pod.
 Both are rendered from the chart values. Edit the values and run `helm upgrade`; do not edit the objects by hand.
 
 This section replaces the application definitions of EduIDE 2.x.
@@ -41,10 +41,10 @@ templates:
 | `resources`, `port`, `placement`, `buildSystems` | Pod resources, IDE port, node placement, build systems the template accepts |
 | `pool` | `minIdle` and `maxInstances`. No pool means every launch is a cold start |
 
-An unlisted template still shows its name and logo in "Your environments".
+An unlisted template still shows its name and logo in "Your sessions".
 `templateDefaults` applies to every template first: resources, user id, timeouts (idle 60 minutes, warning 50 minutes, maximum 24 hours) and persistence (`none` and `volume` allowed, default `none`).
 
-## Warm pools
+## Pools
 
 | Field | Owner | Meaning |
 |---|---|---|

@@ -20,7 +20,7 @@ The view starts on the dashboard.
 
 ## 3) Open your exercise
 
-Under **Current Workspace Exercise**, click the exercise that is open in your workspace.
+Under **Current Workspace Exercise**, click the exercise that is open in your session.
 Make sure the title matches the exercise you work on.
 
 Below the exercise, a status line shows whether there is anything to submit:
@@ -52,7 +52,7 @@ Then the result appears in the same view:
 ## 6) Before a long break
 
 Pushing and submitting are what keep your work.
-In a **Temporary workspace** your files are lost whenever the session ends, for example after 60 minutes without input (the default) or at the session lifetime limit, so submit before you leave.
+In a **Temporary session** your files are lost whenever the session ends, for example after 60 minutes without input (the default) or at the maximum session duration, so submit before you leave.
 See [When Your Session Ends](../getting-started/session-timeout.md).
 
 ## Done when

@@ -39,7 +39,7 @@ export default function HeroSection() {
           loop
           muted
           playsInline
-          aria-label="edu ide - browser-based IDE demo"
+          aria-label="EduIDE - browser-based IDE demo"
           className={styles.heroImage}
         />
       </div>

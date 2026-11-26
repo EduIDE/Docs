@@ -35,7 +35,7 @@ export default function LanguagesSection() {
       <div className={styles.inner}>
         <div className={styles.textCol}>
           <h2 id="languages-heading">
-            Ready-to-code environments
+            Ready-to-code IDEs
           </h2>
           <p>
             We provide pre-configured browser IDEs with full toolchain support and LSP-powered editing right out of the box.

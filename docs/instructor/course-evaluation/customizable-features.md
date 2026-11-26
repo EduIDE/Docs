@@ -5,14 +5,14 @@ description: What parts of EduIDE can be adapted to the needs of a specific cour
 
 # Customizable Features
 
-EduIDE is not limited to one fixed IDE setup. A major strength of the platform is that the course environment can be adapted quite deeply before students ever log in.
+EduIDE is not limited to one fixed IDE setup. A major strength of the platform is that the IDE setup can be adapted quite deeply before students ever log in.
 
 ## The Most Important Customization Point: The IDE Image
 
 The image that runs the IDE can be customized for the course.
-A university builds its own image from one of the published edition images (`<language>-artemis` or `<language>-standalone`) and the platform team offers it as a template.
+A university builds its own image from one of the published edition images (`<language>-artemis` or `<language>-standalone`) and the admins offer it as a template.
 
-This is the most important fact instructors should understand when evaluating EduIDE, because it means the platform is not only configurable at the UI level. The actual environment students receive can be prepared ahead of time to match the course closely.
+This is the most important fact instructors should understand when evaluating EduIDE, because it means the platform is not only configurable at the UI level. The actual IDE students receive can be prepared ahead of time to match the course closely.
 
 That includes:
 
@@ -28,11 +28,11 @@ That includes:
 - debug profiles
 - preinstalled extensions
 
-In other words, the full IDE environment can be adapted to the course at hand before teaching starts.
+In other words, the full IDE can be adapted to the course at hand before teaching starts.
 
 ## What This Means in Practice
 
-Course teams can prepare environments so that students start with a setup that already reflects the intended workflow.
+Course teams can prepare templates so that students start with a setup that already reflects the intended workflow.
 
 This can include:
 
@@ -41,7 +41,7 @@ This can include:
 - course-specific editor settings
 - installed language support and helper extensions
 - starter scripts and utility commands
-- environment conventions that match the assignment structure
+- setup conventions that match the assignment structure
 
 The value of this is not only convenience. It also reduces setup drift between students and decreases the amount of time spent debugging local environment differences.
 
@@ -49,11 +49,11 @@ The value of this is not only convenience. It also reduces setup drift between s
 
 ### Tooling and Runtime Environment
 
-The language and tool stack can be adapted to the course, including additional local tools that should be available inside the IDE environment.
+The language and tool stack can be adapted to the course, including additional local tools that should be available inside the IDE.
 
 ### Editor and Workspace Configuration
 
-The editing experience can be prepared in advance through settings, extensions, and workspace structure so students land in an environment that already fits the course.
+The editing experience can be prepared in advance through settings, extensions, and workspace structure so students land in an IDE that already fits the course.
 
 ### Run and Debug Experience
 
@@ -73,7 +73,7 @@ EduIDE can show students more or less of the IDE. There are three levels:
 Levels exist for every language: Java, C, Python, JavaScript, Rust and Go.
 Students can switch level at any time from the status bar or the **Experience Levels** menu, and the change applies immediately, without reloading.
 
-The tasks offered by the **Run** button in the toolbar follow the level. In the starter templates:
+The tasks offered by the **Run** button in the toolbar follow the level. In the starter projects:
 
 - **Beginner** offers Run, which builds and runs the program (Start in the Web template).
 - **Advanced** adds Lint for Python, Vet for Go, Clippy for Rust and Valgrind for C.
@@ -95,13 +95,13 @@ The file sets the starting level only. Once a student picks a level themselves, 
 
 Without the file, students start at **Expert**. The level is a setting inside the session, so it resets to the starting level in every new session, also with a saved workspace.
 
-### Starter Templates
+### Starter Projects
 
-For students who start a language themselves, the image ships starter templates, for example Maven or Gradle for Java, Make or Bazel for C, and Cargo for Rust.
+For students who start a language themselves, the image ships starter projects, for example Maven or Gradle for Java, Make or Bazel for C, and Cargo for Rust.
 A template is a small example project with its tasks for running and testing it.
-Students pick one when they start a tile on the start page.
+Students pick one when they start a tile on the landing page.
 Exercises you start from Artemis bring their own files, so no template applies.
-See [Languages and Starter Templates](/student/getting-started/languages-and-templates) for the list.
+See [Languages and Starter Projects](/student/getting-started/languages-and-templates) for the list.
 
 ### Formatting and Spell Checking
 
@@ -110,7 +110,7 @@ In Python, Ruff formats files on save at the Beginner and Advanced levels, also 
 
 ### Course-Specific Defaults
 
-The environment can be shaped so that the default behavior already matches course expectations rather than requiring every student to adapt the IDE manually.
+The template can be shaped so that the default behavior already matches course expectations rather than requiring every student to adapt the IDE manually.
 
 ## What This Does Not Automatically Mean
 
@@ -120,6 +120,6 @@ It does mean, however, that EduIDE can be tailored much more strongly than a gen
 
 ## Why This Matters For Evaluation
 
-When evaluating EduIDE, instructors should not only look at the default demo environment. They should ask what the course-specific environment could look like once it is prepared properly.
+When evaluating EduIDE, instructors should not only look at the default demo template. They should ask what the course-specific template could look like once it is prepared properly.
 
-That is often the more relevant question, because the real value of EduIDE comes from delivering a prepared environment that matches the teaching concept rather than from showing a generic IDE in the browser.
+That is often the more relevant question, because the real value of EduIDE comes from delivering a prepared IDE that matches the teaching concept rather than from showing a generic IDE in the browser.

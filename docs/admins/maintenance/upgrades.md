@@ -94,6 +94,6 @@ Make sure no old session mounts the PVC before a new session uses it.
 
 - A session URL is `https://<instance host>/<instance id>/`, with a random id.
 - Webviews run on one fixed host, `webview.<instance host>`.
-- The landing page shows "Your environments" and "Start new" tiles, and File, "Back to Start Page" leads back from the IDE.
+- The landing page shows "Your sessions" and "Start new" tiles, and File, "Back to Landing Page" leads back from the IDE.
 - Artemis passes the token in the URL fragment. This needs Artemis pull request [ls1intum/Artemis#14702](https://github.com/ls1intum/Artemis/pull/14702), which is not yet merged upstream. The old `?artemisToken` query is still read during the migration and logged as deprecated.
 - Saved workspaces expire after last use, not after their creation date.

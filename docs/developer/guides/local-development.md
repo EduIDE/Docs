@@ -45,7 +45,7 @@ make e2e        # kind cluster with Envoy Gateway, Calico, Keycloak; full matrix
 make e2e-down   # remove the cluster
 ```
 
-The suite covers the four variants (temporary or saved workspace, with or without a warm pool), the gateway checks (owner, foreign user, free instance, no cookie), the NetworkPolicy negative test, timeouts and a search of logs and spans for leaked launch data. No CI workflow runs it, so run it before a release. `EG_VERSION=v1.10.0 make e2e` runs it against another Envoy Gateway version. See the [testing guide](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/development/testing.md).
+The suite covers the four variants (temporary session or saved workspace, with or without a pool), the gateway checks (owner, foreign user, free instance, no cookie), the NetworkPolicy negative test, timeouts and a search of logs and spans for leaked launch data. No CI workflow runs it, so run it before a release. `EG_VERSION=v1.10.0 make e2e` runs it against another Envoy Gateway version. See the [testing guide](https://github.com/EduIDE/EduIDE-control-plane/blob/main/docs/development/testing.md).
 
 :::danger Isolate your KUBECONFIG
 The default kube context on your machine can be a real cluster. Before any command that touches a local cluster, point `KUBECONFIG` at the kind cluster and check it:
@@ -77,6 +77,6 @@ For extension work, a local Theia application gives the fastest feedback. The `e
 
 `npm ci`, `npm run build` and `bash scripts/check-docs.sh` in the Docs repository.
 
-## When a shared test environment is better
+## When a shared test installation is better
 
-Use a test environment instead of a local cluster when the change depends on the real gateway, a real identity provider, real storage classes or real load. Deploy preview artifacts as described in [Deploying Pull Requests](/developer/guides/deploying-pull-requests).
+Use a test installation instead of a local cluster when the change depends on the real gateway, a real identity provider, real storage classes or real load. Deploy preview artifacts as described in [Deploying Pull Requests](/developer/guides/deploying-pull-requests).

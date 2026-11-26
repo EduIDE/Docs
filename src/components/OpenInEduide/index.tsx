@@ -69,7 +69,7 @@ export default function OpenInEduideGenerator(): React.ReactElement {
         <input
           id="oie-title"
           type="text"
-          placeholder="Shown in the student's environment list"
+          placeholder="Shown in the student's session list"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
