@@ -27,7 +27,7 @@ Both editions have the same languages, tools and starter projects.
 ## Which one do I need?
 
 - Working on an Artemis exercise: use the Artemis edition. Start it from Artemis, see [Start from Artemis](./start-from-artemis.md).
-- Working with your own or your team's repository on GitHub or GitLab: use the standalone edition, see [Private Git Repositories](../learning/private-repositories.md).
+- Working with your own or your team's repository on GitHub or GitLab: use the standalone edition, see [Private Git Repositories](../learning/private-repositories.md). If your start page has a **Git accounts** section, see [Connect Your GitHub or GitLab Account](../learning/connect-git-account.md).
 - Practising without a repository: use the standalone edition, see [First Start](./first-start.md).
 
 ## Saved or temporary: a second, separate choice

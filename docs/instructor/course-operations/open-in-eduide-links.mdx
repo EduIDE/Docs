@@ -36,8 +36,8 @@ If the repository has a Gradle wrapper, the IDE asks before it runs the build to
 | Rule | Why |
 |---|---|
 | `https` only | The installation refuses any other scheme |
-| Hosted on an allowed Git host (today `github.com`, `gitlab.com`, `codeberg.org`) | Each installation keeps a list of hosts it clones from (`allowedHosts`, see [Templates and Pools](/admins/platform/templates-and-pools)). Ask the admins to add your host, for example your own GitLab, Gitea or Forgejo server. A link to another host shows an error that names the host and starts nothing |
-| Public | A link must never carry a password or token. For private repositories, see [below](#private-repositories) |
+| Hosted on an allowed Git host (today `github.com`, `gitlab.com`, `codeberg.org`) | Each installation keeps a list of hosts it clones from (`allowedHosts`, see [Templates and Pools](/admins/platform/templates-and-pools)). Ask the admins to add your host, for example your own GitLab, Gitea or Forgejo server. With Git accounts, the hosts that students can connect count as allowed too. A link to another host shows an error that names the host and starts nothing |
+| Public, unless the installation has [Git accounts](#git-accounts) | A link must never carry a password or token. For private repositories, see [Git accounts](#git-accounts) and [below](#private-repositories) |
 | No query or fragment in the URL | The installation refuses them |
 
 ## Link parameters
@@ -50,7 +50,7 @@ https://<installation>/?appDef=<template>&gitUri=<repository URL, URL-encoded>&t
 
 | Parameter | Meaning |
 |---|---|
-| `appDef` | The template, for example `java-17-standalone`. Use the standalone templates for links outside Artemis |
+| `appDef` | The template, for example `java-17-standalone`. Use the standalone templates for links outside Artemis. With Git accounts, a link without a usable `appDef` still works: the student picks a template, see [Git accounts](#git-accounts) |
 | `gitUri` | The repository URL, URL-encoded |
 | `title` | Optional. The name in the student's session list |
 | `persistence` | Optional. `volume` for a saved workspace, `none` for a temporary one. Ignored when the template does not offer it; without it the template default applies |
@@ -72,9 +72,44 @@ GitHub, GitLab and most Gitea and Forgejo servers do not accept the account pass
 On GitHub, an outside collaborator of an organization repository cannot use a fine-grained token for it; such a student creates a classic token (Personal access tokens > Tokens (classic)) with the `repo` scope.
 A student who may not push to the repository pushes to a fork: fork it on the Git host, then run `git remote add fork <fork URL>` and `git push fork`.
 
+## Git accounts
+
+:::info Available from the EduIDE release that ships Git accounts
+Git accounts are not released yet, and only installations that enable them offer them.
+Ask the admins whether yours does.
+Everything below this notice applies only then. Without Git accounts, use [Private repositories](#private-repositories) and [Push changes](#push-changes).
+:::
+
+With Git accounts, a student connects a GitHub or GitLab account once.
+After that, your links to private repositories open, and the student pushes without typing a token.
+The link format stays the same, and a link never carries a credential.
+Students find the steps in [Connect Your GitHub or GitLab Account](/student/learning/connect-git-account).
+The installation side is in [Git Accounts](/admins/platform/git-accounts).
+
+What changes for you:
+
+- **Private repositories open.** Before the session starts, EduIDE checks the repository. A student who is not connected sees "This repository needs your `<Host>` account" with a **Connect** button, and the start continues on the same link after the connection. A student whose account cannot see the repository sees "No access to this repository". Give students access on the Git host first, for example through your organisation or group. A repository that does not exist looks the same as a private one without access.
+- **`appDef` is optional.** A link with a `gitUri` and no `appDef`, or one the installation does not know, shows **Open `<repository>`** and a list of the templates that can open a repository. The student chooses one. The picker never passes Artemis data on. A link with neither parameter opens the start page.
+- **Pushing needs nothing.** The student pushes to the repository the session was started with, with no username and no token. A student who works on a fork starts from a link to the fork, or approves the fork for the session: Git prints a link, the student opens it and clicks **Allow** on the start page. The installation decides whether approvals exist and whether they cover pushing.
+- **Other hosts keep the manual way.** For a host that students cannot connect (for example a Gitea or Forgejo server), Git asks for a username and an access token as before, see [Push changes](#push-changes).
+- **Commit identity.** The session sets the commit name and e-mail from the connected account (a no-reply address) when it starts. A student who connects later starts a new session to get it.
+
+What does not work with Git accounts:
+
+- **No Git LFS.** A repository with LFS files does not work in a session.
+- **No platform API.** The account serves Git commands only.
+- **A renamed or moved repository** needs its new address in the link. EduIDE does not follow redirects.
+- **Repository paths** have 2 to 10 parts, and no part starts with a dot.
+- **Other repositories** than the one of the session use no account. Public ones work. A private one needs an approval or its own session.
+- **A disconnect or a removed approval** takes up to 5 seconds to reach a running session.
+- **Artemis and exams.** The feature is on in every session of an installation that enables it, including Artemis and exam sessions. A switch per template is tracked in [EduIDE-control-plane issue 32](https://github.com/EduIDE/EduIDE-control-plane/issues/32). Ask the admins whether exam sessions should have it.
+
+The link builder above creates links with a template and works for these installations too.
+Its list of hosts comes from the allowed hosts, so it may refuse a provider host that is not in that list.
+
 ## Private repositories
 
-A link cannot open a private repository, because it never carries credentials.
+Without Git accounts, a link cannot open a private repository, because it never carries credentials.
 Instead, the student starts a session with an **Empty project** and clicks **Clone Repository** in the Source Control view.
 EduIDE asks for the repository URL and, when the host asks for a login, for a username and an access token (see [Push changes](#push-changes); a token with write permission also covers the later push).
 The repository is cloned into the workspace root, so its settings and tasks apply, and in the standalone templates the token stays in memory for three hours, so pushes do not ask again.
@@ -98,3 +133,6 @@ The badge image is hosted with this documentation at `https://eduide.github.io/D
 
 The "Open in EduIDE" browser extension adds an **Open in EduIDE** button to GitHub repository pages and builds the link for you.
 A button for GitLab and Gitea pages is tracked in [EduIDE-Browser-Extension#2](https://github.com/EduIDE/EduIDE-Browser-Extension/pull/2).
+
+With Git accounts, the button appears on every host that your installation announces as a Git account provider, not only on GitHub, and a private repository asks the student to connect first.
+This needs the extension changes in [#2](https://github.com/EduIDE/EduIDE-Browser-Extension/pull/2) and [#3](https://github.com/EduIDE/EduIDE-Browser-Extension/pull/3), which are not released yet.

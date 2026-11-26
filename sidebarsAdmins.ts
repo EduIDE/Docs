@@ -22,6 +22,7 @@ const sidebars: SidebarsConfig = {
         'platform/access-control',
         'platform/templates-and-pools',
         'platform/storage-and-workspaces',
+        'platform/git-accounts',
       ],
     },
     {

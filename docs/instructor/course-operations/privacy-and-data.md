@@ -14,6 +14,7 @@ Check them before the semester.
 - **Login.** Students sign in through the login of your institution. The platform uses a user id from it to show each student only their own sessions and workspaces.
 - **Workspaces.** Files live in the student's session. Only the owner can open it. The files of a temporary session are deleted when it ends. A saved workspace is deleted after the retention time.
 - **Artemis tokens and repository links.** They reach the session only, are deleted with it and do not appear in logs.
+- **Git accounts.** From the EduIDE release that ships them, and only if your installation enables them, students may connect a GitHub or GitLab account. The token stays in the control plane, encrypted, and never enters the session. See [Open a Repository from a Link](./open-in-eduide-links.mdx#git-accounts).
 - **Logs and traces.** They hold a pseudonymous user id and the session id, not names or e-mail addresses. The installation decides how long it keeps traces; ask the admins.
 
 ## What you should do
