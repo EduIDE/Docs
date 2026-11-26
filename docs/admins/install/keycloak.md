@@ -205,11 +205,29 @@ Then set the values from the table at the top and continue with [Installing EduI
 
 A second, confidential client for the gateway lets Keycloak check the gateway's secret.
 It is optional.
+The upcoming Git accounts feature requires it.
 
-1. Create a client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. For small tokens give it the mappers `username` and `email` and the same scope setup as `eduide`.
-2. Give it the valid redirect URI `https://instance.eduide.example.org/oauth2/callback` and no web origin.
-3. Copy the secret from its tab **Credentials** into a file and create `eduide-oidc` from it, as above.
-4. Remove the redirect URI of the instance host from the client `eduide`.
-5. Set `oidc.gatewayClientID: eduide-gateway`. `oidc.clientIDs` and the landing page keep `eduide`.
+:::warning Keep the shared client public
+The client `eduide` stays public.
+Never switch it to confidential.
+The landing page has no secret, and Keycloak then rejects every landing page login with `unauthorized_client`.
+:::
+
+Follow the steps in this order.
+Every login keeps working after each step, because the shared client keeps its redirect URI until the gateway no longer uses it.
+
+1. Create the new client, for example `eduide-gateway`, with **Client authentication** on and only **Standard flow**. Give it the valid redirect URI `https://instance.eduide.example.org/oauth2/callback` and no web origin. For small tokens give it the mappers `username` and `email` and the same scope setup as `eduide`. Nothing uses the client yet. Check that Keycloak saved it.
+2. Copy the secret from its tab **Credentials** into a file and replace the Secret `eduide-oidc` from it, as in [step 8](#8-fill-in-the-values). Never put the secret into Git. Check that the Secret exists and its `client-secret` is not empty.
+3. Set `oidc.gatewayClientID: eduide-gateway` and deploy. `oidc.clientIDs` and the landing page keep `eduide`. Check in a private window: sign in on the landing page, start a session and open the IDE.
+4. Only after step 3 works, remove the redirect URI `https://instance.eduide.example.org/oauth2/callback` from the client `eduide`. Keep its entries for the landing page and leave **Client authentication** off. Check again in a private window: sign in, start a session, open the IDE.
+
+The webview host needs no entry in either client.
+The gateway always returns to the instance host, so the sign-in callback never happens on the webview host.
 
 The admin role stays on the client `eduide`, because the admin API checks the access token of the landing page.
+
+### Go back
+
+1. Restore the redirect URI of the instance host on the client `eduide`, if you removed it in step 4.
+2. Set `oidc.gatewayClientID: eduide` and deploy.
+3. Check in a private window: sign in, start a session, open the IDE.
